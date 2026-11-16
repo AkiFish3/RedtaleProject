@@ -1,0 +1,33 @@
+{
+  // 示范装备（M2 验收件）。内容 id 发布后不要改：它会写进 modifier id 与存档。
+  id: "demo_longsword",
+  base: "sword",              // 14 个基底之一：sword/dagger/axe/hammer/spear/staff/bow/shield/helmet/chestplate/leggings/boots/ring/amulet
+  name: "示范长剑",
+  durability: 1200,
+  rarity: "rare",             // common | uncommon | rare | epic
+  rev: 2,                     // sockets 段 0→1、set_id 1→2（D33：改定义型字段必须 +1）
+
+  // 套装归属（M3 §5.4）：定义型字段，改它要 rev+1。套装数值不进物品组件。
+  set_id: "emberforged",
+
+  // 孔位（M3）：definition 型字段 —— 改它必须 rev+1，否则存量物品的孔数不跟着变。
+  sockets: {
+    count: 2,
+    types: ["offensive", "any"],   // 按孔序；短了末位补 any，长了截断
+  },
+
+  // BetterCombat 的武器动作（D15）。纯字符串引用，我们从不 import 它。
+  // 它不在线时这个字段没人读，不报错。
+  weapon_attributes: "bettercombat:claymore",
+
+  stats: {
+    // 一律写「该属性的平加量」。玩家基础攻击伤害是 1.0，这里 +7.0 → 8.0
+    attack_damage: 7.0,
+    // attack_speed 是唯一的例外：写**目标次/秒**（原版剑就是 1.6），建栈时换算成 -2.4
+    attack_speed: 1.6,
+    // 暴击率：0.12 = 12%（不是百分比字符串）
+    critical_strike_chance: 0.12,
+    // 百分比类属性也写小数：0.2 = +20%，由 L2 乘区读取
+    physical_damage: 0.2,
+  },
+}

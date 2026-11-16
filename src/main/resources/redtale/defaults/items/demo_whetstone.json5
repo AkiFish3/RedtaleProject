@@ -1,0 +1,22 @@
+{
+  // D23 第二半验收件：磨刀石（修另一只手里那件）。
+  // 主手拿它 → 修副手；副手拿它 → 修主手。规则一句话，右键结果可预期。
+  // 基底同样借 amulet（14 基底没有「工具/材料」格，Q-016 挂待拍板）。
+  id: "demo_whetstone",
+  base: "amulet",
+  name: "磨刀石",
+  durability: 0,
+  rarity: "common",
+
+  repair: {
+    // targets 留空 = 不限制，任意可损坏物品都能修。
+    // 要限制的写法：["#minecraft:swords", "redtale_project:sword", "demo_longsword"]
+    //   #ns:tag → 原版物品标签；ns:path → 物品注册 id；裸串 → 内容 id
+    targets: [],
+    mode: "amount",          // amount | percent
+    amount: 120,             // 或 percent: 0.25（按最大耐久算）
+    consume_item: true,      // 修成功才扣一块
+  },
+
+  rev: 1,
+}

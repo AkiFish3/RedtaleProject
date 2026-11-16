@@ -1,0 +1,14 @@
+{
+  // M0 验收脚本：玩家进服跑一条 effect。
+  // 改完执行 /redtale reload 即生效，不用重启。
+  id: 'greeting',
+  trigger: 'player_join',
+  cooldown_ticks: 100,
+  conditions: [
+    { type: 'always' },
+  ],
+  effects: [
+    { type: 'message', args: { text: '[赤物语] 欢迎回来，%player%。脚本层 M0 已在线。' } },
+    { type: 'console_log', args: { text: '玩家 %player% 登录，greeting 脚本已执行' } },
+  ],
+}

@@ -1,0 +1,28 @@
+{
+  // M4 示范附魔 ②：脚本化型（走 redtale_project:scripted → L3 脚本层，验 V9/V10）
+  // 执行体全在 scripts/*.json5 里：这里只声明「什么时候触发 + 传什么参数」
+  id: "redtale_project:soul_reap",
+  description: "摄魂",
+  description_en: "Soul Reap",   // en_us 的 lang 值（缺省回落 description）
+  max_level: 2,
+  weight: 2,
+  anvil_cost: 4,
+  slots: ["mainhand"],
+  supported_items: "#minecraft:enchantable/sharp_weapon",
+  min_cost: { base: 8, per_level_above_first: 10 },
+  max_cost: { base: 30, per_level_above_first: 10 },
+  exclusive_set: "#redtale_project:exclusive_set/lifesteal",
+  effects: {
+    "minecraft:post_attack": [
+      {
+        enchanted: "attacker",
+        affected: "victim",
+        effect: {
+          type: "redtale_project:scripted",
+          script: "enchants/soul_reap",
+          args: { heal_ratio: 0.08, per_level: 0.02 },
+        },
+      },
+    ],
+  },
+}

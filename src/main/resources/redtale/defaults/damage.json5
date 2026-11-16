@@ -1,0 +1,51 @@
+{
+  // 伤害闸门（D16）。默认全 0 = 关闭：结算层永不偷偷砍伤害，平衡靠「投放层」（装备数值）。
+  // 想临时收紧不用换 jar，改这里 + /redtale reload 即可。
+  caps: {
+    percentCap: 0,          // 百分比池相加后的上限，0 = 不限
+    condCap: 0,             // 单个条件乘区的上限，0 = 不限
+    condCount: 0,           // 条件乘区最多生效几个，0 = 不限
+    damageCap: 0,           // 单次伤害绝对天花板，0 = 不限
+  },
+
+  // 异常保护：不参与平衡，只在工程事故时兜底（负数归零 / 1e9 硬顶 / 超阈值记日志）
+  sanity: {
+    negativeGuard: true,
+    hardCeiling: 1.0e9,
+    logThreshold: 10000.0,
+    logSampleRate: 0.1,     // 超阈值只采样 10% 记日志，避免刷屏
+  },
+
+  // L2 乘区（D12 / D31）：只乘「我们自己命名空间」的伤害，别人的一律原样放行。
+  // 这是硬边界，不是保守：服上十几个 mod 在同一个伤害事件里加减乘，多乘一次就说不清是谁干的。
+  multiplier: {
+    // 生效的伤害类型。支持 namespace:* 通配、精确 id、以及 "*"（全部，别这么写）
+    damage_types: ["redtale_project:*"],
+
+    // 白名单外的伤害怎么处理：true = 只计数并记住最后一次（观测用），false = 完全忽略
+    passthrough_external: true,
+
+    // 贡献百分比池的**无条件**属性（逻辑 id，写 physical_damage 即可，不用带命名空间）
+    percent_attributes: ["physical_damage"],
+
+    // 伤害类别池（R26-b / Q-018 默认 A）：技能按类别分轴，物理吃 physical_damage、法术吃 magical_damage。
+    // 按声明顺序 first-match，一条都不命中就落回上面的 percent_attributes。
+    // 分轴只冻结两个 damage_type（skill_physical / skill_magical），不是「每个技能一个类型」——
+    // damage_type 是启动期 registry，按内容注册就得重启（D17）。
+    // 整段删掉 = 用默认两条；显式写 category_attributes: [] = 关掉分轴（全部走 percent_attributes）。
+    category_attributes: [
+      { type: "redtale_project:skill_magical", attributes: ["magical_damage"] },
+      { type: "redtale_project:skill_physical", attributes: ["physical_damage"] },
+    ],
+
+    // 条件乘区（M2）：按「打的是谁」追加属性，**与上面的无条件项进同一个百分比池相加**。
+    // 物理 +20% 且对亡灵 +30%，打到僵尸是 ×1.5（不是 ×1.56）。
+    // 分类口径只有一个实现（TargetClass）：玩家 → pvp；亡灵（#minecraft:undead）→ pve + undead；其它生物 → pve。
+    // 整段删掉 = 用默认（三条全开）；显式写 conditional_attributes: {} = 关掉条件乘区。
+    conditional_attributes: {
+      pvp: ["pvp_damage"],
+      pve: ["pve_damage"],
+      undead: ["undead_damage"],
+    },
+  },
+}

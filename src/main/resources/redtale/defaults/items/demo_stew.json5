@@ -1,0 +1,31 @@
+{
+  // D23 消耗品验收件：右键生效。
+  // 基底只能用**非护甲**的 10 件（sword…shield / ring / amulet）——
+  // 护甲基底是 ArmorItem，右键语义是「穿戴」，解析期就会丢掉 use 段并告警。
+  // 14 基底里没有「食物」这一格，先用 amulet 顶外观（已在 Q-016 挂待拍板）。
+  id: "demo_stew",
+  base: "amulet",
+  name: "赤物语浓汤",
+  durability: 0,
+  rarity: "uncommon",
+
+  // effects 的 chance 缺省 1.0；duration 缺省 200 tick，amplifier 缺省 0
+  use: {
+    effects: [
+      { effect: "minecraft:regeneration", duration: 200, amplifier: 1 },
+      { effect: "minecraft:saturation", duration: 1, amplifier: 0 },
+    ],
+    restore_food: 6,
+    saturation: 0.6,
+    cooldown_ticks: 400,
+    // 脚本层：message 给玩家看，console_log 留一行日志（FakePlayer 无连接时 message 静默跳过，
+    // 日志那行仍会落地 —— 验收靠它判「脚本真的跑了」）
+    script: [
+      { effect: "message", args: { text: "热汤下肚，%player% 暖和了。" } },
+      { effect: "console_log", args: { text: "[redtale] demo_stew 被 %player% 使用（use.script）" } },
+    ],
+  },
+
+  // only_when_hungry 会挡掉「不饿也能喝」——验收两组都跑（饿 / 不饿）
+  consume: "always",
+}

@@ -1,0 +1,20 @@
+{
+  // 宝石示范（M3）。宝石本身也是一件**内容物品**（D17）：不是新注册表项、不是新组件，
+  // 所以加一颗宝石 = 写一份 json5 + /redtale reload，不换 jar。
+  id: "gem_ruby",
+  base: "amulet",             // 只提供外观（14 基底，Q-016 同款取舍）
+  name: "赤红宝石",
+  rarity: "rare",
+
+  gem: {
+    type: "offensive",        // 缺省 any；匹配规则：孔的 type 或宝石的 type 任一是 any 即可镶
+    tier: 1,                  // 只用于显示与排序
+    exclusive_group: "ruby",  // 非空 = 同一件装备上同组只能有一颗
+    stats: {
+      // 与词条同一条解析与归一（AffixPools.parseStats）：裸数字 = 平加
+      physical_damage: 0.05,
+      // 曲线写法也可以混用：base + per_item_level × 物品等级（等级未接，现在恒按 1 算）
+      attack_damage: { base: 2, per_item_level: 0.1 },
+    },
+  },
+}

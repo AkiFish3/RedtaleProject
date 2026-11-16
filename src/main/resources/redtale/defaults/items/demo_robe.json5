@@ -1,0 +1,16 @@
+{
+  // 白板化的**边界**验收件：0 属性装备。
+  // 判据是「modifier 列表非空」而不是「组件存在」，所以空 stats 会回落到皮革胸甲的 3 点护甲。
+  // 建栈时会塞一个 +0 占位（ItemFactory），穿上去护甲必须仍是 0。
+  id: "demo_robe",
+  base: "chestplate",
+  name: "示范布袍",
+  durability: 200,
+  rarity: "common",
+  rev: 1,                      // 加 set_id（D33：定义型字段必须 +1）
+
+  // 套装归属（M3 §5.4）
+  set_id: "emberforged",
+
+  stats: {},
+}

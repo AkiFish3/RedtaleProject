@@ -1,0 +1,12 @@
+build/
+.gradle/
+run/
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+libs/*.jar
+
+# 队列锁与日志（2026-11-17 加，勿提交）
+.queue/
+logs/
+*.log
+.workbuddy/

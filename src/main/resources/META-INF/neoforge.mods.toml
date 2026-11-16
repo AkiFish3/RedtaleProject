@@ -1,0 +1,30 @@
+modLoader = "javafml"
+loaderVersion = "[4,)"
+license = "LGPL-3.0-only"
+
+[[mods]]
+modId = "${mod_id}"
+version = "${mod_version}"
+displayName = "RedtaleProject"
+description = '''
+赤物语服务端 RPG 套件自研实现。属性 / 装备 / 宝石 / 套装 / 附魔 / 技能 / 怪物 / 等级经验。
+配置全 JSON5，/redtale reload 生效。
+'''
+
+[[dependencies.${mod_id}]]
+modId = "neoforge"
+type = "required"
+versionRange = "[21.1.257,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.${mod_id}]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.21.1,1.22)"
+ordering = "NONE"
+side = "BOTH"
+
+# 攻速注入点（D15/D19）：Player#getCurrentItemAttackStrengthDelay
+[[mixins]]
+config = "redtale_project.mixins.json"

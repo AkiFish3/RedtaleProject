@@ -1,0 +1,20 @@
+{
+  // 近战暴击（M2，Q-008 口径：保留近战/法术双轨，基值照搬上游）。
+  // 属性基值：critical_strike_chance = 0（没内容就不暴击）、critical_strike_power = 2.0。
+  // 想关掉整套暴击改 enabled: false + /redtale reload，不换 jar。
+  enabled: true,
+
+  // 逻辑 id（不带命名空间）。属性表见 docs/ATTRIBUTE-REGISTRY.md §2 A 段。
+  chance_attribute: "critical_strike_chance",
+  power_attribute: "critical_strike_power",
+
+  // 原版跳跃暴击（1.5×）是否也换成我们的倍率。
+  // true = 全服暴击统一按 critical_strike_power（默认 2.0）；false = 原版 1.5 保留，只做「额外暴击」。
+  apply_to_vanilla_crit: true,
+
+  // 掷中暴击率时，把「原版没判暴击」强制判成暴击。关掉 = 暴击率只在跳跃时才有意义。
+  force_on_roll: true,
+
+  // 暴击率上限。0 = 不限（D16：结算层不设平衡上限，靠投放层控制）。
+  max_chance: 0,
+}

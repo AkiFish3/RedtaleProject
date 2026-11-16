@@ -1,0 +1,17 @@
+{
+  // 宝石示范（M3）：与 gem_ruby 同 interop 不同 exclusive_group —— 两颗可以同时镶在一件装备上。
+  // 再放一颗同组宝石时镶嵌会被拦（Socketer.EXCLUSIVE_CONFLICT）。
+  id: "gem_sapphire",
+  base: "amulet",
+  name: "湛蓝宝石",
+  rarity: "uncommon",
+
+  gem: {
+    type: "defensive",   // 与 gem_ruby 的 offensive 不同：用来验「类型不匹配被拦」
+    tier: 2,
+    exclusive_group: "sapphire",
+    stats: {
+      critical_strike_chance: 0.03,
+    },
+  },
+}

@@ -1,0 +1,15 @@
+{
+  // 套装默认配置（M3 §5.4 验收件）。
+  // 件数口径：护甲 4 格 + 主手 + 副手，按**内容 id**去重 —— 同一件戴两个也只算一件。
+  // pieces 写的是**内容 id**（items/*.json5 的 id），不是物品注册 id。
+  // 生效规则：所有 count <= 当前件数 的档**全部**生效（不是只取最高档），同档多项相加。
+  id: "emberforged",
+  name: "炽锻",
+  // demo_robe 故意不在里面：它与 demo_chestplate 同为胸甲基底，两件互斥，
+  // 写进来等于造一个「3 件档永远到不了」的坑。
+  pieces: ["demo_longsword", "demo_chestplate"],
+  bonuses: [
+    { count: 1, stats: { max_health: 2 } },
+    { count: 2, stats: { physical_damage: 0.05, attack_damage: 2 }, name: "炽锻·全" },
+  ],
+}

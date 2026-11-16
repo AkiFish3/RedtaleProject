@@ -1,0 +1,30 @@
+{
+  // 攻速来源表（D18）。所有条目最终都以 ADD_MULTIPLIED_TOTAL 写进 minecraft:generic.attack_speed，
+  // 所以咖啡因 / 茶 / Ferocity / 双持 / 我们自己的规则全部在同一个属性池里相加。
+  // 改完执行 /redtale reload 即刻生效，不用重启、不用换 jar。
+
+  // 急迫每级提供多少攻速（D19：0.10 = 保留 1.20.1 的「急迫堆攻速」玩法）
+  // I = +10%，II = +20% …… VIII = +80%。填 0 退回纯原版行为。
+  //
+  // ★ 2026-11-15 实测更正：1.21.1 的原版急迫**自己就加攻速**——
+  //   MobEffects.DIG_SPEED 注册时挂了
+  //   addAttributeModifier(ATTACK_SPEED, minecraft:effect.haste, 0.1, ADD_MULTIPLIED_TOTAL)
+  //   （server jar 字节码实读）。所以这里的 0.10 是「目标总加成」：
+  //   检测到原版 modifier 在，我们**自动让位**（不叠加），否则再自己写一份。
+  //   日志里出现「攻速去重：minecraft:haste 自带的 modifier …」是正常的。
+  haste_attack_speed_per_level: 0.10,
+
+  // 其它「效果 → 攻速」映射。默认全 0：这些来源别人已经加过了，我们再加就是重复计。
+  // 格式：per_level 按效果等级线性，flat 是固定值，两者可叠加。
+  effect_attack_speed: {
+    'minecraft:haste':            { per_level: 0.0 },  // 只走上面那条，这里非零会被忽略并告警
+    'farmersrespite:caffeinated': { flat: 0.0 },       // Farmer's Respite 自己给了 +20%
+  },
+
+  // 饱和点（D19：0 = 不饱和）。想收敛就填数字，例如 4.0 → 再多也就 4 次/秒附近。
+  soft_cap: 0.0,
+
+  // 物理地板：冷却最短多少 tick。这不是平衡阀，是防 getAttackCooldownProgress 除零
+  // （delay = 0 → NaN → 每 tick 都能出手）。默认 1.0，想放开到极限也别低于 0.05。
+  min_attack_delay_ticks: 1.0,
+}

@@ -1,0 +1,76 @@
+plugins {
+    id 'java'
+    id 'net.neoforged.moddev' version "${moddevgradle_version}"
+}
+
+group = mod_group
+version = mod_version
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+neoForge {
+    version = project.neo_version
+
+    // 只用官方 mojmap，不引 parchment（少一个外部仓库依赖）
+    runs {
+        client {
+            client()
+            gameDirectory = file('run/client')
+        }
+        server {
+            server()
+            gameDirectory = file('run/server')
+            programArguments = ['--nogui']
+        }
+    }
+
+    mods {
+        "${mod_id}" {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
+repositories {
+    maven { name = 'GradleChina'; url = 'https://mirrors.cloud.tencent.com/nexus/repository/maven-public/' }
+    maven { name = 'NeoForgedMirror'; url = 'https://bmclapi2.bangbang93.com/maven' }
+    mavenCentral()
+}
+
+dependencies {
+    // M0 不引任何第三方前置。GeckoLib / Curios 等按里程碑逐个加，
+    // 且必须是 D11 白名单内的库型前置。
+}
+
+processResources {
+    def props = [
+        mod_id     : mod_id,
+        mod_name   : mod_name,
+        mod_version: mod_version,
+        mod_group  : mod_group,
+    ]
+    inputs.properties props
+    filesMatching(['META-INF/neoforge.mods.toml']) {
+        expand props
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 21
+}
+
+jar {
+    manifest {
+        attributes([
+            'Specification-Title'    : mod_name,
+            'Specification-Version'  : mod_version,
+            'Implementation-Title'   : mod_name,
+            'Implementation-Version' : mod_version,
+        ])
+    }
+}

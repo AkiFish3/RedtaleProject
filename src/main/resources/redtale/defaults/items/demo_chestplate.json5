@@ -1,0 +1,19 @@
+{
+  // 白板化验收件（D21）：写 20 护甲，穿上就是 20 —— 不是 20 + 皮革胸甲自带 3。
+  // 机制：ATTRIBUTE_MODIFIERS 组件非空时，原版跳过 item.getDefaultAttributeModifiers()。
+  id: "demo_chestplate",
+  base: "chestplate",
+  name: "示范胸甲",
+  durability: 600,
+  rarity: "epic",
+  rev: 1,                      // 加 set_id（D33：定义型字段必须 +1）
+
+  // 套装归属（M3 §5.4）
+  set_id: "emberforged",
+
+  stats: {
+    armor: 20,
+    armor_toughness: 4,
+    max_health: 4,
+  },
+}

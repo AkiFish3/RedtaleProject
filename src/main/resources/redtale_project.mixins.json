@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "minVersion": "0.8.7",
+  "package": "com.redtale.project.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "PlayerAttackSpeedMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

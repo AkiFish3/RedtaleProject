@@ -1,0 +1,14 @@
+{
+  // 词条定义（D22）。stats 两种写法等价：
+  //   数字  = 固定值（attack_damage: 3）
+  //   对象  = 曲线（{ base: 3.0, per_item_level: 0.08 } → 值 = base + per_item_level × 物品等级）
+  // 可选 spread / max_spread：生成时摇一次并写进物品，之后不再变（StatValue）。
+  id: "sharp",
+  kind: "prefix",                 // prefix | suffix | core
+  weight: 100,                    // 池内权重（不是概率）
+  item_level: { min: 1, max: 60 },
+  exclusive_group: "damage",      // 同组最多出一条
+  stats: {
+    attack_damage: { base: 2.0, per_item_level: 0.08 },
+  },
+}

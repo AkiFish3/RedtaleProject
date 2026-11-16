@@ -1,0 +1,10 @@
+{
+  id: "of_the_bear",
+  kind: "suffix",
+  weight: 60,
+  item_level: { min: 1, max: 60 },
+  exclusive_group: "vitality",
+  stats: {
+    "minecraft:generic.max_health": { base: 2.0, per_item_level: 0.2 },
+  },
+}

@@ -1,0 +1,26 @@
+{
+  // M4 示范附魔 ①：纯数值型（不碰脚本层，用来验 V8「差值 = linear 算出的值」）
+  // 加第 N 个这类附魔 = 抄这份改数字，不编译（D32 的硬指标）
+  id: "redtale_project:super_sharpness",
+  description: "超级锋利",
+  description_en: "Super Sharpness",   // en_us 的 lang 值（缺省回落 description）
+  max_level: 3,
+  weight: 4,
+  anvil_cost: 2,
+  slots: ["mainhand"],
+  supported_items: "#minecraft:enchantable/sharp_weapon",
+  min_cost: { base: 5, per_level_above_first: 12 },
+  max_cost: { base: 25, per_level_above_first: 12 },
+  exclusive_set: "#minecraft:exclusive_set/damage",
+  effects: {
+    // 原版组件原样透传：I 级 +2.0，每级再 +1.0
+    "minecraft:damage": [
+      {
+        effect: {
+          type: "minecraft:add",
+          value: { type: "minecraft:linear", base: 2.0, per_level_above_first: 1.0 },
+        },
+      },
+    ],
+  },
+}

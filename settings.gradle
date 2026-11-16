@@ -1,0 +1,11 @@
+pluginManagement {
+    repositories {
+        // 国内镜像优先：maven.neoforged.net 在本机直连超时（2026-11-15 实测 000/21s）
+        maven { name = 'GradleChina'; url = 'https://mirrors.cloud.tencent.com/nexus/repository/maven-public/' }
+        maven { name = 'NeoForgedMirror'; url = 'https://bmclapi2.bangbang93.com/maven' }
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+rootProject.name = 'RedtaleProject'

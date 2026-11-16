@@ -1,0 +1,109 @@
+plugins {
+    id 'java'
+}
+
+group = mod_group
+version = mod_version
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// 构建策略（2026-11-15 定稿，Aki 拍板「用镜像源」）
+//
+// 背景：ModDevGradle 需要 net.neoforged:neoform-runtime（反编译 + 打补丁那套工具），
+// 该构件只在 maven.neoforged.net 上；国内镜像（阿里 / 腾讯 / 华为 / 清华 / bmclapi）
+// 全部 404，本机直连超时。「纯镜像 + MDG」这条路走不通。
+//
+// 但 NeoForge 从 1.20.2 起取消了 reobf：mod jar 里就是 Mojang 官方名，
+// 所以只要拿到「已打补丁的 Minecraft + NeoForge API」，普通 javac 编出来的 jar
+// 就是合法可运行产物（R1 已在测试服实测通过）。
+//
+// 因此：compile classpath 直接用正式服 / 测试服的 libraries（含 server-srg 与 neoforge-universal），
+// 仓库只留给以后真正需要的第三方前置（GeckoLib / Curios 等，走镜像）。
+// ---------------------------------------------------------------------------
+def neoforgeLibs = file(project.findProperty('neoforge_libraries') ?: 'E:/server-test/libraries')
+
+if (!neoforgeLibs.isDirectory()) {
+    throw new GradleException("neoforge_libraries 不存在：${neoforgeLibs}（改 gradle.properties）")
+}
+
+repositories {
+    // 镜像优先，官方源兜底
+    maven { name = 'Aliyun'; url = 'https://maven.aliyun.com/repository/public' }
+    maven { name = 'Tencent'; url = 'https://mirrors.cloud.tencent.com/nexus/repository/maven-public/' }
+    maven { name = 'Huawei'; url = 'https://repo.huaweicloud.com/repository/maven/' }
+    mavenCentral()
+}
+
+dependencies {
+    // 显式顺序：server-srg 里也有一份 net.minecraft 类，签名不全的那份会让 javac 解析错
+    compileOnly files(
+        file("${neoforgeLibs}/net/minecraft/server/1.21.1-20240808.144430/server-1.21.1-20240808.144430-srg.jar"),
+        file("${neoforgeLibs}/net/neoforged/neoforge/21.1.257/neoforge-21.1.257-universal.jar"),
+        file("${neoforgeLibs}/net/neoforged/neoforge/21.1.257/neoforge-21.1.257-server.jar")
+    )
+    // 其余运行库（gson / joml / log4j / netty…）一次兜齐，避免逐个补
+    compileOnly fileTree(dir: neoforgeLibs, include: ['**/*.jar'], exclude: [
+        '**/net/minecraft/server/**',
+        '**/net/neoforged/neoforge/**',
+        '**/AutoRenamingTool/**'
+    ])
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 21
+}
+
+// ---------------------------------------------------------------------------
+// 离线单测（纯 Java：settle / StatValue / 攻速曲线）
+//
+// 为什么不引 JUnit：本机离线构建拉不到测试依赖（docs/BUILD.md），而且这三块
+// 是纯函数，一个 main + 断言计数器就够跑出退出码。
+//   D:\redtale-work\tools\gradle-8.8\bin\gradle selftest --offline
+// ---------------------------------------------------------------------------
+sourceSets {
+    selftest {
+        java.srcDir 'src/selftest/java'
+        compileClasspath += sourceSets.main.output + configurations.compileClasspath
+        runtimeClasspath += sourceSets.main.output + configurations.compileClasspath
+    }
+}
+
+tasks.register('selftest', JavaExec) {
+    group = 'verification'
+    description = '跑纯 Java 数值单测（不需要 Minecraft 运行时）'
+    dependsOn tasks.named('selftestClasses')
+    classpath = sourceSets.selftest.runtimeClasspath
+    mainClass = 'com.redtale.project.selftest.SelfTest'
+}
+
+// 产物名与 mods 目录里现有的一致，方便直接替换
+jar {
+    archiveBaseName = mod_id
+    manifest {
+        attributes(
+            'Specification-Title'    : mod_name,
+            'Specification-Version'  : mod_version,
+            'Implementation-Title'   : mod_name,
+            'Implementation-Version' : mod_version
+        )
+    }
+}
+
+processResources {
+    def props = [
+        mod_id     : mod_id,
+        mod_name   : mod_name,
+        mod_version: mod_version,
+        mod_group  : mod_group,
+    ]
+    inputs.properties props
+    filesMatching(['META-INF/neoforge.mods.toml']) {
+        expand props
+    }
+}

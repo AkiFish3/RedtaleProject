@@ -1,0 +1,32 @@
+{
+  // 附魔「摄魂」（enchantments/soul_reap.json5）的执行体（D32 的 L3 层）。
+  //
+  // 链路：原版 post_attack 组件 → redtale_project:scripted（L2）→ 本脚本（L3）。
+  // 触发时不看本文件的 trigger（fireById 直接按 id 跑）；写 manual 只是为了通过
+  // 「trigger 必须是已注册原语」的加载期校验。
+  //
+  // args 里的 heal_ratio / per_level 由附魔 JSON5 通过 args 传进来，落在 %var.*% 上；
+  // 未定义的键原样保留，所以日志里看到 %var.xxx% 就是没传进来。
+  //
+  // R24：脚本层加了 heal 原语，这里真正回血。口径是「按施法者最大生命的比例」——
+  // post_attack 的组件签名不带伤害数值，按伤害抽血要等伤害管线把数值递进脚本上下文，
+  // 排到 M5（R24 记在 PLAN §13.27）。等级 1 吃 8%，等级 2 再追加 2%（共 10%）。
+  id: 'enchants/soul_reap',
+  trigger: 'manual',
+  effects: [
+    {
+      type: 'console_log',
+      args: {
+        text: '[soul_reap] 触发 · 施法者 %player% · 等级 %var.enchant_level% · heal_ratio=%var.heal_ratio% · per_level=%var.per_level%',
+      },
+    },
+    {
+      type: 'heal',
+      args: {
+        target: 'caster',
+        ratio: 0.08,
+        per_level: 0.02,
+      },
+    },
+  ],
+}
