@@ -33,6 +33,12 @@ S7 派单 → OPEN → (S8 领) DOING → (S8 自测) DONE → (S7 验) VERIFIED
 7. **验收必须机器可判**：`gradle build` 退出码、文件存在、`grep -c`、`python -c json.load`、命令输出行数。禁止「看起来对了」。
 8. **S8 不碰**：`build.gradle`、`PLAN.md`、`docs/CONTRACTS.md`、`docs/TASKS.md` 的规则区与别人的卡、`E:\server-test`、`E:\server-1.21.1`、任何 `Q-` 决策。
 
+9. **收工入库（S7 做，S8 不做）**：本轮改完、验完、写完协作板之后，在 `E:\RedtaleProject` 跑一次
+   `git add -A && git commit -q -m "R<轮次>：<一句话>" && git push -q origin main`。
+   失败就记一行「本轮未入库 + 原因」，下轮补推；**不许 `push --force`、不许 `rebase`**——这是唯一一份源码，冲突就停手写信。
+   提交信息以轮次号开头，dev 侧靠 `git log --oneline` 对齐 `PLAN.md` §13 台账。
+   `build/` `.gradle/` `.queue/` `logs/` `.workbuddy/` 已在 `.gitignore`，**不要 `git add -f` 手工塞进去**。
+
 ## 3. 构建锁（S7 / S8 共用）
 
 两边都会跑 `gradle build --offline`，同一 build 目录会互锁/覆盖产物。规则：
