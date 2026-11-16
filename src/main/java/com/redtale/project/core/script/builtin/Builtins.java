@@ -17,6 +17,8 @@ public final class Builtins {
         registries.register(new ConsoleEffect());
         // M4 的 soul_reap 执行体（R24）：附魔 post_attack → scripted → 本原语
         registries.register(new HealEffect());
+        // M5-A 第一条直伤原语（R27）：只给白值，倍率由 DamageLayer 乘（SKILLS §5 红线 1）
+        registries.register(new DamageEffect());
 
         // conditions
         registries.register(new AlwaysCondition());

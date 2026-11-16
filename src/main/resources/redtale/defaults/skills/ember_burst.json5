@@ -1,0 +1,17 @@
+// 技能示范 2（M5-A）：法术单体。`damage_type` 必须显式写 skill_magical，
+// 否则会去吃物理百分比属性（SKILLS.md §5 第 4 条）。
+{
+  id: "redtale_project:ember_burst",
+  name: "灼焰爆",
+  icon: "minecraft:blaze_powder",
+  cooldown_ticks: 200, // 10 秒
+
+  conditions: [
+    { type: "health_below", args: { ratio: 0.9 } },
+  ],
+
+  effects: [
+    { type: "console_log", args: { text: "[skill] ember_burst by %player%" } },
+    { type: "damage", args: { amount: 8.0, damage_type: "redtale_project:skill_magical" } },
+  ],
+}

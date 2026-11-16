@@ -68,6 +68,13 @@ public final class RedtaleCommand {
                 .then(Commands.literal("damage")
                         .executes(RedtaleCommand::damage)
                         .then(Commands.literal("probe").executes(RedtaleCommand::damageProbe))
+                        // /redtale damage hit probe [amount]：M5 的 damage 原语端到端（白值 → 乘区）
+                        .then(Commands.literal("hit")
+                                .then(Commands.literal("probe")
+                                        .executes(ctx -> damageHitProbe(ctx, 10.0D))
+                                        .then(Commands.argument("amount", com.mojang.brigadier.arguments.DoubleArgumentType.doubleArg(0.1D, 1.0e9D))
+                                                .executes(ctx -> damageHitProbe(ctx,
+                                                        com.mojang.brigadier.arguments.DoubleArgumentType.getDouble(ctx, "amount"))))))
                         .then(Commands.literal("check")
                                 .then(Commands.argument("type", ResourceLocationArgument.id())
                                         .executes(RedtaleCommand::damageCheck))))
@@ -870,6 +877,123 @@ public final class RedtaleCommand {
             }
         }
         return 1;
+    }
+
+    /**
+     * {@code /redtale damage hit probe [amount]}：{@code damage} 原语的端到端探测（M5-A）。
+     *
+     * <p>验的是**三层模型**这条链，而不是「打出去了」：
+     * <ol>
+     *   <li>A 组：白值直接进场，攻击者零属性 → 掉血量 = 白值（原语只给白值，不自己算倍率）</li>
+     *   <li>B 组：攻击者 {@code physical_damage +0.25} → 掉血 = 白值 × 1.25（倍率由 L2 乘区乘）</li>
+     *   <li>C 组：{@code skill_magical} + {@code magical_damage +0.5} → ×1.5（分轴，R26）</li>
+     *   <li>D 组：{@code skill_magical} 但只堆物理 → ×1.0（反证：法术不吃物理百分比）</li>
+     * </ol>
+     * A 组若等于「白值×属性」，说明原语自己乘了；B 组若等于白值，说明 {@code DamageLayer} 没接上。
+     * 两组一起才卡得住 D12。
+     *
+     * <p>目标用一只 {@code MAX_HEALTH = 1000} 的牛（不还手、设 {@code NoAI}），每次打之前把血与
+     * {@code invulnerableTime} 归零 —— 否则 1.21 的 10 tick 无敌帧会让第二次命中变成 0。
+     * 攻击者用 {@code FakePlayer}（纯服务端，不需要客户端）。
+     */
+    private static int damageHitProbe(CommandContext<CommandSourceStack> ctx, double amount) {
+        CommandSourceStack src = ctx.getSource();
+        if (src.getServer() == null) {
+            src.sendFailure(Component.literal("[redtale] 没有服务端上下文"));
+            return 0;
+        }
+        var level = src.getServer().overworld();
+        if (level == null) {
+            src.sendFailure(Component.literal("[redtale] 主世界还没加载"));
+            return 0;
+        }
+        var fp = net.neoforged.neoforge.common.util.FakePlayerFactory.getMinecraft(level);
+        net.minecraft.world.entity.animal.Cow cow = net.minecraft.world.entity.EntityType.COW.create(level);
+        if (cow == null) {
+            src.sendFailure(Component.literal("[redtale] 造不出探测目标（EntityType.COW.create 返回 null）"));
+            return 0;
+        }
+        cow.moveTo(fp.getX() + 1.0D, fp.getY(), fp.getZ(), 0.0F, 0.0F);
+        var maxHealth = cow.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
+        if (maxHealth != null) {
+            maxHealth.setBaseValue(1000.0D);
+        }
+        cow.setHealth(1000.0F);
+        cow.setNoAi(true);
+        if (!level.addFreshEntity(cow)) {
+            src.sendFailure(Component.literal("[redtale] 探测目标没能进入世界"));
+            return 0;
+        }
+
+        net.minecraft.resources.ResourceLocation physId =
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("redtale_project", "probe/physical");
+        net.minecraft.resources.ResourceLocation magId =
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("redtale_project", "probe/magical");
+        Holder<Attribute> phys = RedtaleAttributes.holder(AttributeSpecs.byId("physical_damage"));
+        Holder<Attribute> mag = RedtaleAttributes.holder(AttributeSpecs.byId("magical_damage"));
+        if (phys == null || mag == null) {
+            src.sendFailure(Component.literal("[redtale] physical_damage / magical_damage 未注册"));
+            return 0;
+        }
+        var physInst = fp.getAttribute(phys);
+        var magInst = fp.getAttribute(mag);
+        if (physInst == null || magInst == null) {
+            src.sendFailure(Component.literal("[redtale] FakePlayer 上没有这两条属性（EntityAttributeModificationEvent 没挂上？）"));
+            return 0;
+        }
+
+        int bad = 0;
+        try {
+            src.sendSuccess(() -> Component.literal("[redtale] damage 原语端到端（白值 " + AttributeBreakdown.num(amount)
+                    + "，目标：牛 1000 血 / NoAI，攻击者：FakePlayer）："), false);
+            bad += hitOnce(src, level, fp, cow, amount, null, 1.0D, "A 白值 · 零属性");
+            physInst.addTransientModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(
+                    physId, 0.25D, net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_VALUE));
+            bad += hitOnce(src, level, fp, cow, amount, null, 1.25D, "B 白值 · physical_damage +0.25");
+            bad += hitOnce(src, level, fp, cow, amount, "redtale_project:skill_magical", 1.0D,
+                    "D 法术类型 · 只堆物理（应不吃）");
+            magInst.addTransientModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(
+                    magId, 0.5D, net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_VALUE));
+            bad += hitOnce(src, level, fp, cow, amount, "redtale_project:skill_magical", 1.5D,
+                    "C 法术类型 · magical_damage +0.5");
+            // 不存在的类型：应回缺省物理轴（= 吃 physical 的 0.25，不吃 magical）
+            bad += hitOnce(src, level, fp, cow, amount, "redtale_project:no_such_type", 1.25D,
+                    "E 不存在的类型 · 回缺省物理轴");
+        } finally {
+            physInst.removeModifier(physId);
+            magInst.removeModifier(magId);
+            cow.discard();
+        }
+        int failures = bad;
+        src.sendSuccess(() -> Component.literal("[redtale] 五组里 " + (5 - failures) + " 组符合预期"
+                + (failures == 0 ? " ✓" : "（" + failures + " 组不符，见上面标记）")), false);
+        return failures == 0 ? 1 : 0;
+    }
+
+    /** 打一次并核对掉血量；返回 0 = 符合预期，1 = 不符。 */
+    private static int hitOnce(CommandSourceStack src, net.minecraft.server.level.ServerLevel level,
+                               LivingEntity attacker, LivingEntity target, double amount,
+                               String damageType, double expectedFactor, String label) {
+        // 无敌帧归零：1.21 的 10 tick 无敌窗口会让连续探测的第二下变成 0
+        target.invulnerableTime = 0;
+        target.setHealth(1000.0F);
+        com.google.gson.JsonObject args = new com.google.gson.JsonObject();
+        args.addProperty("amount", amount);
+        if (damageType != null) {
+            args.addProperty("damage_type", damageType);
+        }
+        List<com.redtale.project.core.script.ScriptCall> calls =
+                List.of(new com.redtale.project.core.script.ScriptCall("damage", args));
+        double before = target.getHealth();
+        int ran = RedtaleCore.get().engine().runCalls(calls, ScriptContext.ofEntity(attacker, target));
+        double dealt = before - target.getHealth();
+        double expected = amount * expectedFactor;
+        boolean ok = ran == 1 && Math.abs(dealt - expected) < 1.0e-3D;
+        String line = (ok ? "  ✓ " : "  ✗ ") + label + "：白值 " + AttributeBreakdown.num(amount)
+                + " → 实际掉血 " + AttributeBreakdown.num(dealt)
+                + "（期望 " + AttributeBreakdown.num(expected) + "，×" + AttributeBreakdown.num(expectedFactor) + "）";
+        src.sendSuccess(() -> Component.literal(line), false);
+        return ok ? 0 : 1;
     }
 
     /** 查一个伤害类型会不会被我们乘（白名单判定，只读配置，不产生伤害）。 */

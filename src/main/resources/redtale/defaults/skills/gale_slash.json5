@@ -1,0 +1,20 @@
+// 技能示范 1（M5-A）：物理单体。判据 K1（只写 JSON5 → reload → 可见，不换 jar）。
+// name 可省（缺省 = lang 键 skill.redtale.<path>）；示范件直接写中文可读名，运营看得懂。
+{
+  id: "redtale_project:gale_slash",
+  name: "疾风斩",
+  icon: "minecraft:iron_sword",
+  cooldown_ticks: 120, // 6 秒
+
+  // 条件层（§2 第 ③ 步）：血低于一半才有额外表现，本示范只作语法示例
+  conditions: [
+    { type: "always" },
+  ],
+
+  // 执行层（§2 第 ⑤ 步）：顺序跑，单条坏只丢那一条
+  effects: [
+    { type: "console_log", args: { text: "[skill] gale_slash by %player%" } },
+    // 只给白值：倍率由 DamageLayer 统一乘（SKILLS.md §5 红线 1），缺省类型 = skill_physical
+    { type: "damage", args: { amount: 6.0 } },
+  ],
+}

@@ -53,6 +53,8 @@ public final class RedtaleCore {
     private volatile java.util.Map<String, com.redtale.project.items.AffixPools.Pool> affixPools = java.util.Map.of();
     /** 套装定义（M3，{@code sets/*.json5}）。与内容分开存：套装是「玩家穿了一组」的派生态，不是物品属性。 */
     private volatile java.util.Map<String, com.redtale.project.items.SetSpec.Definition> sets = java.util.Map.of();
+    /** 技能定义（M5-A，{@code skills/*.json5}）。快照整份换掉；执行在 SkillEngine（冷却表 T-0022 落地后接）。 */
+    private volatile com.redtale.project.core.skill.SkillRegistry skills = com.redtale.project.core.skill.SkillRegistry.EMPTY;
     /** 最近一次 reload 的非致命告警（配置写歪了但被默认值兜住）。 */
     private volatile List<String> configWarnings = List.of();
 
@@ -113,6 +115,11 @@ public final class RedtaleCore {
         return affixPools;
     }
 
+    /** 技能定义（M5-A）。为空 = 没有技能内容，命令与怪物 AI 都拿不到东西。 */
+    public com.redtale.project.core.skill.SkillRegistry skills() {
+        return skills;
+    }
+
     /** 最近一次 reload 的非致命告警。 */
     public List<String> configWarnings() {
         return configWarnings;
@@ -154,6 +161,8 @@ public final class RedtaleCore {
             affixPools = com.redtale.project.items.AffixPools.parsePools(all, warnings);
             // 套装（M3）：同样是纯解析，失败只告警；下发在 SetBonus（件数变化时重算）
             sets = com.redtale.project.items.SetSpec.parseAll(all, warnings);
+            // 技能（M5-A）：解析层不校验原语是否存在（那需要启动期注册表），交给执行期与 /redtale validate
+            skills = com.redtale.project.core.skill.SkillRegistry.load(all, warnings);
             net.minecraft.server.MinecraftServer srv = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
             if (srv != null) { WeaponAttributesGenerator.generateAll(srv.getWorldPath(net.minecraft.world.level.storage.LevelResource.DATAPACK_DIR).resolve("redtale_project"), all, contentItems.all(), warnings); } else { LOG.warn("weapon_attributes 生成跳过：当前没有服务端实例"); }
             // M4 / D32 的 L1→L0：把 enchantments/*.json5 写成真·原版 Enchantment JSON。
@@ -162,6 +171,8 @@ public final class RedtaleCore {
             // R23：14 基底不在原版 #minecraft:enchantable/* 里 → /enchant 报 cannot support（R22 实测）。
             // 这里往原版 tag 里**追加**（replace:false），并给缺失的自家 exclusive_set tag 补空文件。
             if (srv != null) { com.redtale.project.enchants.EnchantableTags.generateAll(srv.getWorldPath(net.minecraft.world.level.storage.LevelResource.DATAPACK_DIR).resolve("redtale_project"), all, warnings); } else { LOG.warn("enchantable tag 生成跳过：当前没有服务端实例"); }
+            // R27 / T-0020：不写这三条原版可获取性 tag，附魔台刷不出、村民不卖、战利品不掉（V4 卡在这）
+            if (srv != null) { com.redtale.project.enchants.EnchantObtainTags.generateAll(srv.getWorldPath(net.minecraft.world.level.storage.LevelResource.DATAPACK_DIR).resolve("redtale_project"), all, warnings); } else { LOG.warn("obtain tag 生成跳过：当前没有服务端实例"); }
             // R8-1：写出来的包必须被选中 + 重载才会进注册表，否则要等重启（R7 实测）
             if (srv != null) { LOG.info("生成数据包状态：{}", com.redtale.project.core.datapack.PackEnabler.ensureEnabled(srv, "redtale_project", warnings)); }
             configWarnings = List.copyOf(warnings);
@@ -188,11 +199,12 @@ public final class RedtaleCore {
             if (outcome.clean()) {
                 lastError = "";
                 lastErrorLines = List.of();
-                LOG.info("配置重载完成：{} 条脚本，{} 个文件，{} 件装备内容。攻速：{}",
-                        outcome.loaded(), all.size(), contentItems.size(), attackSpeedRules.describe());
+                LOG.info("配置重载完成：{} 条脚本，{} 个文件，{} 件装备内容，{}。攻速：{}",
+                        outcome.loaded(), all.size(), contentItems.size(), skills.describe(),
+                        attackSpeedRules.describe());
                 return new ReloadResult(true,
                         "已载入 " + outcome.loaded() + " 条脚本 + " + contentItems.size()
-                                + " 件装备内容（" + all.size() + " 份配置文件）" + tail,
+                                + " 件装备内容 + " + skills.size() + " 条技能（" + all.size() + " 份配置文件）" + tail,
                         List.of());
             }
 

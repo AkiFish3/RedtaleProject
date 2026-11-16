@@ -62,7 +62,11 @@ public final class ConfigStore {
             "enchantments/soul_reap.json5",
             // 附魔脚本化的执行体（M4）：soul_reap 的 script id 是 enchants/soul_reap，
             // 没有这份文件 post_attack 会走「脚本不存在」分支（只 WARN 一次）
-            "scripts/enchants_soul_reap.json5"
+            "scripts/enchants_soul_reap.json5",
+            // 技能（M5-A）：两份示范 = 一条物理单体 + 一条法术单体。
+            // 没有它们 skills/ 目录是空的，K1（只写 JSON5 就能看见）无从验起
+            "skills/gale_slash.json5",
+            "skills/ember_burst.json5"
     );
 
     private final Path root;
