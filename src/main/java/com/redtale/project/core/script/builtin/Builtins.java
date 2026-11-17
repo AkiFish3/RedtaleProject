@@ -28,6 +28,8 @@ public final class Builtins {
         // M5-C 控场第 1/2 条（R33）：推离 / 拉向，共用 KnockbackEffect.shove 一份位移实现
         registries.register(new KnockbackEffect());
         registries.register(new PullEffect());
+        // M5-C 控场第 3 条（R34）：停 AI 定住（不用 slowness 255，会被速度修正抵消）
+        registries.register(new StunEffect());
 
         // conditions
         registries.register(new AlwaysCondition());

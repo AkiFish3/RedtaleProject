@@ -97,5 +97,13 @@ public final class GameHooks {
     @SubscribeEvent
     public void onServerTickPost(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
         com.redtale.project.core.hook.UpgradeSweep.get().tick();
+        // M5-C 停 AI 定住（R34）：到点恢复。空闲时是一次 isEmpty 判断。
+        com.redtale.project.core.script.builtin.StunEffect.tick();
+    }
+
+    /** 重启残留兜底：上次关服时还定着的怪，入世即解除（否则永久 NoAI）。 */
+    @SubscribeEvent
+    public void onEntityJoin(net.neoforged.neoforge.event.entity.EntityJoinLevelEvent event) {
+        com.redtale.project.core.script.builtin.StunEffect.onEntityJoin(event.getEntity());
     }
 }
