@@ -69,7 +69,11 @@ public final class ConfigStore {
             "skills/ember_burst.json5",
             // 法力（M5 收口 R35）：一份带 mana_cost 的示范 —— 没有它，法力链路只有代码没有内容，
             // 「蓝不够就放不出」这条永远没人踩到
-            "skills/arc_bolt.json5"
+            "skills/arc_bolt.json5",
+            // 怪物（M6，R36）：两份示范 = 带装备的近战精英 + 双技能的施法者。
+            // 没有它们 mobs/ 目录是空的，MobRegistry 恒为 0 只，M6 后面几步全都无从验起
+            "mobs/ember_guard.json5",
+            "mobs/ash_caster.json5"
     );
 
     private final Path root;

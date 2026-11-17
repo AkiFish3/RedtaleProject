@@ -1,0 +1,24 @@
+// 怪物示范 1（M6 · R36）：近战精英，带装备与一条技能引用。
+// 这条只喂 MobSpec/MobRegistry 两层（解析 + 快照）。实体现阶段还不是真 EntityType，
+// `/redtale mob list` 能看到它、刷怪替换还不认它（那要等 M6 第三步的模板实体）。
+// attributes 与词条/套装/宝石走同一条归一规则（AffixPools.parseStats），写属性必须用已知键。
+{
+  id: "ember_guard",
+  name: "炽焰守卫",
+  base: "elite",
+  scale: 1.15,
+  level: 12,
+  attributes: {
+    max_health: { base: 60, per_item_level: 4 },
+    attack_damage: 9,
+    armor: 6,
+    movement_speed: 0.02,
+  },
+  equipment: {
+    mainhand: "redtale_project:sword",
+    chest: "redtale_project:chestplate",
+  },
+  skills: [
+    { skill: "redtale_project:gale_slash", cooldown_ticks: 120, chance: 0.35 },
+  ],
+}

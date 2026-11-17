@@ -1,0 +1,25 @@
+// 怪物示范 2（M6 · R36）：施法型，两条技能引用（一条带蓝耗）。
+// `chance` 是每次出手掷的概率，`cooldown_ticks` 是这条引用的独立冷却（与技能自身的冷却叠加取大）。
+// 施法原型的蓝量靠属性给：没配 max_mana 就按 ManaPool.DEFAULT_MAX（100）。
+{
+  id: "ash_caster",
+  name: "灰烬术士",
+  base: "caster",
+  scale: 1.0,
+  level: 8,
+  attributes: {
+    max_health: { base: 24, per_item_level: 3 },
+    max_mana: 80,
+    mana_regeneration: 2.0,
+    magical_damage: 0.25,
+    fire_damage: 0.2,
+  },
+  equipment: {
+    mainhand: "redtale_project:staff",
+    head: "redtale_project:helmet",
+  },
+  skills: [
+    { skill: "redtale_project:ember_burst", cooldown_ticks: 200, chance: 0.5 },
+    { skill: "redtale_project:arc_bolt", cooldown_ticks: 80, chance: 0.25 },
+  ],
+}
