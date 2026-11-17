@@ -198,18 +198,27 @@ public final class ScriptEngine {
      * 单条失败只记日志，不影响后面的条 —— 与 {@link #execute} 同口径。
      */
     public int runCalls(List<ScriptCall> calls, ScriptContext ctx) {
+        return runCalls(calls, ctx, "物品脚本");
+    }
+
+    /**
+     * 同上，但日志带上调用方标签（M5-A 技能引擎用：{@code "技能 redtale_project:gale_slash"}）。
+     * 标签只进日志文案，不影响执行语义 —— 少一个重载，技能报错就会被写成「物品脚本的 effect」。
+     */
+    public int runCalls(List<ScriptCall> calls, ScriptContext ctx, String owner) {
+        String who = owner == null || owner.isBlank() ? "匿名调用" : owner;
         int done = 0;
         for (ScriptCall call : calls) {
             EffectType effect = registries.effect(call.type());
             if (effect == null) {
-                log.warn("物品脚本的 effect {} 未注册（已跳过）", call.type());
+                log.warn("{} 的 effect {} 未注册（已跳过）", who, call.type());
                 continue;
             }
             try {
                 effect.run(ctx, call.argsOrEmpty());
                 done++;
             } catch (Exception e) {
-                log.error("物品脚本的 effect {} 执行失败", call.type(), e);
+                log.error("{} 的 effect {} 执行失败", who, call.type(), e);
             }
         }
         return done;

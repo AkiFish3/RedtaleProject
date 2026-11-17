@@ -127,7 +127,11 @@ public final class RedtaleCommand {
                 // /redtale set check（套装引用与可达性校验，T-0016；同包无需 import；Brigadier 按同名 set 节点合并）
                 .then(SetCheckCommand.node())
                 // /redtale enchant list（已落盘附魔只读清单，T-0019；同包无需 import）
-                .then(EnchantListCommand.node()));
+                .then(EnchantListCommand.node())
+                // /redtale enchant obtain（三条可获取性 tag 只读对账，T-0023；同包无需 import）
+                .then(EnchantObtainCommand.node())
+                // /redtale skill [list|cast|probe|cd]（M5-A 引擎观测面与 v1 触发入口；同包无需 import）
+                .then(SkillCommand.node()));
     }
 
     /**

@@ -55,6 +55,8 @@ public final class RedtaleCore {
     private volatile java.util.Map<String, com.redtale.project.items.SetSpec.Definition> sets = java.util.Map.of();
     /** 技能定义（M5-A，{@code skills/*.json5}）。快照整份换掉；执行在 SkillEngine（冷却表 T-0022 落地后接）。 */
     private volatile com.redtale.project.core.skill.SkillRegistry skills = com.redtale.project.core.skill.SkillRegistry.EMPTY;
+    /** 技能执行器（M5-A）：持有冷却表。**跨 reload 存活**（reload 清冷却 = 免费刷技能）。 */
+    private final com.redtale.project.core.skill.SkillEngine skillEngine = new com.redtale.project.core.skill.SkillEngine();
     /** 最近一次 reload 的非致命告警（配置写歪了但被默认值兜住）。 */
     private volatile List<String> configWarnings = List.of();
 
@@ -113,6 +115,11 @@ public final class RedtaleCore {
 
     public java.util.Map<String, com.redtale.project.items.AffixPools.Pool> affixPools() {
         return affixPools;
+    }
+
+    /** 技能执行器（M5-A）：{@code /redtale skill cast} 与 M6 怪物 AI 共用同一个冷却表。 */
+    public com.redtale.project.core.skill.SkillEngine skillEngine() {
+        return skillEngine;
     }
 
     /** 技能定义（M5-A）。为空 = 没有技能内容，命令与怪物 AI 都拿不到东西。 */
