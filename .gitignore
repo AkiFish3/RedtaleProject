@@ -10,3 +10,4 @@ libs/*.jar
 logs/
 *.log
 .workbuddy/
+__pycache__/
