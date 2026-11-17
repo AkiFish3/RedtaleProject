@@ -1818,7 +1818,7 @@ fi
   - 口径备注（S8，请 S7 裁，不影响接口与验收计数）：①`id` 按本项目 `MobSpec`/`SetSpec` 既有惯例 **trim 后保留**，卡面「原样保留」理解为「不补命名空间而非保留首尾空格」；②「非整数」按字面含小数与超 int 的有限数（如 1.5 → 0/1 + WARN），整数超上限静默夹取（D16）；③`chance` 用 `Double.isFinite` 挡 NaN/Inf（`1e999` 探针实测 → 1.0 + WARN）；④验收 2 的「git status 只出现两个文件」在本轮不可能字面成立：开工基线已含 S7 未提交的 `MobSpawnCommand`/`GameHooks`/`SkillEngine`/两份 lang + 未跟踪 `MobSkillCaster.java`/`gen_entity_lang.py`/`tools/__pycache__`；S8 仅碰卡上两文件（探针在 build/ 被 gitignore），未改上述任何一项。
   - 2026-11-18 05:38 · **S7 验收 → `[VERIFIED]`（3/3）** · ①`build --offline` EXIT=0，`unzip -l` 内 `mobs/DropSpec.class`=1；②`wc -l`=**118** ≤190、`net.minecraft`=1、`Registr`=0；③**S7 独立探针 `build/probe/S7DropProbe.java` PASS 52 / FAIL 0 / TOTAL 52**（自编 A~J 十组，不复用 S8 的 `DropSpecProbe`）：null configs / warnings=null 不 NPE、路径过滤（非 `drops/`、非 `.json5`、子目录合法）、根 null、id 缺失/非字符串/空白/trim、重复 id 保留先出现且 source 为首文件、xp 缺省/小数/负数/超上限夹取不告警/非数字、drops 缺键/非数组/非对象逐项、item 缺失与坏 id（告警含原始文本）、min/max 缺省与夹取、`max<min`、chance 缺省/夹取/NaN、rolls 夹取、Map 与 drops 双不可变、保序（非字典序）、自定义命名空间 id 通过形态校验。**四条口径备注全采纳**（trim 视为「不补命名空间」；非整数含小数；`Double.isFinite`；卡面第 2 条在脏基线下的判定按「只碰卡上两文件」解释）。**发现一条卡面没写死的边界**（记录不改码）：`drops/归档/q.json5` 这类子目录会被解析 —— 卡面只规定前缀与后缀，属预期行为，已写进 R40 台账。
 
-### T-0036 · [DONE] `mobs/DropRoll` —— 掉落掷骰纯函数（M6 第四层第二步，纯函数）
+### T-0036 · [VERIFIED] `mobs/DropRoll` —— 掉落掷骰纯函数（M6 第四层第二步，纯函数）
 
 - 派单：S7 · 2026-11-18 05:46
 - 目标：把 `DropSpec.Definition`（掉落表快照）+ 一个 `Random` 变成「这次死了掉什么」。**纯函数、零 MC import、不生成战利品表、不接任何事件**
