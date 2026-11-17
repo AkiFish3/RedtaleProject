@@ -4,6 +4,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.redtale.project.core.RedtaleCore;
+import com.redtale.project.core.script.ScriptCall;
 import com.redtale.project.core.skill.SkillEngine;
 import com.redtale.project.core.skill.SkillSpec;
 import net.minecraft.commands.CommandSourceStack;
@@ -52,6 +53,9 @@ public final class SkillCommand {
                 .then(Commands.literal("cd")
                         .then(Commands.argument("id", StringArgumentType.string())
                                 .executes(ctx -> cd(ctx, StringArgumentType.getString(ctx, "id")))))
+                .then(Commands.literal("info")
+                        .then(Commands.argument("id", StringArgumentType.string())
+                                .executes(ctx -> info(ctx, StringArgumentType.getString(ctx, "id")))))
                 .then(Commands.literal("use")
                         .then(Commands.argument("content", StringArgumentType.string())
                                 .executes(ctx -> useProbe(ctx, StringArgumentType.getString(ctx, "content")))));
@@ -337,6 +341,83 @@ public final class SkillCommand {
             }
         }
         return null;
+    }
+
+    /**
+     * 单条技能的全貌（只读）：条件 / 效果**逐条标注册状态** + 谁绑了它。
+     *
+     * <p>{@code list} 给的是「有几条、多大」；这条给的是「这条技能放出去会经过哪些原语、缺哪个」——
+     * {@code validate} 只报「有问题」，不告诉运营是哪份配置、哪件武器在用。
+     * 注册状态用 {@code core.registries()}（启动期冻结的那份表），与执行期判断**同源**，不另写一份白名单。
+     */
+    static int info(CommandContext<CommandSourceStack> ctx, String skillId) {
+        CommandSourceStack src = ctx.getSource();
+        RedtaleCore core = RedtaleCore.get();
+        SkillSpec.Definition def = core.skills().get(skillId);
+        if (def == null) {
+            String have = String.join(" · ", core.skills().sortedIds());
+            src.sendFailure(Component.literal("[redtale] 没有技能 " + skillId
+                    + "（现有 " + core.skills().size() + " 条：" + (have.isEmpty() ? "（空）" : have) + "）"));
+            return 0;
+        }
+        src.sendSuccess(() -> Component.literal("[redtale] 技能 " + def.id() + " · " + def.name()
+                + " · 冷却 " + def.cooldownTicks() + " tick · 图标 " + def.icon()), false);
+        src.sendSuccess(() -> Component.literal("  来源 " + def.source()), false);
+
+        int missing = 0;
+        List<ScriptCall> conds = def.conditions();
+        src.sendSuccess(() -> Component.literal("  conditions " + conds.size() + " 条："), false);
+        if (conds.isEmpty()) {
+            src.sendSuccess(() -> Component.literal("    （无 —— 无条件放行）"), false);
+        }
+        for (ScriptCall call : conds) {
+            boolean ok = core.registries().condition(call.type()) != null;
+            src.sendSuccess(() -> Component.literal("    " + (ok ? "✅ " : "✗ 未注册 ") + call.type()
+                    + argsBrief(call)), false);
+        }
+        List<ScriptCall> effects = def.effects();
+        src.sendSuccess(() -> Component.literal("  effects " + effects.size() + " 条（按序执行）："), false);
+        if (effects.isEmpty()) {
+            src.sendSuccess(() -> Component.literal("    （无 —— 放出去什么都不做）"), false);
+        }
+        for (ScriptCall call : effects) {
+            boolean ok = core.registries().effect(call.type()) != null;
+            if (!ok) {
+                missing++;
+            }
+            src.sendSuccess(() -> Component.literal("    " + (ok ? "✅ " : "✗ 未注册 ") + call.type()
+                    + argsBrief(call)), false);
+        }
+        for (ScriptCall call : conds) {
+            if (core.registries().condition(call.type()) == null) {
+                missing++;
+            }
+        }
+
+        List<String> bound = new java.util.ArrayList<>();
+        for (var content : core.contentItems().all()) {
+            if (content.abilities() != null && content.abilities().contains(skillId)) {
+                bound.add(content.id());
+            }
+        }
+        String boundText = bound.isEmpty() ? "（没有内容绑定 —— 只能 /redtale skill cast 手动放）"
+                : bound.size() + " 件：" + String.join(" · ", bound);
+        src.sendSuccess(() -> Component.literal("  被内容绑定 " + boundText), false);
+        int miss = missing;
+        src.sendSuccess(() -> Component.literal(miss == 0
+                ? "  ✓ 全部原语已注册（放得出去）"
+                : "  ✗ " + miss + " 条原语未注册（放了只会 WARN；/redtale validate 也报这几条）"), false);
+        return miss == 0 ? 1 : 0;
+    }
+
+    /** {@code args} 的一行摘要：空参数不打，超长截断（只影响显示，不动数据）。 */
+    private static String argsBrief(ScriptCall call) {
+        var args = call.argsOrEmpty();
+        if (args.isEmpty()) {
+            return "";
+        }
+        String text = args.toString();
+        return " " + (text.length() <= 80 ? text : text.substring(0, 80) + "…");
     }
 
     /** 剩余冷却（只读）：用来验「剩余 tick 递减」，不记账。 */

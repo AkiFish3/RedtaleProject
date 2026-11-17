@@ -3,6 +3,8 @@ package com.redtale.project.core.command;
 import com.mojang.brigadier.context.CommandContext;
 import com.redtale.project.core.RedtaleCore;
 import com.redtale.project.core.config.ConfigFile;
+import com.redtale.project.core.script.ScriptCall;
+import com.redtale.project.core.skill.SkillSpec;
 import com.redtale.project.items.AffixPools;
 import com.redtale.project.items.ItemBase;
 import com.redtale.project.items.ItemContent;
@@ -124,11 +126,14 @@ public final class ValidateCommand {
                         + " 没有对应套装定义（写错一个字母就静默不生效）");
             }
         }
+        // 第 6 条（T-0025）：技能引用的原语必须在启动期冻结的 ScriptRegistries 里存在
+        checkSkillPrimitives(core, problems);
         final int k = problems.size();
         final int ext = external;
         final int sc = sets.size();
+        final int skc = core.skills().size();
         src.sendSuccess(() -> Component.literal("校验：" + contents.size() + " 件内容 / " + pools.size()
-                + " 个词条池 / " + defs.size() + " 条词条定义 / " + sc + " 个套装 · 问题 " + k
+                + " 个词条池 / " + defs.size() + " 条词条定义 / " + sc + " 个套装 · 技能 " + skc + " 条 · 问题 " + k
                 + " 条（外部 weapon_attributes 引用 " + ext + " 条未校验）"), false);
         if (k == 0) {
             src.sendSuccess(() -> Component.literal("  （没有引用问题）"), false);
@@ -138,5 +143,25 @@ public final class ValidateCommand {
             }
         }
         return k;
+    }
+
+    /** 第 6 条（T-0025）：技能里写的 condition / effect 类型有没有对应原语。同一技能同种同 type 只报一条。 */
+    private static void checkSkillPrimitives(RedtaleCore core, List<String> problems) {
+        for (Map.Entry<String, SkillSpec.Definition> entry : core.skills().all().entrySet()) {
+            Set<String> badConditions = new LinkedHashSet<>();
+            Set<String> badEffects = new LinkedHashSet<>();
+            for (ScriptCall call : entry.getValue().conditions()) {
+                String type = call.type() == null ? "" : call.type();
+                if (core.registries().condition(type) == null && badConditions.add(type)) {
+                    problems.add("  " + entry.getKey() + ": conditions 引用了未注册的原语 " + type);
+                }
+            }
+            for (ScriptCall call : entry.getValue().effects()) {
+                String type = call.type() == null ? "" : call.type();
+                if (core.registries().effect(type) == null && badEffects.add(type)) {
+                    problems.add("  " + entry.getKey() + ": effects 引用了未注册的原语 " + type);
+                }
+            }
+        }
     }
 }
