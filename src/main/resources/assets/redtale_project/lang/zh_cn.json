@@ -68,6 +68,16 @@
   "death.attack.redtale_skill_magical": "%1$s 被赤物语的法术吞没",
   "death.attack.redtale_skill_physical": "%1$s 被赤物语的战技击倒",
   "death.attack.redtale_verification_strike": "%1$s 被赤物语的校验打击击倒",
+  "enchantment.redtale_project.soul_reap": "摄魂",
+  "enchantment.redtale_project.super_sharpness": "超级锋利",
+  "entity.redtale_project.ambient": "环境",
+  "entity.redtale_project.caster": "施法",
+  "entity.redtale_project.charger": "冲锋",
+  "entity.redtale_project.elite": "精英",
+  "entity.redtale_project.flyer": "飞行",
+  "entity.redtale_project.melee": "近战",
+  "entity.redtale_project.ranged": "远程",
+  "entity.redtale_project.summoner": "召唤",
   "item.redtale_project.amulet": "护符",
   "item.redtale_project.axe": "斧",
   "item.redtale_project.boots": "靴子",
@@ -81,7 +91,5 @@
   "item.redtale_project.shield": "盾",
   "item.redtale_project.spear": "长枪",
   "item.redtale_project.staff": "法杖",
-  "item.redtale_project.sword": "剑",
-  "enchantment.redtale_project.soul_reap": "摄魂",
-  "enchantment.redtale_project.super_sharpness": "超级锋利"
+  "item.redtale_project.sword": "剑"
 }

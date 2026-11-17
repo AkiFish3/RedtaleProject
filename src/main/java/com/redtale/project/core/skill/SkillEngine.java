@@ -139,6 +139,67 @@ public final class SkillEngine {
         return new Result(Status.CAST, def.id(), 0, done, null);
     }
 
+    /**
+     * 生物释放一次技能（M6 第三步第 3 小步）：条件 → 冷却 → effects，与 {@link #cast} 同序同源，
+     * 只有两处不同。
+     *
+     * <p>① **不算法力**：法力池读的是玩家面板的 {@code max_mana} / {@code mana_regeneration}，
+     * 自建怪身上这三条属性基值都是 0（R35-a 口径），套上去恒「蓝不够」等于给怪物上锁。
+     * ② **冷却时长可由调用方覆盖**：{@code MobSpec.SkillRef.cooldownTicks} 是「这只怪的这个技能」的节奏，
+     * 与 {@code skills/*.json5} 的全局冷却解耦（同一个技能玩家 40 tick、精英怪 100 tick 是合法的）。
+     * {@code cooldownTicks <= 0} 回落技能定义值。
+     *
+     * <p>冷却仍记在 {@link SkillCooldowns}，键是 {@code (UUID, 技能 id)} —— 怪物有 UUID，
+     * 因此与玩家的冷却天然隔离；也让「怪物重生成」不会继承旧冷却（新 UUID）。
+     *
+     * <p>施法者要能被原语认出来：非玩家施法走 {@code vars.attacker}（R24/R27 的既有约定，
+     * {@code DamageEffect#caster} 就是这么取生物施法者的），所以这里必须灌进去。
+     */
+    public Result castMob(LivingEntity caster, Entity target, String skillId, int cooldownTicks) {
+        if (caster == null) {
+            return new Result(Status.NO_PLAYER, skillId, 0, 0, null);
+        }
+        RedtaleCore core = RedtaleCore.get();
+        SkillSpec.Definition def = core.skills().get(skillId);
+        if (def == null) {
+            return new Result(Status.NO_SKILL, skillId, 0, 0, null);
+        }
+        long now = caster.level().getGameTime();
+
+        // 施法者身份：玩家走 player()；生物走 vars.attacker（否则 damage 原语拿不到攻击者，
+        // 打出来的伤害没有归属实体、也不吃攻击者的属性面板）
+        ScriptContext ctx = ScriptContext.ofEntity(caster, target);
+        if (!(caster instanceof ServerPlayer)) {
+            ctx.vars().put("attacker", caster);
+        }
+
+        for (ScriptCall call : def.conditions()) {
+            ConditionType condition = core.registries().condition(call.type());
+            if (condition == null) {
+                continue;
+            }
+            boolean ok;
+            try {
+                ok = condition.test(ctx, call.argsOrEmpty());
+            } catch (Exception e) {
+                return new Result(Status.CONDITION, def.id(), 0, 0, call.type() + "（判定异常）");
+            }
+            if (!ok) {
+                return new Result(Status.CONDITION, def.id(), 0, 0, call.type());
+            }
+        }
+
+        long remaining = cooldowns.remaining(caster.getUUID(), def.id(), now);
+        if (remaining > 0L) {
+            return new Result(Status.COOLDOWN, def.id(), (int) remaining, 0, null);
+        }
+        int ticks = cooldownTicks > 0 ? cooldownTicks : def.cooldownTicks();
+        cooldowns.start(caster.getUUID(), def.id(), ticks, 0.0D, now);
+
+        int done = core.engine().runCalls(def.effects(), ctx, "怪物技能 " + def.id());
+        return new Result(Status.CAST, def.id(), 0, done, null);
+    }
+
     /** 冷却文案（SKILLS §6 写死便于 grep）：{@code 技能 <id> 冷却中：<剩余> tick}。 */
     public static String cooldownText(String skillId, int remainingTicks) {
         return "技能 " + skillId + " 冷却中：" + remainingTicks + " tick";

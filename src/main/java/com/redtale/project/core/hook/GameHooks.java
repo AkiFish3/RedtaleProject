@@ -100,6 +100,8 @@ public final class GameHooks {
     @SubscribeEvent
     public void onServerTickPost(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
         com.redtale.project.core.hook.UpgradeSweep.get().tick();
+        // M6 第三步第 3 小步（R40）：怪物按 MobSpec.skills 掷骰放技能（内部 10 tick 节拍）。
+        com.redtale.project.mobs.MobSkillCaster.tick(event.getServer());
         // M5-C 停 AI 定住（R34）：到点恢复。空闲时是一次 isEmpty 判断。
         com.redtale.project.core.script.builtin.StunEffect.tick();
     }

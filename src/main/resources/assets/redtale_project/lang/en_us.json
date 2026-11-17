@@ -68,6 +68,16 @@
   "death.attack.redtale_skill_magical": "%1$s was consumed by Redtale magic",
   "death.attack.redtale_skill_physical": "%1$s was cut down by a Redtale skill",
   "death.attack.redtale_verification_strike": "%1$s was struck down by a Redtale verification strike",
+  "enchantment.redtale_project.soul_reap": "Soul Reap",
+  "enchantment.redtale_project.super_sharpness": "Super Sharpness",
+  "entity.redtale_project.ambient": "Ambient",
+  "entity.redtale_project.caster": "Caster",
+  "entity.redtale_project.charger": "Charger",
+  "entity.redtale_project.elite": "Elite",
+  "entity.redtale_project.flyer": "Flyer",
+  "entity.redtale_project.melee": "Melee",
+  "entity.redtale_project.ranged": "Ranged",
+  "entity.redtale_project.summoner": "Summoner",
   "item.redtale_project.amulet": "Amulet",
   "item.redtale_project.axe": "Axe",
   "item.redtale_project.boots": "Boots",
@@ -81,7 +91,5 @@
   "item.redtale_project.shield": "Shield",
   "item.redtale_project.spear": "Spear",
   "item.redtale_project.staff": "Staff",
-  "item.redtale_project.sword": "Sword",
-  "enchantment.redtale_project.soul_reap": "Soul Reap",
-  "enchantment.redtale_project.super_sharpness": "Super Sharpness"
+  "item.redtale_project.sword": "Sword"
 }

@@ -5,12 +5,19 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.redtale.project.core.RedtaleCore;
+import com.redtale.project.mobs.MobSkillCaster;
 import com.redtale.project.mobs.MobSpec;
 import com.redtale.project.mobs.MobSpawner;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+
+import java.util.List;
 
 /**
  * {@code /redtale mob spawn <id> [x y z]} + {@code /redtale mob list}（M6 第三步第 2 小步）。
@@ -26,10 +33,16 @@ public final class MobSpawnCommand {
     private MobSpawnCommand() {
     }
 
-    /** 命令节点：{@code /redtale mob [list|spawn <id> [x y z]]}（与 MobCheckCommand 的同名 mob 节点合并）。 */
+    /** 命令节点：{@code /redtale mob [list|spawn <id> [x y z]|cast <id> [skill]]}（与 MobCheckCommand 的同名 mob 节点合并）。 */
     public static LiteralArgumentBuilder<CommandSourceStack> node() {
         return Commands.literal("mob")
                 .then(Commands.literal("list").executes(MobSpawnCommand::list))
+                .then(Commands.literal("cast")
+                        .then(Commands.argument("id", StringArgumentType.word())
+                                .executes(ctx -> cast(ctx, Mode.FORCE))
+                                .then(Commands.literal("roll").executes(ctx -> cast(ctx, Mode.ROLL)))
+                                .then(Commands.argument("skill", StringArgumentType.string())
+                                        .executes(ctx -> cast(ctx, Mode.EXPLICIT)))))
                 .then(Commands.literal("spawn")
                         .then(Commands.argument("id", StringArgumentType.word())
                                 .executes(ctx -> spawn(ctx, null, null, null))
@@ -94,5 +107,123 @@ public final class MobSpawnCommand {
             src.sendSuccess(() -> Component.literal("  ⚠ " + skip), false);
         }
         return 1;
+    }
+
+    /** 施法入口的三种模式（验收要能分别打「掷骰」「门槛」「执行」三条路径）。 */
+    public enum Mode {
+        /** 忽略 chance，按配置顺序试到放出去为止（验执行链与冷却覆盖）。 */
+        FORCE,
+        /** 只放点名的那条（验单技能，不被其它技能的冷却干扰）。 */
+        EXPLICIT,
+        /** 走真实掷骰路径（与周期入口 {@code MobSkillCaster#tick} 同一个方法，验 chance 过滤）。 */
+        ROLL
+    }
+
+    /**
+     * 验收入口（M6 第三步第 3 小步）：找一只同内容 id 的怪（没有才现生成），对 8 格内最近的活体放一次技能。
+     *
+     * <p><b>复用优先</b>（R40 实测教训）：每次现生成新怪会拿到新 UUID，而冷却键是 {@code (UUID, 技能 id)}，
+     * 于是「连放第二次应被冷却拦下」永远验不出来（第二只是新施法者，冷却表里干净）。
+     * 16 格内有同类怪就直接用它，输出里标 {@code 复用} / {@code 新生} 以示区别。
+     *
+     * <p>三种 {@link Mode} 分开验：{@code ROLL} 掷骰 → {@code FORCE} 门槛 → {@code EXPLICIT} 单技能执行。
+     * 三条混在一起时，「没放出来」到底是概率还是故障就分不清了。
+     *
+     * <p>生成的怪<b>不 discard</b>：验收要接着 {@code /data get entity} 看目标血量与效果，杀掉会丢证据。
+     */
+    public static int cast(CommandContext<CommandSourceStack> ctx, Mode mode) {
+        CommandSourceStack src = ctx.getSource();
+        String id = StringArgumentType.getString(ctx, "id");
+        RedtaleCore core = RedtaleCore.get();
+        MobSpec.Definition def = core.mobs().get(id);
+        if (def == null) {
+            src.sendFailure(Component.literal("[redtale] 没有怪物 " + id + "（现有 "
+                    + core.mobs().size() + " 只：" + String.join(", ", core.mobs().sortedIds()) + "）"));
+            return 0;
+        }
+        if (def.skills().isEmpty()) {
+            src.sendFailure(Component.literal("[redtale] " + id + " 没配 skills，放不了技能"));
+            return 0;
+        }
+        ServerLevel level = src.getLevel();
+        Vec3 pos = src.getPosition();
+        Mob mob = nearestExisting(level, pos, id);
+        String how = "复用";
+        if (mob == null) {
+            MobSpawner.Result spawned = MobSpawner.spawn(level, pos.x, pos.y, pos.z, def);
+            if (!spawned.ok()) {
+                src.sendFailure(Component.literal("[redtale] " + spawned.message()));
+                return 0;
+            }
+            mob = spawned.mob();
+            how = "新生";
+        }
+        final Mob caster = mob;
+        List<LivingEntity> near = level.getEntitiesOfClass(LivingEntity.class,
+                caster.getBoundingBox().inflate(8.0D),
+                e -> e != caster && e.isAlive() && !isContentMob(e));
+        if (near.isEmpty()) {
+            src.sendFailure(Component.literal("[redtale] " + id + " 8 格内没有活体目标（先 /summon cow）"));
+            return 0;
+        }
+        near.sort(java.util.Comparator.comparingDouble(e -> e.distanceToSqr(caster)));
+        final LivingEntity target = near.get(0);
+        MobSkillCaster.Result result;
+        if (mode == Mode.EXPLICIT) {
+            String skill = StringArgumentType.getString(ctx, "skill");
+            int ticks = 0;
+            for (MobSpec.SkillRef ref : def.skills()) {
+                if (ref.skillId().equals(skill)) {
+                    ticks = ref.cooldownTicks();
+                    break;
+                }
+            }
+            var er = core.skillEngine().castMob(caster, target, skill, ticks);
+            // 失败时把状态与剩余冷却一起带出来 —— 只回一个 null 的话，「冷却中」与「没这个技能」看着一样
+            String detail = er.cast() ? null
+                    : er.status() + (er.remainingTicks() > 0 ? " " + er.remainingTicks() + "t" : "")
+                            + (er.failedCondition() != null ? " " + er.failedCondition() : "");
+            result = new MobSkillCaster.Result(er.cast(), skill, er.status(), er.effects(), detail);
+        } else if (mode == Mode.ROLL) {
+            result = MobSkillCaster.tryCast(caster, def, target);
+        } else {
+            result = MobSkillCaster.forceCast(caster, def, target);
+        }
+        String line = "[redtale] " + def.id() + "（" + how + "）→ " + target.getName().getString() + "："
+                + (result.cast()
+                        ? "施放 " + result.skillId() + " · " + result.status() + " · " + result.effects() + " 条 effect"
+                        : "未施放（" + result.detail() + "）")
+                + " · 目标血量 " + String.format("%.1f/%.1f",
+                        target.getHealth(), target.getMaxHealth());
+        src.sendSuccess(() -> Component.literal(line), true);
+        return result.cast() ? 1 : 0;
+    }
+
+    /** 16 格内最近的同类内容怪（按 scoreboard tag 认），没有则 null。 */
+    private static Mob nearestExisting(ServerLevel level, Vec3 pos, String contentId) {
+        List<Mob> found = level.getEntitiesOfClass(Mob.class,
+                new AABB(pos.x - 16.0D, pos.y - 16.0D, pos.z - 16.0D,
+                        pos.x + 16.0D, pos.y + 16.0D, pos.z + 16.0D),
+                e -> e.isAlive() && e.getTags().contains(MobSpawner.TAG_PREFIX + contentId));
+        Mob best = null;
+        double bestD = Double.MAX_VALUE;
+        for (Mob m : found) {
+            double d = m.distanceToSqr(pos);
+            if (d < bestD) {
+                bestD = d;
+                best = m;
+            }
+        }
+        return best;
+    }
+
+    /** 内容怪（带 {@code redtale_mob/} 标签）不当靶子 —— 否则「怪打怪」会掩盖数值问题。 */
+    private static boolean isContentMob(net.minecraft.world.entity.Entity e) {
+        for (String tag : e.getTags()) {
+            if (tag.startsWith(MobSpawner.TAG_PREFIX)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
