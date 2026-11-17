@@ -2,6 +2,7 @@ package com.redtale.project.items;
 
 import com.redtale.project.core.RedtaleCore;
 import com.redtale.project.core.script.ScriptContext;
+import com.redtale.project.core.skill.SkillEngine;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -18,11 +19,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * 非护甲基底的载体类（14 个基底里的武器 + 饰品）。**只有一层行为**：右键用药（D23）。
+ * 非护甲基底的载体类（14 个基底里的武器 + 饰品）。**右键入口共用一处**，分支三条：
+ * 消耗品（D23）→ 修理品（D23 第二半）→ 绑定技能（M5-B，{@code SKILLS.md} §7）。
  *
  * <p>为什么要有这个类：{@code Item#use} 是<b>行为</b>，而行为不能进配置。
  * 14 个基底里有 4 件护甲用 {@code ArmorItem}（右键 = 穿戴，不能抢），其余 10 件都需要
- * 「右键 = 使用消耗品」这一个入口 —— 一个共享子类解决，不破坏「内容即数据组件」（基石 1）。
+ * 「右键 = 使用消耗品 / 修 / 放技能」这一个入口 —— 一个共享子类解决，不破坏「内容即数据组件」（基石 1）。
+ *
+ * <p>分支优先级**固定**：{@code use} 段 → {@code repair} 段 → {@code abilities} 第一条。
+ * 一件事物既有 {@code use} 又有 {@code abilities} 时技能不生效（内容作者的责任，不自动二选一）。
  *
  * <p>三条口径：
  * <ol>
@@ -62,7 +67,41 @@ public class ContentItem extends Item {
         if (repair != null) {
             return useRepair(serverPlayer, stack, repair);
         }
+        // M5-B（K7）：没有 use / repair 段时才轮到技能 —— 消耗品与修理品优先，右键语义不变
+        ItemContent definition = definitionOf(stack);
+        if (definition != null && !definition.abilities().isEmpty()) {
+            return useAbility(serverPlayer, stack, definition.abilities().get(0));
+        }
         return InteractionResultHolder.pass(stack);
+    }
+
+    /**
+     * 技能分支（K7）：右键施放绑定的**第一条**技能。
+     *
+     * <p>为什么只放第一条：一键全放等于「按一下把家底掏空」，多技能选择属于键位绑定（M5-C）。
+     * 排在后面的技能不告警、不提示 —— 配置里写了不生效是内容作者的错，日志刷屏无助于定位。
+     *
+     * <p>冷却 / 条件失败一律 {@code FAIL}（手臂不摆、有文案），找不到技能 {@code PASS}
+     * （配置漂移不是「这次右键作废」，物品还能丢能存）。
+     */
+    private InteractionResultHolder<ItemStack> useAbility(ServerPlayer serverPlayer, ItemStack stack,
+                                                          String skillId) {
+        SkillEngine.Result result = RedtaleCore.get().skillEngine().cast(serverPlayer, skillId);
+        switch (result.status()) {
+            case CAST:
+                return InteractionResultHolder.consume(stack);
+            case COOLDOWN:
+                notify(serverPlayer, SkillEngine.cooldownText(skillId, result.remainingTicks()));
+                return InteractionResultHolder.fail(stack);
+            case CONDITION:
+                notify(serverPlayer, "技能 " + skillId + " 条件不满足（" + result.failedCondition() + "）");
+                return InteractionResultHolder.fail(stack);
+            case NO_SKILL:
+                LOG.warn("物品绑定的技能 {} 不在技能表里（内容 {}）", skillId, contentIdOf(stack));
+                return InteractionResultHolder.pass(stack);
+            default:
+                return InteractionResultHolder.pass(stack);
+        }
     }
 
     /** 消耗品分支（D23 第一半）：效果 / 饱食 / 冷却 / 扣件 / 脚本。 */
@@ -131,12 +170,22 @@ public class ContentItem extends Item {
 
     /** 物品上的内容定义 → {@code use} 段；任何一环缺失都返回 {@code null}（= 不是消耗品）。 */
     private static ConsumableSpec.Spec specOf(ItemStack stack) {
+        ItemContent definition = definitionOf(stack);
+        return definition == null ? null : definition.consumable();
+    }
+
+    /** 物品上的内容定义（现查、不缓存：改配置 + reload 对存量物品立刻生效）。 */
+    private static ItemContent definitionOf(ItemStack stack) {
         ContentData data = stack.get(ContentComponents.CONTENT.get());
         if (data == null) {
             return null;
         }
-        ItemContent definition = RedtaleCore.get().contentItems().get(data.contentId());
-        return definition == null ? null : definition.consumable();
+        return RedtaleCore.get().contentItems().get(data.contentId());
+    }
+
+    private static String contentIdOf(ItemStack stack) {
+        ContentData data = stack.get(ContentComponents.CONTENT.get());
+        return data == null ? "-" : data.contentId();
     }
 
     /**

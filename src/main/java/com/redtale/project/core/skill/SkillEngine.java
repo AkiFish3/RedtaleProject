@@ -1,12 +1,15 @@
 package com.redtale.project.core.skill;
 
 import com.redtale.project.core.RedtaleCore;
+import com.redtale.project.core.attr.RedtaleAttributes;
 import com.redtale.project.core.script.ConditionType;
 import com.redtale.project.core.script.ScriptCall;
 import com.redtale.project.core.script.ScriptContext;
+import net.minecraft.core.Holder;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -103,8 +106,9 @@ public final class SkillEngine {
             }
         }
 
-        // ④ 门槛：冷却。v1 不减 CD（cooldown_reduction 属性按 SKILLS §6 留给 M5-B）
-        if (!cooldowns.tryStart(player.getUUID(), def.id(), def.cooldownTicks(), 0.0D, now)) {
+        // ④ 门槛：冷却（M5-B 起吃 cooldown_reduction 属性，公式与钳制在 SkillCooldowns 里）
+        if (!cooldowns.tryStart(player.getUUID(), def.id(), def.cooldownTicks(),
+                cooldownReduction(player), now)) {
             return new Result(Status.COOLDOWN, def.id(), (int) cooldowns.remaining(player.getUUID(), def.id(), now), 0, null);
         }
 
@@ -116,6 +120,24 @@ public final class SkillEngine {
     /** 冷却文案（SKILLS §6 写死便于 grep）：{@code 技能 <id> 冷却中：<剩余> tick}。 */
     public static String cooldownText(String skillId, int remainingTicks) {
         return "技能 " + skillId + " 冷却中：" + remainingTicks + " tick";
+    }
+
+    /**
+     * 读玩家身上的 {@code redtale_project:cooldown_reduction}（M5-B）。
+     *
+     * <p>口径：**读属性面板，不读装备**。属性由装备 modifier / 药水 / 套装下发，重复计算的责任
+     * 在 {@code AttributeMap} 侧（D18 同思路）；这里只做「取一个数、异常归零」。
+     * 钳制上限 {@code 0.9} 与「地板 1 tick」都在 {@link SkillCooldowns#effectiveTicks} 里，
+     * 这个方法是唯一入口，别在别处再换算一次。
+     */
+    public static double cooldownReduction(ServerPlayer player) {
+        Holder<Attribute> attr = RedtaleAttributes.custom("cooldown_reduction");
+        if (attr == null || player == null) {
+            return 0.0D;
+        }
+        double value = player.getAttributeValue(attr);
+        // 负数 / NaN / Inf 一律归零（D16 的异常保护，不是平衡钳制）
+        return Double.isFinite(value) && value > 0.0D ? value : 0.0D;
     }
 
     /**

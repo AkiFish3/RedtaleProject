@@ -5,10 +5,14 @@
   name: "示范长剑",
   durability: 1200,
   rarity: "rare",             // common | uncommon | rare | epic
-  rev: 2,                     // sockets 段 0→1、set_id 1→2（D33：改定义型字段必须 +1）
+  rev: 3,                     // sockets 段 0→1、set_id 1→2、abilities 2→3（D33：改定义型字段必须 +1）
 
   // 套装归属（M3 §5.4）：定义型字段，改它要 rev+1。套装数值不进物品组件。
   set_id: "emberforged",
+
+  // 绑定技能（M5-B，SKILLS §7）：右键施放**第一条**，多技能留给 M5-C 键位。
+  // 定义型字段 → 改它要 rev+1。技能 id 不存在不报错（施放时日志 WARN）。
+  abilities: ["redtale_project:gale_slash"],
 
   // 孔位（M3）：definition 型字段 —— 改它必须 rev+1，否则存量物品的孔数不跟着变。
   sockets: {

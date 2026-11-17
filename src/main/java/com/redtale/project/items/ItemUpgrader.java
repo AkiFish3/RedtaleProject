@@ -180,7 +180,9 @@ public final class ItemUpgrader {
                 // set_id 是**定义型字段**（§5.4：改它要 rev+1）→ 重建时取新定义的值，
                 // 不是照抄旧的（照抄 = 改了 assign 也不跟，与 rev 语义矛盾）
                 data.contentId(), def.rev(), SCHEMA, def.setId(), data.upgradeLevel(),
-                effective, keptRolled, affixes, data.abilities(), def.weaponAttributes(),
+                effective, keptRolled, affixes,
+                // M5-B：abilities 同为**定义型字段**（与 set_id 同口径）→ 取新定义，不照抄旧值
+                def.abilities(), def.weaponAttributes(),
                 sockets, gemStats));
         return new Result(Status.UPGRADED, data.contentId(), data.contentRev(), def.rev(),
                 List.copyOf(warnings));

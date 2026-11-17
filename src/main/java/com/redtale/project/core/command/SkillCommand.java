@@ -51,7 +51,10 @@ public final class SkillCommand {
                                 .executes(ctx -> probe(ctx, StringArgumentType.getString(ctx, "id")))))
                 .then(Commands.literal("cd")
                         .then(Commands.argument("id", StringArgumentType.string())
-                                .executes(ctx -> cd(ctx, StringArgumentType.getString(ctx, "id")))));
+                                .executes(ctx -> cd(ctx, StringArgumentType.getString(ctx, "id")))))
+                .then(Commands.literal("use")
+                        .then(Commands.argument("content", StringArgumentType.string())
+                                .executes(ctx -> useProbe(ctx, StringArgumentType.getString(ctx, "content")))));
     }
 
     /** K1：技能快照逐条打印。行尾给 {@code source} 便于对「改的那份文件生效了没」。 */
@@ -184,6 +187,156 @@ public final class SkillCommand {
         } finally {
             cow.discard();
         }
+    }
+
+    /**
+     * 右键链路的无客户端探针（K7，M5-B）：FakePlayer 手里拿一件**真实内容物品**，
+     * 走 {@code ItemStack#use} 的完整路径（{@code ContentItem#use} → 技能分支）。
+     *
+     * <p>为什么绕这一圈而不是直接 {@code cast}：这要验的正是「配置里的 {@code abilities}
+     * 有没有真的变成物品的右键行为」—— 三段任何一段断掉都不报错：解析没读到 / {@code ContentData}
+     * 没写 / {@code use} 没接，现象全是「右键没反应」。
+     *
+     * <p>四组输出（A 带技能武器 / B 同件立刻再按 / C 无 abilities 的武器 / 空手不适用）：
+     * A 应 {@code CONSUME} 且木桩掉血、B 应 {@code FAIL} 且剩余冷却 = 定义值、
+     * C 应 {@code PASS} 且**一条冷却都没记**（证明不是「凡右键都放技能」）。
+     */
+    static int useProbe(CommandContext<CommandSourceStack> ctx, String contentId) {
+        CommandSourceStack src = ctx.getSource();
+        if (src.getServer() == null) {
+            src.sendFailure(Component.literal("[redtale] 没有服务端上下文"));
+            return 0;
+        }
+        var core = RedtaleCore.get();
+        var chosen = core.contentItems().get(contentId);
+        if (chosen == null) {
+            src.sendFailure(Component.literal("[redtale] 没有内容 '" + contentId + "'"));
+            return 0;
+        }
+        if (chosen.abilities().isEmpty()) {
+            src.sendFailure(Component.literal("[redtale] " + contentId
+                    + " 没有 abilities 段（右键会走 use/repair/什么都不做；本探针只验技能分支）"));
+            return 0;
+        }
+        var level = src.getServer().overworld();
+        var fp = net.neoforged.neoforge.common.util.FakePlayerFactory.getMinecraft(level);
+        Mob cow = net.minecraft.world.entity.EntityType.COW.create(level);
+        if (cow == null) {
+            src.sendFailure(Component.literal("[redtale] 造不出探测目标"));
+            return 0;
+        }
+        cow.moveTo(fp.getX() + 1.0D, fp.getY(), fp.getZ(), 0.0F, 0.0F);
+        var maxHealth = cow.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
+        if (maxHealth != null) {
+            maxHealth.setBaseValue(PROBE_MAX_HEALTH);
+        }
+        cow.setHealth((float) PROBE_MAX_HEALTH);
+        cow.setNoAi(true);
+        if (!level.addFreshEntity(cow)) {
+            src.sendFailure(Component.literal("[redtale] 探测目标没能进入世界"));
+            return 0;
+        }
+        String skillId = chosen.abilities().get(0);
+        var hand = net.minecraft.world.InteractionHand.MAIN_HAND;
+        try {
+            // random=null：不摇词条，同一件内容每次探针都逐字相同
+            var stack = com.redtale.project.items.ItemFactory.build(chosen, null);
+            fp.setItemInHand(hand, stack);
+            fp.removeAllEffects();
+            fp.getCooldowns().tick();
+            core.skillEngine().cooldowns().clear(fp.getUUID());
+            lookAt(fp, cow);
+
+            src.sendSuccess(() -> Component.literal("[redtale] 右键探针 " + chosen.id()
+                    + "（FakePlayer 真调 ItemStack#use；第一条技能 " + skillId + "）："), false);
+            src.sendSuccess(() -> Component.literal("  定义 abilities " + chosen.abilities().size()
+                    + " 条 " + chosen.abilities()), false);
+            var data = fp.getItemInHand(hand).get(com.redtale.project.items.ContentComponents.CONTENT.get());
+            src.sendSuccess(() -> Component.literal("  组件 abilities "
+                    + (data == null ? "（无组件）" : data.abilities())
+                    + " · cooldown_reduction " + SkillEngine.cooldownReduction(fp)), false);
+
+            float beforeA = cow.getHealth();
+            var retA = fp.getItemInHand(hand).use(level, fp, hand);
+            double dealtA = beforeA - cow.getHealth();
+            long nowA = level.getGameTime();
+            long leftA = core.skillEngine().cooldowns().remaining(fp.getUUID(), skillId, nowA);
+            SkillSpec.Definition defA = core.skills().get(skillId);
+            src.sendSuccess(() -> Component.literal("  A 组 首次右键：返回 " + retA.getResult()
+                    + " · 木桩掉血 " + com.redtale.project.core.attr.AttributeBreakdown.num(dealtA)
+                    + " · " + skillId + " 剩余冷却 " + leftA + " tick（定义 "
+                    + (defA == null ? "缺失！" : defA.cooldownTicks()) + "）"), false);
+
+            cow.invulnerableTime = 0;
+            float beforeB = cow.getHealth();
+            var retB = fp.getItemInHand(hand).use(level, fp, hand);
+            double dealtB = beforeB - cow.getHealth();
+            src.sendSuccess(() -> Component.literal("  B 组 立刻再按：返回 " + retB.getResult()
+                    + " · 木桩掉血 " + com.redtale.project.core.attr.AttributeBreakdown.num(dealtB)
+                    + "（冷却期必须 FAIL 且 0 掉血）"), false);
+
+            // C 组：无 abilities 的武器 —— 右键不应记任何冷却
+            core.skillEngine().cooldowns().clear(fp.getUUID());
+            var plain = firstWithoutAbilities(core);
+            int plainRc = 0;
+            if (plain != null) {
+                fp.setItemInHand(hand, com.redtale.project.items.ItemFactory.build(plain, null));
+                lookAt(fp, cow);
+                var retC = fp.getItemInHand(hand).use(level, fp, hand);
+                long leftC = core.skillEngine().cooldowns().remaining(fp.getUUID(), skillId, level.getGameTime());
+                plainRc = leftC <= 0L ? 1 : 0;
+                src.sendSuccess(() -> Component.literal("  C 组 无 abilities 的 " + plain.id()
+                        + "：返回 " + retC.getResult() + " · 冷却记录 " + leftC
+                        + "（应 PASS / 0，证明不是凡右键都放技能）"), false);
+            }
+            boolean a = retA.getResult() == net.minecraft.world.InteractionResult.CONSUME && leftA > 0L;
+            boolean b = retB.getResult() == net.minecraft.world.InteractionResult.FAIL && dealtB == 0.0D;
+            final boolean plainOk = plain == null || plainRc == 1;
+
+            // D 组（M5-B 后半）：给施法者挂 cooldown_reduction +0.5 → 同一条技能剩余冷却应 ≈ 定义值的一半。
+            // FakePlayer 不 tick，所以装备上的 modifier 刷不进 AttributeMap（R5 事实）—— 只能显式挂瞬时 modifier。
+            var cdAttr = com.redtale.project.core.attr.RedtaleAttributes.custom("cooldown_reduction");
+            var cdInst = cdAttr == null ? null : fp.getAttribute(cdAttr);
+            long leftD = -1L;
+            if (cdInst != null && defA != null) {
+                var probeId = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
+                        "redtale_project", "probe/cooldown_reduction");
+                cdInst.addTransientModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(
+                        probeId, 0.5D, net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_VALUE));
+                try {
+                    fp.setItemInHand(hand, com.redtale.project.items.ItemFactory.build(chosen, null));
+                    core.skillEngine().cooldowns().clear(fp.getUUID());
+                    lookAt(fp, cow);
+                    var retD = fp.getItemInHand(hand).use(level, fp, hand);
+                    leftD = core.skillEngine().cooldowns().remaining(fp.getUUID(), skillId, level.getGameTime());
+                    final long shown = leftD;
+                    src.sendSuccess(() -> Component.literal("  D 组 cooldown_reduction +0.5：返回 "
+                            + retD.getResult() + " · 剩余冷却 " + shown + " tick（定义 "
+                            + defA.cooldownTicks() + " 的 50% 应 ≈ " + (defA.cooldownTicks() / 2) + "）"), false);
+                } finally {
+                    cdInst.removeModifier(probeId);
+                }
+            }
+            boolean d = leftD < 0L || Math.abs(leftD - (defA == null ? 0 : defA.cooldownTicks() * 0.5D)) <= 2.0D;
+            src.sendSuccess(() -> Component.literal((a && b && plainOk && d)
+                    ? "  ✓ K7 成立：abilities → 组件 → 右键施放 → 冷却拦截 → 冷却减免生效"
+                    : "  ✗ K7 不成立（看上面几组的返回与掉血 / 剩余冷却）"), false);
+            return a && b && d ? 1 : 0;
+        } finally {
+            fp.setItemInHand(hand, net.minecraft.world.item.ItemStack.EMPTY);
+            cow.discard();
+        }
+    }
+
+    /** C 组样本：第一件**非护甲、无 use/repair、无 abilities** 的内容（右键什么都不该发生）。 */
+    private static com.redtale.project.items.ItemContent firstWithoutAbilities(RedtaleCore core) {
+        for (var candidate : core.contentItems().all()) {
+            if (!candidate.base().isArmor() && !candidate.isConsumable() && !candidate.isRepairItem()
+                    && candidate.abilities().isEmpty()) {
+                return candidate;
+            }
+        }
+        return null;
     }
 
     /** 剩余冷却（只读）：用来验「剩余 tick 递减」，不记账。 */

@@ -105,6 +105,10 @@ public final class ContentTooltip {
         if (!data.affixes().isEmpty()) {
             out.add("词条 " + data.affixes().size() + "：" + String.join(" · ", data.affixes()));
         }
+        // 绑定技能（M5-B §7）：只列 id —— 技能数值在 skills/*.json5，不在这儿重复第二份真相
+        if (!data.abilities().isEmpty()) {
+            out.add("技能 " + data.abilities().size() + "：" + String.join(" · ", data.abilities()));
+        }
         // 孔位与宝石（M3）：孔序按定义布局逐孔写，空孔写「空」。
         // 数值已经在上面那两行里（宝石走 ATTRIBUTE_MODIFIERS，与内容数值同一个面板），
         // 这里再写一遍数值就是两份真相（D20 同口径）。

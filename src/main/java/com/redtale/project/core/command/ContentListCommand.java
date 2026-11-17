@@ -17,12 +17,6 @@ import java.util.List;
  */
 public final class ContentListCommand {
 
-    /**
-     * 词条层（D22）还没接进内容模型，{@link ItemContent} 里没有词条字段。
-     * 这里固定写「未接入」而不是 0 —— 0 会让人以为「解析过、结果是零个」。
-     */
-    private static final String AFFIX_PENDING = "-（词条层未接入）";
-
     private ContentListCommand() {
     }
 
@@ -48,17 +42,24 @@ public final class ContentListCommand {
         int count = all.size();
         int stats = statTotal;
         int weapons = withWeaponAttributes;
+        int pools = core.affixPools().size();
+        int sets = core.sets().size();
         src.sendSuccess(() -> Component.literal("[redtale] 内容 " + count + " 件 · 数值共 "
-                + stats + " 条 · 带 weapon_attributes " + weapons + " 件"), false);
+                + stats + " 条 · 带 weapon_attributes " + weapons + " 件 · 词条池 " + pools
+                + " 个 · 套装定义 " + sets + " 个"), false);
 
         for (ItemContent content : all) {
             String base = content.base() == null ? "-" : content.base().id();
+            String setId = content.setId() == null || content.setId().isBlank() ? "-" : content.setId();
+            int sockets = content.sockets() == null ? 0 : content.sockets().count();
             String line = "  " + content.id()
                     + " · base " + base
                     + " · 数值 " + content.stats().size() + " 条"
-                    + " · 词条 " + AFFIX_PENDING
-                    + " · weapon_attributes " + (content.weaponAttributes().isEmpty()
-                            ? "-" : content.weaponAttributes());
+                    + " · 孔位 " + sockets
+                    + " · 套装 " + setId
+                    + " · 消耗品 " + (content.consumable() != null ? "是" : "否")
+                    + " · 修理 " + (content.repair() != null ? "是" : "否")
+                    + " · rev " + content.rev();
             src.sendSuccess(() -> Component.literal(line), false);
         }
         return count;

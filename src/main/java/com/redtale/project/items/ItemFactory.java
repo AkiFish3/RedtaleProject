@@ -121,7 +121,9 @@ public final class ItemFactory {
         stack.set(ContentComponents.CONTENT.get(), new ContentData(
                 content.id(), content.rev(), ContentData.CURRENT_SCHEMA,
                 // M3 套装归属：定义型字段，随 rev 一起写（改 set_id 必须 rev+1，否则存量物品不跟）
-                content.setId(), 0, stats, List.copyOf(rolled.stats().keySet()), rolled.affixIds(), List.of(),
+                content.setId(), 0, stats, List.copyOf(rolled.stats().keySet()), rolled.affixIds(),
+                // M5-B：绑定技能（定义型字段，随 rev 一起写）
+                content.abilities(),
                 content.weaponAttributes(),
                 // M3（§5.5 第 4 步）：按定义布局填空孔 —— 孔数是**定义型**的，
                 // 新发放就必须与定义对齐，否则玩家拿到一件「有孔位但孔不存在」的物品。

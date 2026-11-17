@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.redtale.project.core.attr.AttributeSpec;
 import com.redtale.project.core.attr.AttributeSpecs;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -45,6 +46,11 @@ import java.util.Map;
  *                <b>定义型字段</b> —— 改它要 `rev`+1，否则存量物品的套装归属不会跟着变。
  *                这里只存「归属」，套装数值**永不进 {@code ContentData}**：件数一变就整张重算，
  *                写进玩家身上固定 id 的 modifier（{@code SetBonus}）。
+ * @param abilities 绑定技能（M5-B，{@code SKILLS.md} §7 v1.5）：{@code ["redtale_project:gale_slash"]}。
+ *                右键施放**第一条**（多技能键位留给 M5-C）。<b>定义型字段</b> —— 改它要 `rev`+1，
+ *                否则存量物品的 {@code ContentData.abilities} 不会跟着变。
+ *                这里**不校验技能是否存在**（R28-d：技能与物品是两份并行配置，校验归
+ *                {@code /redtale validate}）；缺的技能到施放时由引擎报 {@code NO_SKILL}。
  */
 public record ItemContent(
         String id,
@@ -61,10 +67,12 @@ public record ItemContent(
         RepairSpec.Spec repair,
         SocketSpec.Layout sockets,
         SocketSpec.Gem gem,
-        String setId) {
+        String setId,
+        List<String> abilities) {
 
     public ItemContent {
         stats = Map.copyOf(stats);
+        abilities = List.copyOf(abilities);
     }
 
     /**
@@ -148,10 +156,51 @@ public record ItemContent(
         // /redtale validate 检查（解析期看不到 sets/，两份配置是并行的）
         String setId = str(root, "set_id", "").trim();
 
+        // M5-B：绑定技能（只解析形态，不校验技能存在 —— R28-d）
+        List<String> abilities = parseAbilities(root, source, warnings);
+
         return new ItemContent(id, base, str(root, "name", id), durability, rarity,
                 str(root, "weapon_attributes", ""), stats,
                 bool(root, "strip_vanilla_effects", false), rev, source, consumable, repair,
-                sockets, gem, setId);
+                sockets, gem, setId, abilities);
+    }
+
+    /**
+     * {@code abilities} 段：数组，每项一个技能 id（带命名空间）。
+     * 坏项只跳过自己并告警（R1-a 分级失败），不影响这件物品的其它字段。
+     */
+    private static List<String> parseAbilities(JsonObject root, String source, List<String> warnings) {
+        JsonElement el = root.get("abilities");
+        if (el == null || el.isJsonNull()) {
+            return List.of();
+        }
+        if (!el.isJsonArray()) {
+            warnings.add(source + "：abilities 不是数组 —— 已忽略（应写 [\"redtale_project:技能id\"]）");
+            return List.of();
+        }
+        List<String> out = new ArrayList<>();
+        for (JsonElement item : el.getAsJsonArray()) {
+            if (!item.isJsonPrimitive() || !item.getAsJsonPrimitive().isString()) {
+                warnings.add(source + "：abilities 里有非字符串项 —— 已跳过");
+                continue;
+            }
+            String skillId = item.getAsString().trim();
+            if (skillId.isEmpty()) {
+                warnings.add(source + "：abilities 里有空串 —— 已跳过");
+                continue;
+            }
+            if (!skillId.contains(":")) {
+                warnings.add(source + "：abilities 的 \"" + skillId
+                        + "\" 缺命名空间（应写 redtale_project:" + skillId + "）—— 已跳过");
+                continue;
+            }
+            if (out.contains(skillId)) {
+                warnings.add(source + "：abilities 里 " + skillId + " 重复 —— 已跳过重复项");
+                continue;
+            }
+            out.add(skillId);
+        }
+        return List.copyOf(out);
     }
 
     /** 是不是修理物品（{@code repair} 段解析成功）。 */
@@ -184,6 +233,7 @@ public record ItemContent(
                 + (sockets.count() > 0 ? " · 孔位 " + sockets.count() : "")
                 + (gem != null ? " · 宝石 " + gem.type() + " T" + gem.tier() : "")
                 + (setId.isEmpty() ? "" : " · 套装 " + setId)
+                + (abilities.isEmpty() ? "" : " · 技能 " + abilities.size())
                 + (rev > 0 ? " · rev " + rev : "");
     }
 
