@@ -19,6 +19,12 @@ public final class Builtins {
         registries.register(new HealEffect());
         // M5-A 第一条直伤原语（R27）：只给白值，倍率由 DamageLayer 乘（SKILLS §5 红线 1）
         registries.register(new DamageEffect());
+        // M5-C 增益类第一条（T-0026）：给目标挂原版状态效果
+        registries.register(new BuffEffect());
+        // M5-C 直伤第 2 条（R32）：范围白值伤害，圈心 = 受害者脚下（无目标则施法者脚下）
+        registries.register(new DamageAoeEffect());
+        // M5-C 减益第 1 条（R32）：只吃 HARMFUL 分类的效果，缺省打在受害者身上
+        registries.register(new DebuffEffect());
 
         // conditions
         registries.register(new AlwaysCondition());

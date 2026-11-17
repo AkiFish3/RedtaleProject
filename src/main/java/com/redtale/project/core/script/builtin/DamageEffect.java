@@ -111,7 +111,7 @@ public final class DamageEffect implements EffectType {
      * <p>类型 id 查不到注册表 → 退回缺省类型；连缺省也查不到（数据包没加载）→ 退回
      * {@code level.damageSources().generic()} 并 WARN 一次，宁可少乘也不崩。
      */
-    private static DamageSource source(Level level, ScriptContext ctx, JsonObject args) {
+    static DamageSource source(Level level, ScriptContext ctx, JsonObject args) {
         Entity caster = caster(ctx);
         String typeId = DEFAULT_TYPE;
         if (args.has("damage_type")) {
@@ -138,7 +138,7 @@ public final class DamageEffect implements EffectType {
         return caster == null ? new DamageSource(holder) : new DamageSource(holder, caster, caster);
     }
 
-    private static Holder<DamageType> holder(Level level, String id) {
+    static Holder<DamageType> holder(Level level, String id) {
         try {
             ResourceLocation rl = ResourceLocation.tryParse(id);
             if (rl == null) {
@@ -152,7 +152,7 @@ public final class DamageEffect implements EffectType {
     }
 
     /** 施法者：玩家优先，其次生物施法者（附魔挂在怪物武器上是 {@code vars.attacker}）。 */
-    private static Entity caster(ScriptContext ctx) {
+    static Entity caster(ScriptContext ctx) {
         if (ctx.hasPlayer()) {
             return ctx.player();
         }
@@ -160,7 +160,7 @@ public final class DamageEffect implements EffectType {
         return attacker instanceof Entity e ? e : null;
     }
 
-    private static double num(JsonObject args, String key, double def) {
+    static double num(JsonObject args, String key, double def) {
         if (!args.has(key)) {
             return def;
         }
