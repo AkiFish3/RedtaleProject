@@ -30,6 +30,8 @@ public final class Builtins {
         registries.register(new PullEffect());
         // M5-C 控场第 3 条（R34）：停 AI 定住（不用 slowness 255，会被速度修正抵消）
         registries.register(new StunEffect());
+        // M5-C 位移第 2 条（T-0031）：施法者自己冲出去，不吃击退抗性
+        registries.register(new DashEffect());
 
         // conditions
         registries.register(new AlwaysCondition());

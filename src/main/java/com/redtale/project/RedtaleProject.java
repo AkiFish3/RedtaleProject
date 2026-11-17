@@ -30,6 +30,9 @@ public final class RedtaleProject {
         RedtaleItems.register(modBus);
         // M4 / D32：唯一自定义附魔实体效果（内置表，走 RegisterEvent）
         com.redtale.project.enchants.ScriptedEnchantmentEffect.register(modBus);
+        // M6 第三步：8 个模板 EntityType（id 与 MobSpec.BASES 一一对应）
+        com.redtale.project.mobs.RedtaleEntities.register(modBus);
+        modBus.addListener(com.redtale.project.mobs.RedtaleEntities::onAttributes);
         // 属性注册完还要挂到实体上，否则 /attribute 与 getAttribute() 都看不到它们
         modBus.addListener(RedtaleProject::onEntityAttributes);
         NeoForge.EVENT_BUS.register(new GameHooks());
