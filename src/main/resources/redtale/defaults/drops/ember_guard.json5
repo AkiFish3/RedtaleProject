@@ -1,0 +1,20 @@
+// 掉落表示范（M6 第四层 · R41）：炽焰守卫死后掉什么。
+// 本文件由 DropSpec 解析（xp / drops 两段），由 DropRoll 掷骰，由 MobDrops 在 LivingDropsEvent 上落到地上。
+// 规则要点（卡面同款）：
+//   · 每条 `rolls` 次掷骰，每次都先判 chance（即使 chance = 1.0 也判，保证同种子序列稳定）；
+//   · `min`/`max` 是件数区间，`max <= min` 就固定为 `min`；
+//   · 同 `item` 多次命中会聚合成一条，位置按首次出现；
+//   · `xp` 是白值，加在原版给出的经验上（不乘任何属性）。
+// 两种 item 写法都支持（R41 实测）：
+//   · 真实物品 id → 带命名空间（`minecraft:gold_nugget` / `redtale_project:amulet`）；
+//   · **内容 id → 裸名**（`gem_ruby`，不写 `redtale_project:`）—— 内容栈 = 基底 id + `redtale_project:content` 组件。
+// id 是**裸名**（不补 `redtale_project:`）—— mobs/*.json5 的 `drops:` 直接写这个 id。
+{
+  id: "ember_guard",
+  xp: 12,
+  drops: [
+    { item: "minecraft:gold_nugget", min: 1, max: 3, chance: 0.8, rolls: 2 },
+    { item: "minecraft:blaze_powder", min: 1, max: 1, chance: 0.35, rolls: 1 },
+    { item: "gem_ruby", min: 1, max: 1, chance: 0.1, rolls: 1 },
+  ],
+}

@@ -57,6 +57,8 @@ public final class RedtaleCore {
     private volatile com.redtale.project.core.skill.SkillRegistry skills = com.redtale.project.core.skill.SkillRegistry.EMPTY;
     /** 怪物定义（M6 第二层，{@code mobs/*.json5}）。只到「快照」为止：EntityType 注册与刷怪替换在后面几步。 */
     private volatile com.redtale.project.mobs.MobRegistry mobs = com.redtale.project.mobs.MobRegistry.EMPTY;
+    /** 掉落表（M6 第四层，{@code drops/*.json5}）。与物品/技能同样存裸 map：id 是裸名，不带命名空间。 */
+    private volatile java.util.Map<String, com.redtale.project.mobs.DropSpec.Definition> drops = java.util.Map.of();
     /** 技能执行器（M5-A）：持有冷却表。**跨 reload 存活**（reload 清冷却 = 免费刷技能）。 */
     private final com.redtale.project.core.skill.SkillEngine skillEngine = new com.redtale.project.core.skill.SkillEngine();
     /** 最近一次 reload 的非致命告警（配置写歪了但被默认值兜住）。 */
@@ -134,6 +136,11 @@ public final class RedtaleCore {
         return mobs;
     }
 
+    /** 掉落表（M6 第四层）。键是 {@code drops/*.json5} 里的裸 {@code id}（不补命名空间）。 */
+    public java.util.Map<String, com.redtale.project.mobs.DropSpec.Definition> drops() {
+        return drops;
+    }
+
     /** 最近一次 reload 的非致命告警。 */
     public List<String> configWarnings() {
         return configWarnings;
@@ -192,6 +199,8 @@ public final class RedtaleCore {
             // 怪物（M6）：解析层不校验「装备 id / 技能 id 是否存在」—— 那要等快照与内容都就位，
             // 交给执行期与 /redtale mob check（S8 卡 T-0032）
             mobs = com.redtale.project.mobs.MobRegistry.load(all, warnings);
+            // 掉落表（M6 第四层）：纯解析，id 存在性 / 物品存在性归 mob check 与掉落事件（本层不判）
+            drops = com.redtale.project.mobs.DropSpec.parse(all, warnings);
             net.minecraft.server.MinecraftServer srv = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
             int written = 0;
             if (srv != null) { written += WeaponAttributesGenerator.generateAll(srv.getWorldPath(net.minecraft.world.level.storage.LevelResource.DATAPACK_DIR).resolve("redtale_project"), all, contentItems.all(), warnings); } else { LOG.warn("weapon_attributes 生成跳过：当前没有服务端实例"); }
@@ -232,13 +241,13 @@ public final class RedtaleCore {
             if (outcome.clean()) {
                 lastError = "";
                 lastErrorLines = List.of();
-                LOG.info("配置重载完成：{} 条脚本，{} 个文件，{} 件装备内容，{}，{}。攻速：{}",
+                LOG.info("配置重载完成：{} 条脚本，{} 个文件，{} 件装备内容，{}，{} 张掉落表，{}。攻速：{}",
                         outcome.loaded(), all.size(), contentItems.size(), skills.describe(),
-                        mobs.describe(), attackSpeedRules.describe());
+                        drops.size(), mobs.describe(), attackSpeedRules.describe());
                 return new ReloadResult(true,
                         "已载入 " + outcome.loaded() + " 条脚本 + " + contentItems.size()
                                 + " 件装备内容 + " + skills.size() + " 条技能 + " + mobs.size()
-                                + " 只怪物（" + all.size() + " 份配置文件）" + tail,
+                                + " 只怪物 + " + drops.size() + " 张掉落表（" + all.size() + " 份配置文件）" + tail,
                         List.of());
             }
 

@@ -73,7 +73,10 @@ public final class ConfigStore {
             // 怪物（M6，R36）：两份示范 = 带装备的近战精英 + 双技能的施法者。
             // 没有它们 mobs/ 目录是空的，MobRegistry 恒为 0 只，M6 后面几步全都无从验起
             "mobs/ember_guard.json5",
-            "mobs/ash_caster.json5"
+            "mobs/ash_caster.json5",
+            // 掉落表（M6 第四层，R41）：没有这份默认文件，ember_guard 的 drops 引用就悬空，
+            // 死掉零产出 —— 「掉落接线通没通」这条验收永远没有内容可验
+            "drops/ember_guard.json5"
     );
 
     private final Path root;

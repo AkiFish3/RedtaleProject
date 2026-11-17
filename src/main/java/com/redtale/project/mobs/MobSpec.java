@@ -49,7 +49,7 @@ public final class MobSpec {
      */
     public record Definition(String id, String name, String base, double scale, int level, boolean undead,
                              Map<String, StatValue> attributes,
-                             Equipment equipment, List<SkillRef> skills, String source) {}
+                             Equipment equipment, List<SkillRef> skills, String drops, String source) {}
     private static final String DIR = "mobs/";
     private static final String SUFFIX = ".json5";
     private static final List<String> SLOTS =
@@ -80,7 +80,7 @@ public final class MobSpec {
             }
             out.put(id, new Definition(id, name(root, id, path, sink), base, scale(root, path, sink),
                     level(root, path, sink), undead(root, path, sink), attributes(root, path, sink),
-                    equipment(root, path, sink), skills(root, path, sink), path));
+                    equipment(root, path, sink), skills(root, path, sink), drops(root, path, sink), path));
         }
         return Collections.unmodifiableMap(out);
     }
@@ -138,6 +138,19 @@ public final class MobSpec {
         if (e.isJsonPrimitive() && e.getAsJsonPrimitive().isBoolean()) return e.getAsBoolean();
         w.add(path + ": undead 不是布尔（写了 " + e + "），已按 false 处理");
         return false;
+    }
+    /**
+     * {@code drops}：掉落表 id，缺省 {@code ""}（= 不掉落表，仍走原版掉落）。
+     *
+     * <p>**原样保留、不补命名空间**（R41）：{@code DropSpec} 的 id 本来就是裸名，
+     * 补一个 {@code redtale_project:} 前缀只会让两边永远对不上（R22 的 `script` 字段踩过同一个坑）。
+     * 非字符串 → {@code ""} + 1 条 WARN（漏配掉落=少掉落物，代价远小于整条怪跳过）。
+     */
+    private static String drops(JsonObject root, String path, List<String> w) {
+        JsonElement e = root.get("drops");
+        if (e == null) return "";
+        if (!isString(e)) { w.add(path + ": drops 不是字符串，已按「不掉落表」处理"); return ""; }
+        return e.getAsString().trim();
     }
     /** 走 {@link AffixPools#parseStats} 的同一条归一与曲线规则（不另写一份、不降级成裸 double）；缺失 / 非对象 → 空表不告警。 */
     private static Map<String, StatValue> attributes(JsonObject root, String path, List<String> w) {

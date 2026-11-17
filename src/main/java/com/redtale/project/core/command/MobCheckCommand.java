@@ -66,10 +66,17 @@ public final class MobCheckCommand {
                             + " 不存在" + existing(skills));
                 }
             }
+            // 掉落表引用（M6 第四层，R41）：写了但表不存在 → 死掉什么都不掉，且解析层不会报
+            String drops = def.drops();
+            if (drops != null && !drops.isEmpty() && !core.drops().containsKey(drops)) {
+                problems.add("  " + def.name() + " " + def.id() + ": 掉落表 " + drops
+                        + " 不存在" + existingDrops(core.drops().keySet()));
+            }
         }
         int k = problems.size();
         String head = "[redtale] 怪物检查：" + mobs.size() + " 只 / 技能引用 " + mobs.skillCount()
-                + " 条" + (k == 0 ? " · 引用完整 ✓" : " / 问题 " + k + " 个");
+                + " 条 / 掉落表 " + core.drops().size() + " 张"
+                + (k == 0 ? " · 引用完整 ✓" : " / 问题 " + k + " 个");
         src.sendSuccess(() -> Component.literal(head), false);
         for (String line : problems) {
             src.sendSuccess(() -> Component.literal(line), false);
@@ -83,6 +90,16 @@ public final class MobCheckCommand {
         if (ids.isEmpty()) return "（现有 0 条）";
         String listed = String.join(", ", ids.subList(0, Math.min(MAX_LISTED, ids.size())));
         return "（现有 " + ids.size() + " 条：" + listed
+                + (ids.size() > MAX_LISTED ? "…" : "") + "）";
+    }
+
+    /** 同上，但键是掉落表裸 id（{@code Map} 无序 → 先排序再截，保证两次输出逐字相同）。 */
+    private static String existingDrops(java.util.Collection<String> drops) {
+        List<String> ids = new ArrayList<>(drops);
+        java.util.Collections.sort(ids);
+        if (ids.isEmpty()) return "（现有 0 张）";
+        String listed = String.join(", ", ids.subList(0, Math.min(MAX_LISTED, ids.size())));
+        return "（现有 " + ids.size() + " 张：" + listed
                 + (ids.size() > MAX_LISTED ? "…" : "") + "）";
     }
 }

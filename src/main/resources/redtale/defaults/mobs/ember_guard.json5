@@ -2,12 +2,15 @@
 // 这条只喂 MobSpec/MobRegistry 两层（解析 + 快照）。实体现阶段还不是真 EntityType，
 // `/redtale mob list` 能看到它、刷怪替换还不认它（那要等 M6 第三步的模板实体）。
 // attributes 与词条/套装/宝石走同一条归一规则（AffixPools.parseStats），写属性必须用已知键。
+// `drops`（R41）：这只怪用哪张掉落表（`drops/*.json5` 的裸 id，不补命名空间）。
+// 不写 = 只走原版掉落；写了但表不存在 = `/redtale mob check` 报一条，死时按原版处理。
 {
   id: "ember_guard",
   name: "炽焰守卫",
   base: "elite",
   scale: 1.15,
   level: 12,
+  drops: "ember_guard",
   attributes: {
     max_health: { base: 60, per_item_level: 4 },
     attack_damage: 9,

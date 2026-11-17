@@ -43,6 +43,10 @@ public final class GameHooks {
         // M2：物品更新（D33）的 3 个被动刷新点：登录 / 换维度 / 复活 / 开容器 / 区块加载。
         // 用单例而不是 new：UpgradeSweep（第 ④ 个刷新点）要复用同一个升级计数器。
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(ItemUpgradeHooks.get());
+        // M6 第四层（R41）：自建怪死亡掉落 = mobs/*.json5 的 drops 引用 → drops/*.json5 → DropRoll 掷一次。
+        // 只在 LivingDropsEvent / LivingExperienceDropEvent 上「追加」，不 clear 原版战利品（D15 只乘不覆盖）。
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(
+                new com.redtale.project.mobs.MobDrops());
     }
 
     @SubscribeEvent
