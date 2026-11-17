@@ -32,6 +32,8 @@ public final class Builtins {
         registries.register(new StunEffect());
         // M5-C 位移第 2 条（T-0031）：施法者自己冲出去，不吃击退抗性
         registries.register(new DashEffect());
+        // M5-C 投射第 1 条（T-0033）：沿视线射出投射物，只做「射出去」，on_hit 未支持
+        registries.register(new ProjectileEffect());
 
         // conditions
         registries.register(new AlwaysCondition());

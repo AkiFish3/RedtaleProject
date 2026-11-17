@@ -98,8 +98,11 @@ public final class EnchantmentGenerator {
                 if (parent != null) {
                     Files.createDirectories(parent);
                 }
-                Files.writeString(out, GSON.toJson(emit.json()) + "\n", StandardCharsets.UTF_8);
-                written++;
+                // R39：改了才写（幂等）。否则每次 reload 都算「写出过文件」→ 触发一次多余的数据包重载
+                if (com.redtale.project.core.datapack.TagJson.writeIfChanged(
+                        out, GSON.toJson(emit.json()) + "\n", "enchantments", log)) {
+                    written++;
+                }
             } catch (IOException e) {
                 log.add("enchantments：写入 " + out + " 失败（" + e.getMessage() + "），已跳过");
             }

@@ -1,12 +1,15 @@
 // 怪物示范 2（M6 · R36）：施法型，两条技能引用（一条带蓝耗）。
 // `chance` 是每次出手掷的概率，`cooldown_ticks` 是这条引用的独立冷却（与技能自身的冷却叠加取大）。
 // 施法原型的蓝量靠属性给：没配 max_mana 就按 ManaPool.DEFAULT_MAX（100）。
+// `undead`（R39）：true 会把 `redtale_project:caster` 整个原型追加进 #minecraft:undead，
+// 于是 undead_damage 条件乘区对这类怪生效（tag 粒度 = 原型，见 MobEntityTags 的注释）。
 {
   id: "ash_caster",
   name: "灰烬术士",
   base: "caster",
   scale: 1.0,
   level: 8,
+  undead: true,
   attributes: {
     max_health: { base: 24, per_item_level: 3 },
     max_mana: 80,

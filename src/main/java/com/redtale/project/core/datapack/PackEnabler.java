@@ -33,8 +33,10 @@ public final class PackEnabler {
 
     /** 结果用于日志与 {@code /redtale status}，不参与逻辑分支。 */
     public enum Outcome {
-        /** 已经在选中列表里，什么都不用做（重启后的常态）。 */
+        /** 已经在选中列表里，且本次没有资源级改动，什么都不用做（重启后的常态）。 */
         ALREADY_SELECTED,
+        /** 已经在选中列表里，但本次**改写了资源文件**（tag / 战利品表 / 附魔 JSON），已顺手重载。 */
+        ALREADY_SELECTED_AND_RELOADED,
         /** 磁盘上有目录但仓库扫不到 —— 通常是生成器没写出文件。 */
         NOT_AVAILABLE,
         /** 新选中并在运行期完成重载 —— 生成物已进注册表。 */
@@ -52,6 +54,23 @@ public final class PackEnabler {
     }
 
     public static Outcome ensureEnabled(MinecraftServer server, String packId, List<String> warnings) {
+        return ensureEnabled(server, packId, warnings, false);
+    }
+
+    /**
+     * 同上，但允许「包已选中时也重载资源」。
+     *
+     * <p>为什么需要这一条（R39 实测）：{@code /redtale reload} 会把 tag 文件重写到磁盘上，
+     * 但包<b>早就在选中列表里</b> → 老逻辑走 {@code ALREADY_SELECTED} 直接返回，一个字节都没重载。
+     * 现象：`data/minecraft/tags/entity_type/undead.json` 明明写着 {@code redtale_project:caster}，
+     * {@code @e[type=#minecraft:undead]} 却匹配不到，必须再敲一次原版 {@code /reload} 才生效 ——
+     * 这正是 D14「全内容可配 + 热重载」的漏点。
+     *
+     * @param resourcesChanged 本次 reload 是否真的写了文件（各生成器的写出计数 &gt; 0）；
+     *                         为 {@code false} 时行为与三参版本完全一致（幂等，不白重载）
+     */
+    public static Outcome ensureEnabled(MinecraftServer server, String packId, List<String> warnings,
+                                        boolean resourcesChanged) {
         if (server == null || packId == null || packId.isBlank()) {
             return Outcome.NOT_AVAILABLE;
         }
@@ -62,7 +81,15 @@ public final class PackEnabler {
         repository.reload();
 
         if (repository.getSelectedIds().contains(id)) {
-            return Outcome.ALREADY_SELECTED;
+            if (!resourcesChanged || !server.isRunning()) {
+                return Outcome.ALREADY_SELECTED;
+            }
+            if (!passGuard()) {
+                // 2s 内刚重载过：同一批文件已经进去了，别再来一次
+                return Outcome.ALREADY_SELECTED;
+            }
+            server.reloadResources(repository.getSelectedIds());
+            return Outcome.ALREADY_SELECTED_AND_RELOADED;
         }
         if (!repository.getAvailableIds().contains(id)) {
             warnings.add("数据包 " + id + " 未出现在可用列表（生成器没有写出文件？）");
@@ -79,13 +106,21 @@ public final class PackEnabler {
         if (!server.isRunning()) {
             return Outcome.ENABLED_PENDING_RELOAD;
         }
-        long now = System.currentTimeMillis();
-        if (now - lastReloadAt < RELOAD_GUARD_MS) {
+        if (!passGuard()) {
             // 同一 tick 内连着来两次（启动事件 + 手动 reload）只重载一次
             return Outcome.ENABLED_PENDING_RELOAD;
         }
-        lastReloadAt = now;
         server.reloadResources(repository.getSelectedIds());
         return Outcome.ENABLED_AND_RELOADED;
+    }
+
+    /** 2 秒去重窗：通过则记时并返回 true。 */
+    private static boolean passGuard() {
+        long now = System.currentTimeMillis();
+        if (now - lastReloadAt < RELOAD_GUARD_MS) {
+            return false;
+        }
+        lastReloadAt = now;
+        return true;
     }
 }

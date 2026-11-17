@@ -38,8 +38,16 @@ public final class MobSpec {
             };
         }
     }
-    /** 一条怪物定义；{@code attributes} 由 {@link AffixPools#parseStats} 归一，与 {@code skills} 同为不可变。 */
-    public record Definition(String id, String name, String base, double scale, int level,
+    /**
+     * 一条怪物定义；{@code attributes} 由 {@link AffixPools#parseStats} 归一，与 {@code skills} 同为不可变。
+     *
+     * <p>{@code undead}（R39 新增）：这只怪算不算「亡灵」。它不参与任何数值结算，只决定
+     * {@link MobEntityTags} 要不要把该 {@code base} 的 EntityType 追加进 {@code #minecraft:undead} ——
+     * 而那张 tag 才是 {@code undead_damage} 条件乘区（{@code TargetClass}）的唯一判据。
+     * 放在 <b>原型</b>粒度（同一 base 的任一怪声明 undead 就把整个原型打上）是因为 EntityType 按 base 注册，
+     * tag 也只能按 EntityType 打；这是 R37-b「id 即 base」的必然结果，不是妥协。
+     */
+    public record Definition(String id, String name, String base, double scale, int level, boolean undead,
                              Map<String, StatValue> attributes,
                              Equipment equipment, List<SkillRef> skills, String source) {}
     private static final String DIR = "mobs/";
@@ -71,8 +79,8 @@ public final class MobSpec {
                 continue;
             }
             out.put(id, new Definition(id, name(root, id, path, sink), base, scale(root, path, sink),
-                    level(root, path, sink), attributes(root, path, sink), equipment(root, path, sink),
-                    skills(root, path, sink), path));
+                    level(root, path, sink), undead(root, path, sink), attributes(root, path, sink),
+                    equipment(root, path, sink), skills(root, path, sink), path));
         }
         return Collections.unmodifiableMap(out);
     }
@@ -117,6 +125,19 @@ public final class MobSpec {
         if (e == null) return 1;
         if (!isNumber(e)) { w.add(path + ": level 不是数字，已用 1"); return 1; }
         return Math.max(1, Math.min(MAX_LEVEL, (int) Math.floor(e.getAsDouble())));
+    }
+    /**
+     * {@code undead}：缺省 {@code false}；非布尔 → {@code false} + 1 条 WARN（含 path）。
+     *
+     * <p>为什么容错到「静默降级成 false」而不是整条跳过：漏标亡灵只会让这只怪少吃 {@code undead_damage}，
+     * 不会算错数值方向；而整条跳过等于「这只怪不生成」，代价大得多。告警留着，运营看得见。
+     */
+    private static boolean undead(JsonObject root, String path, List<String> w) {
+        JsonElement e = root.get("undead");
+        if (e == null) return false;
+        if (e.isJsonPrimitive() && e.getAsJsonPrimitive().isBoolean()) return e.getAsBoolean();
+        w.add(path + ": undead 不是布尔（写了 " + e + "），已按 false 处理");
+        return false;
     }
     /** 走 {@link AffixPools#parseStats} 的同一条归一与曲线规则（不另写一份、不降级成裸 double）；缺失 / 非对象 → 空表不告警。 */
     private static Map<String, StatValue> attributes(JsonObject root, String path, List<String> w) {

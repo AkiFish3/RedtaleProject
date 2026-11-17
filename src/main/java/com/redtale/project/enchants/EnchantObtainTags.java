@@ -2,14 +2,10 @@ package com.redtale.project.enchants;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.redtale.project.core.config.ConfigFile;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +36,6 @@ public final class EnchantObtainTags {
     private static final String VANILLA_NS = "minecraft";
     private static final String CONFIG_DIR = "enchantments/";
     private static final String CONFIG_SUFFIX = ".json5";
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
     /** 三条原版可获取性 tag（**写死常量，不许从配置读**：读配置等于允许内容侧关掉获取途径还不报警）。 */
     private static final List<String> TAGS =
@@ -107,32 +102,10 @@ public final class EnchantObtainTags {
     /**
      * 写一份 tag 文件；内容与磁盘上已有的一致就<b>不动</b>（幂等）。
      *
-     * <p>与 {@code EnchantableTags#writeTag} 同一实现口径：Gson pretty + 末尾换行 +
-     * 逐字节比对。重复一份而不抽公共工具，是因为两边的失败文案不同（一个是「enchantable」，
-     * 一个是「obtain tag」），日志里要能一眼看出是谁写坏的。
+     * <p>R39 起委托 {@link com.redtale.project.core.datapack.TagJson}，失败文案由 {@code label} 区分
+     * （{@code "obtain tag"}），日志里仍能一眼看出是谁写坏的。
      */
     private static boolean writeTag(Path out, List<String> values, List<String> log) {
-        JsonObject json = new JsonObject();
-        json.addProperty("replace", false);
-        JsonArray arr = new JsonArray();
-        for (String value : values) {
-            arr.add(value);
-        }
-        json.add("values", arr);
-        String text = GSON.toJson(json) + "\n";
-        try {
-            if (Files.exists(out) && text.equals(Files.readString(out, StandardCharsets.UTF_8))) {
-                return false;
-            }
-            Path parent = out.getParent();
-            if (parent != null) {
-                Files.createDirectories(parent);
-            }
-            Files.writeString(out, text, StandardCharsets.UTF_8);
-            return true;
-        } catch (IOException e) {
-            log.add("obtain tag：写入 " + out + " 失败（" + e.getMessage() + "），已跳过");
-            return false;
-        }
+        return com.redtale.project.core.datapack.TagJson.write(out, values, "obtain tag", log);
     }
 }

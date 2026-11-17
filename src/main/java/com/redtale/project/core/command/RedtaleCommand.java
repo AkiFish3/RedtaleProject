@@ -504,7 +504,7 @@ public final class RedtaleCommand {
     }
 
     private static int reload(CommandContext<CommandSourceStack> ctx) {
-        RedtaleCore.ReloadResult result = RedtaleCore.get().reload();
+        RedtaleCore.ReloadResult result = RedtaleCore.get().reload(true);
         CommandSourceStack src = ctx.getSource();
         if (result.ok()) {
             // D33 第 ④ 个刷新点：配置换完代之后，把已加载世界分帧刷一遍（docs/ITEM-UPDATE.md §4.1 ④）。

@@ -159,6 +159,18 @@ public final class RedtaleCore {
      * 线上改配置写漏一个逗号不该让整套脚本停摆，也不该静默。
      */
     public ReloadResult reload() {
+        return reload(false);
+    }
+
+    /**
+     * 同上。
+     *
+     * @param allowResourceReload 只有「管理员显式敲 {@code /redtale reload}」才传 {@code true}：
+     *        改写出来的资源级内容（tag / 附魔 JSON / 武器动作）必须靠 {@code reloadResources} 才会进内存，
+     *        而包早就选中 → 旧逻辑直接返回不重载（R39 实测的 D14 漏点）。
+     *        开服起步那次不传，避免启动期白白多加载一遍数据包。
+     */
+    public ReloadResult reload(boolean allowResourceReload) {
         try {
             config.ensureDefaults();
             List<ConfigFile> all = config.loadAll();
@@ -181,17 +193,21 @@ public final class RedtaleCore {
             // 交给执行期与 /redtale mob check（S8 卡 T-0032）
             mobs = com.redtale.project.mobs.MobRegistry.load(all, warnings);
             net.minecraft.server.MinecraftServer srv = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
-            if (srv != null) { WeaponAttributesGenerator.generateAll(srv.getWorldPath(net.minecraft.world.level.storage.LevelResource.DATAPACK_DIR).resolve("redtale_project"), all, contentItems.all(), warnings); } else { LOG.warn("weapon_attributes 生成跳过：当前没有服务端实例"); }
+            int written = 0;
+            if (srv != null) { written += WeaponAttributesGenerator.generateAll(srv.getWorldPath(net.minecraft.world.level.storage.LevelResource.DATAPACK_DIR).resolve("redtale_project"), all, contentItems.all(), warnings); } else { LOG.warn("weapon_attributes 生成跳过：当前没有服务端实例"); }
             // M4 / D32 的 L1→L0：把 enchantments/*.json5 写成真·原版 Enchantment JSON。
             // 与 weapon_attributes 同一个数据包根，靠 PackEnabler 一次选中一次重载。
-            if (srv != null) { com.redtale.project.enchants.EnchantmentGenerator.generateAll(srv.getWorldPath(net.minecraft.world.level.storage.LevelResource.DATAPACK_DIR).resolve("redtale_project"), all, warnings); } else { LOG.warn("enchantments 生成跳过：当前没有服务端实例"); }
+            if (srv != null) { written += com.redtale.project.enchants.EnchantmentGenerator.generateAll(srv.getWorldPath(net.minecraft.world.level.storage.LevelResource.DATAPACK_DIR).resolve("redtale_project"), all, warnings); } else { LOG.warn("enchantments 生成跳过：当前没有服务端实例"); }
             // R23：14 基底不在原版 #minecraft:enchantable/* 里 → /enchant 报 cannot support（R22 实测）。
             // 这里往原版 tag 里**追加**（replace:false），并给缺失的自家 exclusive_set tag 补空文件。
-            if (srv != null) { com.redtale.project.enchants.EnchantableTags.generateAll(srv.getWorldPath(net.minecraft.world.level.storage.LevelResource.DATAPACK_DIR).resolve("redtale_project"), all, warnings); } else { LOG.warn("enchantable tag 生成跳过：当前没有服务端实例"); }
+            if (srv != null) { written += com.redtale.project.enchants.EnchantableTags.generateAll(srv.getWorldPath(net.minecraft.world.level.storage.LevelResource.DATAPACK_DIR).resolve("redtale_project"), all, warnings); } else { LOG.warn("enchantable tag 生成跳过：当前没有服务端实例"); }
             // R27 / T-0020：不写这三条原版可获取性 tag，附魔台刷不出、村民不卖、战利品不掉（V4 卡在这）
-            if (srv != null) { com.redtale.project.enchants.EnchantObtainTags.generateAll(srv.getWorldPath(net.minecraft.world.level.storage.LevelResource.DATAPACK_DIR).resolve("redtale_project"), all, warnings); } else { LOG.warn("obtain tag 生成跳过：当前没有服务端实例"); }
+            if (srv != null) { written += com.redtale.project.enchants.EnchantObtainTags.generateAll(srv.getWorldPath(net.minecraft.world.level.storage.LevelResource.DATAPACK_DIR).resolve("redtale_project"), all, warnings); } else { LOG.warn("obtain tag 生成跳过：当前没有服务端实例"); }
+            // R39 / M6：配置里 undead:true 的原型追加进 #minecraft:undead —— undead_damage 条件乘区只看这张 tag，
+            // 自建 EntityType 不在原版 tag 里就永远吃不到（现象是「伤害不涨」，无报错）。
+            if (srv != null) { written += com.redtale.project.mobs.MobEntityTags.generateAll(srv.getWorldPath(net.minecraft.world.level.storage.LevelResource.DATAPACK_DIR).resolve("redtale_project"), mobs.all(), warnings); } else { LOG.warn("mob undead tag 生成跳过：当前没有服务端实例"); }
             // R8-1：写出来的包必须被选中 + 重载才会进注册表，否则要等重启（R7 实测）
-            if (srv != null) { LOG.info("生成数据包状态：{}", com.redtale.project.core.datapack.PackEnabler.ensureEnabled(srv, "redtale_project", warnings)); }
+            if (srv != null) { LOG.info("生成数据包状态：{}（本次写出 {} 个文件）", com.redtale.project.core.datapack.PackEnabler.ensureEnabled(srv, "redtale_project", warnings, allowResourceReload && written > 0), written); }
             configWarnings = List.copyOf(warnings);
             // 观测数据跟着配置一起换代：上一份规则的命中率不该算进这一份
             DamageTrace.reset();

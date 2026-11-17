@@ -2,14 +2,11 @@ package com.redtale.project.enchants;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.redtale.project.core.config.ConfigFile;
 import com.redtale.project.items.ItemBase;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -45,7 +42,6 @@ public final class EnchantableTags {
     private static final String OWN_NS = "redtale_project";
     private static final String CONFIG_DIR = "enchantments/";
     private static final String CONFIG_SUFFIX = ".json5";
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
     private EnchantableTags() {
     }
@@ -178,29 +174,11 @@ public final class EnchantableTags {
     /**
      * 写一份 tag 文件；内容与磁盘上已有的一致就<b>不动</b>（幂等，避免每次 reload 都改 mtime
      * 触发整包重载）。
+     *
+     * <p>R39 起委托 {@link com.redtale.project.core.datapack.TagJson}：三处 tag 写手收口成一份，
+     * 失败文案仍由各自的 {@code label} 区分（这就是 R27「不抽公共工具」的唯一理由，现在参数化了）。
      */
     private static boolean writeTag(Path out, List<String> values, List<String> log) {
-        JsonObject json = new JsonObject();
-        json.addProperty("replace", false);
-        JsonArray arr = new JsonArray();
-        for (String value : values) {
-            arr.add(value);
-        }
-        json.add("values", arr);
-        String text = GSON.toJson(json) + "\n";
-        try {
-            if (Files.exists(out) && text.equals(Files.readString(out, StandardCharsets.UTF_8))) {
-                return false;
-            }
-            Path parent = out.getParent();
-            if (parent != null) {
-                Files.createDirectories(parent);
-            }
-            Files.writeString(out, text, StandardCharsets.UTF_8);
-            return true;
-        } catch (IOException e) {
-            log.add("enchantable：写入 " + out + " 失败（" + e.getMessage() + "），已跳过");
-            return false;
-        }
+        return com.redtale.project.core.datapack.TagJson.write(out, values, "enchantable", log);
     }
 }

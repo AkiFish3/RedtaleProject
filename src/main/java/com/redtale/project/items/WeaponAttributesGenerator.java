@@ -126,8 +126,11 @@ public final class WeaponAttributesGenerator {
                 if (parent != null) {
                     Files.createDirectories(parent);
                 }
-                Files.writeString(out, GSON.toJson(entry.getValue().root()) + "\n", StandardCharsets.UTF_8);
-                written++;
+                // R39：改了才写（幂等），理由同 EnchantmentGenerator
+                if (com.redtale.project.core.datapack.TagJson.writeIfChanged(
+                        out, GSON.toJson(entry.getValue().root()) + "\n", "weapon_attributes", warnings)) {
+                    written++;
+                }
             } catch (IOException e) {
                 warnings.add("weapon_attributes：写入 " + out + " 失败（" + e.getMessage() + "），已跳过");
             }
