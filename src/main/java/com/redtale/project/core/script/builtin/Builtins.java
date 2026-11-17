@@ -25,6 +25,9 @@ public final class Builtins {
         registries.register(new DamageAoeEffect());
         // M5-C 减益第 1 条（R32）：只吃 HARMFUL 分类的效果，缺省打在受害者身上
         registries.register(new DebuffEffect());
+        // M5-C 控场第 1/2 条（R33）：推离 / 拉向，共用 KnockbackEffect.shove 一份位移实现
+        registries.register(new KnockbackEffect());
+        registries.register(new PullEffect());
 
         // conditions
         registries.register(new AlwaysCondition());

@@ -33,20 +33,25 @@ public final class ContentListCommand {
 
         int statTotal = 0;
         int withWeaponAttributes = 0;
+        int withAbilities = 0;
         for (ItemContent content : all) {
             statTotal += content.stats().size();
             if (!content.weaponAttributes().isEmpty()) {
                 withWeaponAttributes++;
             }
+            if (!content.abilities().isEmpty()) {
+                withAbilities++;
+            }
         }
         int count = all.size();
         int stats = statTotal;
         int weapons = withWeaponAttributes;
+        int skilled = withAbilities;
         int pools = core.affixPools().size();
         int sets = core.sets().size();
         src.sendSuccess(() -> Component.literal("[redtale] 内容 " + count + " 件 · 数值共 "
                 + stats + " 条 · 带 weapon_attributes " + weapons + " 件 · 词条池 " + pools
-                + " 个 · 套装定义 " + sets + " 个"), false);
+                + " 个 · 套装定义 " + sets + " 个 · 带技能 " + skilled + " 件"), false);
 
         for (ItemContent content : all) {
             String base = content.base() == null ? "-" : content.base().id();
@@ -59,9 +64,15 @@ public final class ContentListCommand {
                     + " · 套装 " + setId
                     + " · 消耗品 " + (content.consumable() != null ? "是" : "否")
                     + " · 修理 " + (content.repair() != null ? "是" : "否")
-                    + " · rev " + content.rev();
+                    + " · rev " + content.rev()
+                    + " · 技能 " + abilitiesText(content);
             src.sendSuccess(() -> Component.literal(line), false);
         }
         return count;
+    }
+
+    private static String abilitiesText(ItemContent content) {
+        List<String> ids = content.abilities();
+        return ids == null || ids.isEmpty() ? "-" : ids.size() + ": " + String.join(" · ", ids);
     }
 }
