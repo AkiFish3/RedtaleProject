@@ -1,0 +1,16 @@
+// 技能示范 3（M5 收口 · R35）：法力消耗示范。
+// `mana_cost` 是**白值**，实际扣多少由 mana_cost_reduction 折算（上限 0.9 + 地板 1 点）。
+// 拿到这 40 点蓝的方式：装备/药水给 redtale_project:mana_regeneration 与 max_mana 属性；
+// 没配上限时按 100（ManaPool.DEFAULT_MAX），没配回蓝就是不回蓝。
+{
+  id: "redtale_project:arc_bolt",
+  name: "弧光弹",
+  icon: "minecraft:amethyst_shard",
+  cooldown_ticks: 40, // 2 秒
+  mana_cost: 40.0,
+
+  effects: [
+    { type: "console_log", args: { text: "[skill] arc_bolt by %player%" } },
+    { type: "damage", args: { amount: 6.0, damage_type: "redtale_project:skill_physical" } },
+  ],
+}

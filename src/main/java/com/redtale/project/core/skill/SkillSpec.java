@@ -20,9 +20,12 @@ public final class SkillSpec {
     /**
      * 一条技能定义。{@code conditions} / {@code effects} 不可变；{@code args} 原样透传（不改键名、不换算）。
      *
-     * @param source 来源配置的相对路径（{@code skills/xxx.json5}），排障用
+     * @param manaCost 单次释放的**法力白值**（{@code mana_cost}，缺省 {@code 0} = 不耗）。
+     *                 实际扣多少由 {@code ManaPool.effectiveCost} 按 {@code mana_cost_reduction} 折算，
+     *                 本字段只存配置值（R35：解析层不碰属性、不换算）
+     * @param source   来源配置的相对路径（{@code skills/xxx.json5}），排障用
      */
-    public record Definition(String id, String name, String icon, int cooldownTicks,
+    public record Definition(String id, String name, String icon, int cooldownTicks, double manaCost,
                              List<ScriptCall> conditions, List<ScriptCall> effects, String source) {}
 
     private static final String DIR = "skills/";
@@ -30,6 +33,8 @@ public final class SkillSpec {
     private static final String NAME_PREFIX = "skill.redtale.";
     private static final String DEFAULT_ICON = "minecraft:paper";
     private static final int MAX_COOLDOWN = 1_000_000_000;
+    /** 法力白值硬顶（D16：只做异常保护，不是平衡钳制）。 */
+    private static final double MAX_MANA_COST = 1.0e9D;
 
     private SkillSpec() {}
 
@@ -61,7 +66,8 @@ public final class SkillSpec {
             List<ScriptCall> effects = effects(root, path, sink);
             if (effects == null) continue;
             out.put(id, new Definition(id, name(root, id, path, sink), icon(root, path, sink),
-                    cooldown(root, path, sink), conditions(root, path, sink), effects, path));
+                    cooldown(root, path, sink), manaCost(root, path, sink),
+                    conditions(root, path, sink), effects, path));
         }
         return Collections.unmodifiableMap(out);
     }
@@ -127,6 +133,30 @@ public final class SkillSpec {
             return MAX_COOLDOWN;
         }
         return (int) value;
+    }
+
+    /** 可选：{@code mana_cost}，缺省 {@code 0}（不耗）；非数字 → 0 + WARN；负数 → 0 + WARN；超 {@code 1e9} → 硬顶 + WARN。 */
+    private static double manaCost(JsonObject root, String path, List<String> w) {
+        JsonElement e = root.get("mana_cost");
+        if (e == null) return 0.0D;
+        if (!isNumber(e)) {
+            w.add(path + ": mana_cost 不是数字，已用 0（不耗法力）");
+            return 0.0D;
+        }
+        double value = e.getAsDouble();
+        if (!Double.isFinite(value)) {
+            w.add(path + ": mana_cost 不是有限数，已用 0（不耗法力）");
+            return 0.0D;
+        }
+        if (value < 0.0D) {
+            w.add(path + ": mana_cost 为负数（" + e.getAsString() + "），已用 0（不耗法力）");
+            return 0.0D;
+        }
+        if (value > MAX_MANA_COST) {
+            w.add(path + ": mana_cost 超出硬顶（" + e.getAsString() + "），已夹到 " + MAX_MANA_COST);
+            return MAX_MANA_COST;
+        }
+        return value;
     }
 
     /** 可选：缺失 = 空表；非数组 → 空表 + 1 条 WARN；单项坏掉只丢该项。 */

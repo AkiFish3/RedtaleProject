@@ -81,6 +81,9 @@ public final class GameHooks {
     public void onPlayerTick(PlayerTickEvent.Post event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             AttackSpeedApplier.onPlayerTick(player);
+            // 法力（M5 收口，R35）：每 tick 同步上限 + 按 mana_regeneration 回蓝。
+            // 用 ticks=1 交回池里累积，小数余额不会被取整吃掉（T-0029 行为 5）。
+            RedtaleCore.get().skillEngine().tickMana(player);
             // 套装件数（M3）：每 20 tick 复核一次。换装没有可靠的单点事件
             // （背包点击 / 快捷栏切换 / 被怪打掉 / 死亡掉落 都会改装备），而件数签名没变时
             // SetBonus.apply 是「读 6 个格子 + 拼一个字符串」就返回，不碰任何属性。

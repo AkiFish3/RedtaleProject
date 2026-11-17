@@ -66,7 +66,10 @@ public final class ConfigStore {
             // 技能（M5-A）：两份示范 = 一条物理单体 + 一条法术单体。
             // 没有它们 skills/ 目录是空的，K1（只写 JSON5 就能看见）无从验起
             "skills/gale_slash.json5",
-            "skills/ember_burst.json5"
+            "skills/ember_burst.json5",
+            // 法力（M5 收口 R35）：一份带 mana_cost 的示范 —— 没有它，法力链路只有代码没有内容，
+            // 「蓝不够就放不出」这条永远没人踩到
+            "skills/arc_bolt.json5"
     );
 
     private final Path root;

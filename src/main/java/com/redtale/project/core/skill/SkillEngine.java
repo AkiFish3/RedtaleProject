@@ -43,7 +43,9 @@ public final class SkillEngine {
         /** 有一条 condition 判 false，**一条 effect 都没跑**，冷却未记账。 */
         CONDITION,
         /** 冷却未到，**一条 effect 都没跑**，剩余 tick 见 {@link Result#remainingTicks()}。 */
-        COOLDOWN
+        COOLDOWN,
+        /** 法力不够（M5-B 收口，R35）：**一条 effect 都没跑、冷却没记**，缺多少见 {@link #manaText(ServerPlayer, double)}。 */
+        NO_MANA
     }
 
     /**
@@ -63,9 +65,20 @@ public final class SkillEngine {
 
     private final SkillCooldowns cooldowns = new SkillCooldowns();
 
+    /**
+     * 法力池（M5 收口，R35）：**跨 reload 存活**（挂在引擎上，引擎是 {@code RedtaleCore} 的 final 字段）。
+     * 上限/回复都由属性面板驱动（{@code max_mana} / {@code mana_regeneration}），本类只做「取数 + 交给池」。
+     */
+    private final ManaPool mana = new ManaPool();
+
     /** 冷却表（只读观测用：命令与排障）。 */
     public SkillCooldowns cooldowns() {
         return cooldowns;
+    }
+
+    /** 法力池（观测 / 运维写回用）。当前法力是**运行期状态**，M5 收口第二步才接 {@code PlayerData} 持久化。 */
+    public ManaPool mana() {
+        return mana;
     }
 
     /**
@@ -107,10 +120,19 @@ public final class SkillEngine {
         }
 
         // ④ 门槛：冷却（M5-B 起吃 cooldown_reduction 属性，公式与钳制在 SkillCooldowns 里）
-        if (!cooldowns.tryStart(player.getUUID(), def.id(), def.cooldownTicks(),
-                cooldownReduction(player), now)) {
-            return new Result(Status.COOLDOWN, def.id(), (int) cooldowns.remaining(player.getUUID(), def.id(), now), 0, null);
+        //    先只「查」不「记」：法力不够的那次不该吃掉冷却（否则空蓝连按把技能锁死）
+        long remaining = cooldowns.remaining(player.getUUID(), def.id(), now);
+        if (remaining > 0L) {
+            return new Result(Status.COOLDOWN, def.id(), (int) remaining, 0, null);
         }
+
+        // ④b 门槛：法力（R35）。扣蓝在前、记冷却在后：免费技能（mana_cost 0）不建账、不改任何状态
+        syncMax(player);
+        ManaPool.Payment pay = mana.spend(player.getUUID(), def.manaCost(), manaCostReduction(player));
+        if (!pay.paid()) {
+            return new Result(Status.NO_MANA, def.id(), 0, 0, null);
+        }
+        cooldowns.start(player.getUUID(), def.id(), def.cooldownTicks(), cooldownReduction(player), now);
 
         // ⑤ 执行：复用脚本层 runCalls（单条失败只记日志，不影响后续）
         int done = core.engine().runCalls(def.effects(), ctx, "技能 " + def.id());
@@ -158,5 +180,100 @@ public final class SkillEngine {
     /** 技能定义里引用到的原语种类（排障用；不改变技能快照）。 */
     public static List<String> primitiveTypesOf(SkillSpec.Definition def) {
         return def == null ? List.of() : List.copyOf(def.effects().stream().map(ScriptCall::type).toList());
+    }
+
+    // ------------------------------------------------------------------ 法力（M5 收口，R35）
+
+    /**
+     * 读玩家身上的 {@code redtale_project:max_mana}。
+     *
+     * <p>口径（§13.38 R35-a）：自建属性基值全 {@code 0}（R5 事实），{@code 0} 在这里的含义是
+     * 「**没配**上限」而不是「上限为零」—— 一个上限 0 的法师永远放不出技能，那种状态没有玩法意义。
+     * 所以 {@code <=0} / 非有限一律回落到 {@link ManaPool#DEFAULT_MAX}；配了正数就**完全听属性的**（不设软上限，D16）。
+     */
+    public static double maxManaOf(ServerPlayer player) {
+        Holder<Attribute> attr = RedtaleAttributes.custom("max_mana");
+        if (attr == null || player == null) {
+            return ManaPool.DEFAULT_MAX;
+        }
+        double value = player.getAttributeValue(attr);
+        return Double.isFinite(value) && value > 0.0D ? value : ManaPool.DEFAULT_MAX;
+    }
+
+    /**
+     * 读 {@code mana_regeneration}（每秒）。{@code <=0} / 非有限 → {@code 0} = **不回蓝**。
+     *
+     * <p>这里**不给缺省回蓝**：回蓝速度是内容配置（装备 / 药水 / 套装下发 modifier），
+     * 凭空给一个「每秒 5 点」会让「没配回蓝」与「配了 5 点」在面板上完全一样（D18 同思路：数值只有一个来源）。
+     */
+    public static double manaRegenOf(ServerPlayer player) {
+        Holder<Attribute> attr = RedtaleAttributes.custom("mana_regeneration");
+        if (attr == null || player == null) {
+            return 0.0D;
+        }
+        double value = player.getAttributeValue(attr);
+        return Double.isFinite(value) && value > 0.0D ? value : 0.0D;
+    }
+
+    /** 读 {@code mana_cost_reduction}（与 {@code cooldown_reduction} 分轴）；负数 / 非有限归零，上限 0.9 在 {@link ManaPool#effectiveCost}。 */
+    public static double manaCostReduction(ServerPlayer player) {
+        Holder<Attribute> attr = RedtaleAttributes.custom("mana_cost_reduction");
+        if (attr == null || player == null) {
+            return 0.0D;
+        }
+        double value = player.getAttributeValue(attr);
+        return Double.isFinite(value) && value > 0.0D ? value : 0.0D;
+    }
+
+    /**
+     * 把属性上限同步进池（装等变了上限就变）。只在真的变了才写，避免每 tick 建一堆等值记录。
+     *
+     * <p>抬高上限**不补蓝**（T-0029 验收口径：{@code setMax} 只夹取当前值）—— 换装瞬间白送一管蓝
+     * 等于「脱穿装备回蓝」，那是刷子不是玩法。
+     */
+    public void syncMax(ServerPlayer player) {
+        if (player == null) {
+            return;
+        }
+        double want = maxManaOf(player);
+        if (Math.abs(want - mana.max(player.getUUID())) > 1.0e-6D) {
+            mana.setMax(player.getUUID(), want);
+        }
+    }
+
+    /**
+     * 每 tick 调（{@code GameHooks#onPlayerTick}）：同步上限 + 按属性回蓝。
+     *
+     * <p>用 {@code ticks = 1} 而不是每 20 tick 一次 {@code ticks = 20}：小数余额留在池里，
+     * 「每秒 0.5 蓝」这种配置才不会因为取整永远回 0（T-0029 行为 5 的同一条纪律）。
+     *
+     * @return 本 tick 实际回复量（0 表示满蓝 / 没配回蓝）
+     */
+    public double tickMana(ServerPlayer player) {
+        if (player == null) {
+            return 0.0D;
+        }
+        syncMax(player);
+        return mana.regen(player.getUUID(), manaRegenOf(player), 1L);
+    }
+
+    /** {@code 法力 42.0/100.0}（一位小数的观测面，不参与结算）。 */
+    public String manaText(ServerPlayer player) {
+        if (player == null) {
+            return "法力 -";
+        }
+        return String.format(java.util.Locale.ROOT, "法力 %.1f/%.1f", mana.current(player.getUUID()), mana.max(player.getUUID()));
+    }
+
+    /**
+     * 法力不够的文案（SKILLS §6 写死便于 grep）：{@code 法力不足：需要 <cost>，当前 <cur>/<max>}。
+     * {@code cost} 是**减免后**的实际消耗（与 {@link ManaPool#spend} 同一口径），别在这里再算一遍公式。
+     */
+    public String noManaText(ServerPlayer player, double rawCost) {
+        if (player == null) {
+            return "法力不足";
+        }
+        double cost = ManaPool.effectiveCost(rawCost, manaCostReduction(player));
+        return String.format(java.util.Locale.ROOT, "法力不足：需要 %.1f，当前 %s", cost, manaText(player));
     }
 }

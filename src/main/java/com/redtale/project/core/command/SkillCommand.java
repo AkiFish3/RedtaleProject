@@ -58,7 +58,20 @@ public final class SkillCommand {
                                 .executes(ctx -> info(ctx, StringArgumentType.getString(ctx, "id")))))
                 .then(Commands.literal("use")
                         .then(Commands.argument("content", StringArgumentType.string())
-                                .executes(ctx -> useProbe(ctx, StringArgumentType.getString(ctx, "content")))));
+                                .executes(ctx -> useProbe(ctx, StringArgumentType.getString(ctx, "content")))))
+                .then(Commands.literal("mana")
+                        .executes(SkillCommand::mana)
+                        .then(Commands.literal("set")
+                                .then(Commands.argument("current", com.mojang.brigadier.arguments.DoubleArgumentType.doubleArg())
+                                        .executes(ctx -> manaSet(ctx,
+                                                com.mojang.brigadier.arguments.DoubleArgumentType.getDouble(ctx, "current"), null))
+                                        .then(Commands.argument("max", com.mojang.brigadier.arguments.DoubleArgumentType.doubleArg(0.0D))
+                                                .executes(ctx -> manaSet(ctx,
+                                                        com.mojang.brigadier.arguments.DoubleArgumentType.getDouble(ctx, "current"),
+                                                        com.mojang.brigadier.arguments.DoubleArgumentType.getDouble(ctx, "max"))))))
+                        .then(Commands.literal("probe")
+                                .then(Commands.argument("id", StringArgumentType.string())
+                                        .executes(ctx -> manaProbe(ctx, StringArgumentType.getString(ctx, "id"))))));
     }
 
     /** K1：技能快照逐条打印。行尾给 {@code source} 便于对「改的那份文件生效了没」。 */
@@ -75,6 +88,7 @@ public final class SkillCommand {
         for (SkillSpec.Definition def : all.values()) {
             String line = "  " + def.id() + " · " + def.name()
                     + " · 冷却 " + def.cooldownTicks() + " tick"
+                    + " · 法力 " + com.redtale.project.core.attr.AttributeBreakdown.num(def.manaCost())
                     + " · conditions " + def.conditions().size()
                     + " · effects " + def.effects().size()
                     + " · " + def.source();
@@ -97,7 +111,14 @@ public final class SkillCommand {
             src.sendFailure(Component.literal("[redtale] 这条命令要玩家执行（控制台没有 UUID，冷却记不住）"));
             return 0;
         }
-        SkillEngine.Result result = RedtaleCore.get().skillEngine().cast(player, skillId);
+        SkillEngine engine = RedtaleCore.get().skillEngine();
+        SkillEngine.Result result = engine.cast(player, skillId);
+        if (result.status() == SkillEngine.Status.NO_MANA) {
+            SkillSpec.Definition def = RedtaleCore.get().skills().get(result.skillId());
+            double raw = def == null ? 0.0D : def.manaCost();
+            src.sendFailure(Component.literal("[redtale] " + engine.noManaText(player, raw) + "（这条技能没放出去，冷却未记）"));
+            return 0;
+        }
         return report(src, result, null);
     }
 
@@ -361,7 +382,9 @@ public final class SkillCommand {
             return 0;
         }
         src.sendSuccess(() -> Component.literal("[redtale] 技能 " + def.id() + " · " + def.name()
-                + " · 冷却 " + def.cooldownTicks() + " tick · 图标 " + def.icon()), false);
+                + " · 冷却 " + def.cooldownTicks() + " tick"
+                + " · 法力 " + com.redtale.project.core.attr.AttributeBreakdown.num(def.manaCost())
+                + " · 图标 " + def.icon()), false);
         src.sendSuccess(() -> Component.literal("  来源 " + def.source()), false);
 
         int missing = 0;
@@ -438,8 +461,217 @@ public final class SkillCommand {
         return left <= 0L ? 1 : 0;
     }
 
-    /** 统一的 Result → 文案；{@code dealt != null} 时追打一行掉血（探测用）。 */
-    private static int report(CommandSourceStack src, SkillEngine.Result result, Double dealt) {
+    /**
+     * {@code /redtale skill mana} —— 自己那管蓝（M5 收口，R35）。只读。
+     *
+     * <p>三个数分开打，因为它们是三个来源：上限与回蓝来自属性面板（装备/药水/套装下发），
+     * 当前值来自法力池的运行期账。合成一个百分比看不出「是上限没接还是回蓝没配」。
+     */
+    static int mana(CommandContext<CommandSourceStack> ctx) {
+        CommandSourceStack src = ctx.getSource();
+        ServerPlayer player;
+        try {
+            player = src.getPlayerOrException();
+        } catch (Exception e) {
+            src.sendFailure(Component.literal("[redtale] 这条命令要玩家执行（法力账按 UUID 记）"));
+            return 0;
+        }
+        SkillEngine engine = RedtaleCore.get().skillEngine();
+        engine.syncMax(player);
+        String text = engine.manaText(player)
+                + String.format(java.util.Locale.ROOT, " · 回蓝 %.2f/秒 · 消耗降低 %.0f%% · 在册 %d 人",
+                        SkillEngine.manaRegenOf(player), SkillEngine.manaCostReduction(player) * 100.0D,
+                        engine.mana().tracked());
+        src.sendSuccess(() -> Component.literal("[redtale] " + text), false);
+        return 1;
+    }
+
+    /**
+     * {@code /redtale skill mana set <current> [max]} —— 运维写回（调试 / 补蓝）。
+     * {@code max} 省略时沿用当前上限（没记录过即 {@code ManaPool.DEFAULT_MAX}）。
+     */
+    static int manaSet(CommandContext<CommandSourceStack> ctx, double current, Double max) {
+        CommandSourceStack src = ctx.getSource();
+        ServerPlayer player;
+        try {
+            player = src.getPlayerOrException();
+        } catch (Exception e) {
+            src.sendFailure(Component.literal("[redtale] 这条命令要玩家执行"));
+            return 0;
+        }
+        SkillEngine engine = RedtaleCore.get().skillEngine();
+        double cap = max == null ? engine.mana().max(player.getUUID()) : max;
+        engine.mana().set(player.getUUID(), current, cap);
+        src.sendSuccess(() -> Component.literal("[redtale] 已写回 " + engine.manaText(player)), false);
+        return 1;
+    }
+
+    /**
+     * 法力链路的无客户端探针（R35）：FakePlayer 连放同一技能，五组各自只看一个数。
+     *
+     * <p>分组理由（每组只改一个变量，否则读数没法归因）：
+     * <ol>
+     *   <li><b>A 满蓝</b>：扣蓝应该精确等于 {@code mana_cost}，且 {@code Status = CAST}</li>
+     *   <li><b>B 再放一次</b>：蓝继续扣（证明账是累减的，不是每次重置）</li>
+     *   <li><b>C 蓝不够</b>：{@code Status = NO_MANA}，**蓝一位不变、冷却没记**（冷却表里该技能仍就绪）</li>
+     *   <li><b>D 消耗降低 +50%</b>：同样 {@code mana_cost} 只扣一半（走属性面板，与 {@code cooldown_reduction} 分轴）</li>
+     *   <li><b>E 回蓝</b>：{@code mana_regeneration} 20/秒 → 20 tick 内回到 20 点（小数累积不丢）</li>
+     * </ol>
+     * 用的是技能定义里的**真实** {@code mana_cost}，探针不自己写死数值。
+     */
+    static int manaProbe(CommandContext<CommandSourceStack> ctx, String skillId) {
+        CommandSourceStack src = ctx.getSource();
+        if (src.getServer() == null) {
+            src.sendFailure(Component.literal("[redtale] 没有服务端上下文"));
+            return 0;
+        }
+        SkillSpec.Definition def = RedtaleCore.get().skills().get(skillId);
+        if (def == null) {
+            src.sendFailure(Component.literal("[redtale] 没有技能 " + skillId));
+            return 0;
+        }
+        if (def.manaCost() <= 0.0D) {
+            src.sendFailure(Component.literal("[redtale] 技能 " + skillId + " 的 mana_cost = 0，验不出扣蓝（换一条带 mana_cost 的技能）"));
+            return 0;
+        }
+        var level = src.getServer().overworld();
+        var fp = net.neoforged.neoforge.common.util.FakePlayerFactory.getMinecraft(level);
+        SkillEngine engine = RedtaleCore.get().skillEngine();
+        var pool = engine.mana();
+        var uuid = fp.getUUID();
+        double cost = def.manaCost();
+
+        var reductHolder = com.redtale.project.core.attr.RedtaleAttributes.custom("mana_cost_reduction");
+        var regenHolder = com.redtale.project.core.attr.RedtaleAttributes.custom("mana_regeneration");
+        var reductInst = reductHolder == null ? null : fp.getAttribute(reductHolder);
+        var regenInst = regenHolder == null ? null : fp.getAttribute(regenHolder);
+        net.minecraft.resources.ResourceLocation probeId =
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("redtale_project", "probe/mana");
+
+        int rc = 0;
+        try {
+            src.sendSuccess(() -> Component.literal("[redtale] skill mana probe " + skillId
+                    + "（mana_cost = " + com.redtale.project.core.attr.AttributeBreakdown.num(cost) + "）："), false);
+
+            // A 组：满蓝
+            pool.clear(uuid);
+            engine.cooldowns().clear(uuid);
+            double beforeA = pool.current(uuid);
+            SkillEngine.Result a = engine.cast(fp, skillId);
+            double afterA = pool.current(uuid);
+            src.sendSuccess(() -> Component.literal("  A 组 满蓝 " + com.redtale.project.core.attr.AttributeBreakdown.num(beforeA)
+                    + " → " + com.redtale.project.core.attr.AttributeBreakdown.num(afterA)
+                    + "（扣 " + com.redtale.project.core.attr.AttributeBreakdown.num(beforeA - afterA)
+                    + "，状态 " + a.status() + "）"), false);
+            boolean aOk = a.cast() && Math.abs((beforeA - afterA) - cost) < 1.0e-6D;
+
+            // B 组：连放第二次（冷却先清，只验扣蓝）
+            engine.cooldowns().clear(uuid);
+            double beforeB = pool.current(uuid);
+            SkillEngine.Result b = engine.cast(fp, skillId);
+            double afterB = pool.current(uuid);
+            src.sendSuccess(() -> Component.literal("  B 组 再放一次 " + com.redtale.project.core.attr.AttributeBreakdown.num(beforeB)
+                    + " → " + com.redtale.project.core.attr.AttributeBreakdown.num(afterB)
+                    + "（状态 " + b.status() + "）"), false);
+            boolean bOk = b.cast() && Math.abs((beforeB - afterB) - cost) < 1.0e-6D;
+
+            // C 组：把蓝压到不够
+            pool.set(uuid, Math.max(0.0D, cost - 1.0D), pool.max(uuid));
+            engine.cooldowns().clear(uuid);
+            double beforeC = pool.current(uuid);
+            SkillEngine.Result c = engine.cast(fp, skillId);
+            double afterC = pool.current(uuid);
+            boolean coolFree = engine.cooldowns().ready(uuid, skillId,
+                    level.getGameTime());
+            src.sendSuccess(() -> Component.literal("  C 组 蓝不够 " + com.redtale.project.core.attr.AttributeBreakdown.num(beforeC)
+                    + " → " + com.redtale.project.core.attr.AttributeBreakdown.num(afterC)
+                    + "（状态 " + c.status() + "，冷却就绪 " + coolFree + "）"), false);
+            boolean cOk = c.status() == SkillEngine.Status.NO_MANA
+                    && Math.abs(afterC - beforeC) < 1.0e-9D && coolFree;
+
+            // D 组：消耗降低 +50%
+            boolean dOk = false;
+            if (reductInst != null) {
+                reductInst.addTransientModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(
+                        probeId, 0.5D, net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_VALUE));
+                try {
+                    pool.set(uuid, pool.max(uuid), pool.max(uuid));
+                    engine.cooldowns().clear(uuid);
+                    double beforeD = pool.current(uuid);
+                    SkillEngine.Result d = engine.cast(fp, skillId);
+                    double afterD = pool.current(uuid);
+                    double expectD = Math.max(1.0D, Math.round(cost * 0.5D));
+                    src.sendSuccess(() -> Component.literal("  D 组 消耗降低 50% " + com.redtale.project.core.attr.AttributeBreakdown.num(beforeD)
+                            + " → " + com.redtale.project.core.attr.AttributeBreakdown.num(afterD)
+                            + "（应扣 " + com.redtale.project.core.attr.AttributeBreakdown.num(expectD)
+                            + "，状态 " + d.status() + "）"), false);
+                    dOk = d.cast() && Math.abs((beforeD - afterD) - expectD) < 1.0e-6D;
+                } finally {
+                    reductInst.removeModifier(probeId);
+                }
+            }
+
+            // E 组：回蓝（20/秒 → 20 tick 回 20）
+            boolean eOk = false;
+            if (regenInst != null) {
+                regenInst.addTransientModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(
+                        probeId, 20.0D, net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_VALUE));
+                try {
+                    pool.set(uuid, 0.0D, pool.max(uuid));
+                    double sum = 0.0D;
+                    for (int i = 0; i < 20; i++) {
+                        sum += engine.tickMana(fp);
+                    }
+                    double now = pool.current(uuid);
+                    double total = sum;
+                    src.sendSuccess(() -> Component.literal("  E 组 回蓝 20/秒 × 20 tick → 累计 "
+                            + com.redtale.project.core.attr.AttributeBreakdown.num(total)
+                            + "，余额 " + com.redtale.project.core.attr.AttributeBreakdown.num(now)
+                            + "（应 20.0）"), false);
+                    eOk = Math.abs(now - 20.0D) < 1.0e-6D;
+                } finally {
+                    regenInst.removeModifier(probeId);
+                }
+            }
+
+            // F 组：上限跟属性（max_mana 绝对值 150 → 150；属性 0 = 没配 → 默认 100，见 §13.38 R35-a），且抬上限不补蓝
+            boolean fOk = false;
+            var maxHolder = com.redtale.project.core.attr.RedtaleAttributes.custom("max_mana");
+            var maxInst = maxHolder == null ? null : fp.getAttribute(maxHolder);
+            if (maxInst != null) {
+                maxInst.addTransientModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(
+                        probeId, 150.0D, net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_VALUE));
+                try {
+                    double curBefore = pool.current(uuid);
+                    engine.syncMax(fp);
+                    double capAfter = pool.max(uuid);
+                    double curAfter = pool.current(uuid);
+                    src.sendSuccess(() -> Component.literal("  F 组 max_mana =150 → 上限 "
+                            + com.redtale.project.core.attr.AttributeBreakdown.num(capAfter)
+                            + "（应 150；0 才是默认 100），当前 " + com.redtale.project.core.attr.AttributeBreakdown.num(curBefore)
+                            + " → " + com.redtale.project.core.attr.AttributeBreakdown.num(curAfter) + "（抬上限不补蓝）"), false);
+                    fOk = Math.abs(capAfter - 150.0D) < 1.0e-6D
+                            && Math.abs(curAfter - Math.min(curBefore, capAfter)) < 1.0e-6D;
+                } finally {
+                    maxInst.removeModifier(probeId);
+                    engine.syncMax(fp);
+                }
+            }
+
+            final boolean allOk = aOk && bOk && cOk && dOk && eOk && fOk;
+            final boolean fA = aOk, fB = bOk, fC = cOk, fD = dOk, fE = eOk, fF = fOk;
+            src.sendSuccess(() -> Component.literal("  " + (allOk
+                    ? "✓ 六组全过（扣蓝 / 累减 / 不足不扣 + 不记冷却 / 减免 / 回蓝 / 上限跟属性且不补蓝）"
+                    : "✗ A=" + fA + " B=" + fB + " C=" + fC + " D=" + fD + " E=" + fE + " F=" + fF)), false);
+            rc = allOk ? 1 : 0;
+        } finally {
+            pool.clear(uuid);
+            engine.cooldowns().clear(uuid);
+        }
+        return rc;
+    }
+
+    /** 统一的 Result → 文案；{@code dealt != null} 时追打一行掉血（探测用）。 */    private static int report(CommandSourceStack src, SkillEngine.Result result, Double dealt) {
         String line;
         int rc;
         switch (result.status()) {
@@ -461,6 +693,10 @@ public final class SkillCommand {
             }
             case NO_PLAYER -> {
                 line = "[redtale] 没有施法者";
+                rc = 0;
+            }
+            case NO_MANA -> {
+                line = "[redtale] 技能 " + result.skillId() + " 法力不足，一条 effect 都没跑（冷却未记）";
                 rc = 0;
             }
             default -> {
