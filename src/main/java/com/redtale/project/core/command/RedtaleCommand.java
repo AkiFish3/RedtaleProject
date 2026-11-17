@@ -124,6 +124,8 @@ public final class RedtaleCommand {
                 .then(socketNode())
                 // /redtale set [list|sync|info <id>]：套装件数与下发可见性（M3 第 6 步）
                 .then(SetCommand.node())
+                .then(MobCheckCommand.node())
+                .then(MobSpawnCommand.node())
                 // /redtale set check（套装引用与可达性校验，T-0016；同包无需 import；Brigadier 按同名 set 节点合并）
                 .then(SetCheckCommand.node())
                 // /redtale enchant list（已落盘附魔只读清单，T-0019；同包无需 import）
