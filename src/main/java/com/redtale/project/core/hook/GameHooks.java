@@ -61,6 +61,11 @@ public final class GameHooks {
         LOG.info("附魔实体效果注册：{} 存在={}（表内共 {} 条）",
                 enchantFx, present,
                 net.minecraft.core.registries.BuiltInRegistries.ENCHANTMENT_ENTITY_EFFECT_TYPE.size());
+        // M7 第三层（R43）：进度存档开局摸一次 —— 走 computeIfAbsent，等于证明 .dat 可读可建。
+        com.redtale.project.core.progression.ProgressStore progress =
+                com.redtale.project.core.progression.ProgressStore.get(event.getServer());
+        LOG.info("进度存档就绪：{} 名玩家（{}.dat）", progress.size(),
+                com.redtale.project.core.progression.ProgressStore.FILE_NAME);
     }
 
     @SubscribeEvent
