@@ -47,6 +47,9 @@ public final class GameHooks {
         // 只在 LivingDropsEvent / LivingExperienceDropEvent 上「追加」，不 clear 原版战利品（D15 只乘不覆盖）。
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(
                 new com.redtale.project.mobs.MobDrops());
+        // M6 第三层（R48 / D26）：自然刷怪替换。挂 MobSpawnEvent.PositionCheck，命中则 FAIL + 下一 tick 补生成。
+        // 单例：开关与「已命中规则」计数要跨事件/命令共享。
+        com.redtale.project.mobs.SpawnReplacer.install();
     }
 
     @SubscribeEvent
@@ -115,6 +118,8 @@ public final class GameHooks {
         com.redtale.project.mobs.MobSkillCaster.tick(event.getServer());
         // M5-C 停 AI 定住（R34）：到点恢复。空闲时是一次 isEmpty 判断。
         com.redtale.project.core.script.builtin.StunEffect.tick();
+        // M6 第三层（R48）：把上一 tick 拦下的原版刷新补生成成自建怪（事件里同步生成会撞刷怪循环）。
+        com.redtale.project.mobs.SpawnReplacer.get().tick(event.getServer());
     }
 
     /** 重启残留兜底：上次关服时还定着的怪，入世即解除（否则永久 NoAI）。 */

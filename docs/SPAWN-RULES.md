@@ -138,7 +138,7 @@ if (cap > 0 && count >= cap) → 跳过这条规则
 | 2 | `SpawnRuleSpec` L1 解析器（牌见 `TASKS.md` T-0042） | S8 |
 | 3 | `SpawnRegistry` L2 快照 + `RedtaleCore.spawnRules()` + `DEFAULT_FILES` + 默认一份 `spawn_rules/*.json5` | S7 |
 | 4 | `/redtale spawn list|check` 只读观测面 | S8 |
-| 5 | `SpawnReplacer` L3 挂 `PositionCheck` + 同 tick 延迟生成 | S7 |
+| 5 | `SpawnReplacer` L3 挂 `PositionCheck` + 下一 tick 延迟生成 | S7 ✅ R48 |
 | 6 | 真人验收（需玩家在线才会自然刷怪，R37-b） | S7 + Aki |
 
 ## 11. v1 可机器验的部分
@@ -147,3 +147,6 @@ if (cap > 0 && count >= cap) → 跳过这条规则
 - 解析器探针：坏 `id` / 空 `match` / `chance: 3` 夹成 1 且不告警 / `action: "x"` 告警并回落 `replace` / `priority` 同值稳定排序
 - 快照：`mob` 查不到 → 1 条 WARN 且规则仍在
 - 执行层只有测试服 —— 且**必须真人在线**才刷怪，「事件注册成功 + 开关日志」不等于验收通过（R37-b）
+- R48 起，无玩家在线也能验执行层：`/redtale spawn replace fire <实体> <x> <y> <z>` 造一个**真事件** POST 到
+  `NeoForge.EVENT_BUS`，返回 `DEFAULT`/`FAIL`/`SUCCEED`，下一 tick 看 `@e[type=...]` 与 scoreboard tag 是否落地。
+  它证明「监听器挂上了 + 决策对 + 补生成通」，**不**证明「原版真的会走到这里」——后者仍要真人在线（R48-e）
