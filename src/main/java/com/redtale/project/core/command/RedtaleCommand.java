@@ -132,6 +132,7 @@ public final class RedtaleCommand {
                 .then(EnchantListCommand.node())
                 // /redtale enchant obtain（三条可获取性 tag 只读对账，T-0023；同包无需 import）
                 .then(EnchantObtainCommand.node())
+                .then(DropListCommand.node())
                 // /redtale skill [list|cast|probe|cd]（M5-A 引擎观测面与 v1 触发入口；同包无需 import）
                 .then(SkillCommand.node()));
     }
