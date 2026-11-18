@@ -99,6 +99,11 @@ public final class TreeCommand {
                 .append(" · 节点 ").append(def.nodes().size())
                 .append("\n  职业：").append(classes(def.classes()))
                 .append(" · 来源 ").append(def.source());
+        // R56：「当前等级能拿多少点」只在该定义有玩家上下文时追加 —— 控制台输出逐字不变（T-0047 基线）
+        ServerPlayer viewer = src.getPlayer();
+        if (viewer != null) {
+            sb.append(levelLine(def, TreeService.levelOf(viewer)));
+        }
         for (var node : def.nodes().values()) {
             int[] pos = node.pos();
             sb.append("\n  节点 ").append(node.id()).append(" · ").append(node.name())
@@ -110,6 +115,16 @@ public final class TreeCommand {
         String text = sb.toString();
         src.sendSuccess(() -> Component.literal(text), false);
         return def.nodes().size();
+    }
+
+    /**
+     * 「当前等级能拿多少点」段（R56，PLAN §13.58 下一步第 2 条）：纯函数、零 MC 依赖，
+     * 上限一律走 {@link TreePoints#capFor}（R54-a 的唯一真相），不在这里重算 `points_per_level × level`。
+     * 控制台（无玩家）**不追加**这一行 —— T-0047 的 `info` 文案是验收基线，逐字不许变。
+     */
+    public static String levelLine(SkillTreeSpec.Definition def, int level) {
+        int cap = TreePoints.capFor(def.maxPoints(), def.pointsPerLevel(), level);
+        return "\n  当前等级 " + level + " · 可拿 " + cap + " 点";
     }
 
     // ---- 写面（M7 L5） ----
