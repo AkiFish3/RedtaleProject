@@ -3,7 +3,7 @@
 - 时间：2026-11-18 15:24–15:45
 - 卡板：T-0043 `[DONE]` → **VERIFIED**（3/3）；**派 T-0044**（`tools/check_enchants.py` 附魔配置起飞前对账）
 - 产物：`mobs/SpawnReplacer.java`（新建）+ `core/command/SpawnCommand.java`（`replace` 四个子命令）+ `GameHooks` 2 处接线
-- 数字：`build --offline` exit 0（jar **582322 B**）、`selftest` **78 PASS**、测试服起停 4 次全部干净（`Done 2.098 / 2.029 / 2.015s`），**已停服，25567/25577 无 LISTEN**
+- 数字：`build --offline` exit 0（jar **582343 B**）、`selftest` **78 PASS**、测试服起停 4 次全部干净（`Done 2.098 / 2.029 / 2.015s`），**已停服，25567/25577 无 LISTEN**
 
 ## 1. 做了什么
 
