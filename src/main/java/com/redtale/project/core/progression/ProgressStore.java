@@ -3,11 +3,13 @@ package com.redtale.project.core.progression;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.level.saveddata.SavedData;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -21,17 +23,22 @@ import java.util.UUID;
  * 契约：{@code docs/PROGRESSION.md} §7。**只存 {@code total_exp}，不存等级**（等级是派生值，§2）；
  * 主等级一份 + 每职业各一份，互不换算。纯数据层：不解析配置、不算曲线、不下发属性、不打日志。
  * <p>
- * 存档格式 v1（{@code version=1}）：
+ * 存档格式 v2（{@code version=2}，v1 可直接读）：
  * <pre>
- * { version: 1, players: [ { id: "&lt;uuid&gt;", main: &lt;long&gt;, jobs: { "&lt;jobId&gt;": &lt;long&gt; } } ] }
+ * { version: 2,
+ *   players: [ { id: "&lt;uuid&gt;", main: &lt;long&gt;, jobs: { "&lt;jobId&gt;": &lt;long&gt; },
+ *                trees: { "&lt;treeId&gt;": [ "&lt;nodeId&gt;", ... ] } } ] }
  * </pre>
  * UUID 用字符串存（不落 int 数组，跨版本最稳）；坏条目整条跳过，不抛、不删别人。
+ * <p>
+ * v2 增量 = {@code trees}（树 id → 已点节点；节点 id 只在树内唯一，所以必须分桶）。**存档层零语义**：节点存在与否、前置够不够、点数超没超，
+ * 全部由 {@code TreePoints} / 上层的判定负责；这里只如实存、如实取（R51-a）。
  */
 public final class ProgressStore extends SavedData {
     /** 存档文件名（不含 {@code .dat}）。 */
     public static final String FILE_NAME = "redtale_project_progress";
-    /** 存档格式版本；改结构时 +1 并在 {@link #load} 里加迁移分支。 */
-    public static final int VERSION = 1;
+    /** 存档格式版本；改结构时 +1 并在 {@link #load} 里加迁移分支。v2 加 {@code nodes}。 */
+    public static final int VERSION = 2;
     /** 累计经验硬顶（D16 异常保护：负归零、超顶截断，不做平衡钳制）。 */
     public static final long MAX_TOTAL_EXP = 1_000_000_000_000_000L;
 
@@ -40,6 +47,7 @@ public final class ProgressStore extends SavedData {
     private static final String KEY_ID = "id";
     private static final String KEY_MAIN = "main";
     private static final String KEY_JOBS = "jobs";
+    private static final String KEY_TREES = "trees";
 
     /** 一个玩家的两份累加器。 */
     private final Map<UUID, Player> players = new LinkedHashMap<>();
@@ -90,6 +98,93 @@ public final class ProgressStore extends SavedData {
     /** 有记录的玩家数。 */
     public int size() {
         return players.size();
+    }
+
+    // ---- 技能树已点节点（v2；按树分桶，存档层零语义） ----
+
+    /** 树 id → 该树已点节点（不可变副本，保写入顺序与树插入序）；没有记录 → 空表。 */
+    public Map<String, Set<String>> trees(UUID id) {
+        Player p = id == null ? null : players.get(id);
+        if (p == null || p.trees.isEmpty()) {
+            return Map.of();
+        }
+        Map<String, Set<String>> out = new LinkedHashMap<>();
+        for (Map.Entry<String, Set<String>> e : p.trees.entrySet()) {
+            out.put(e.getKey(), Collections.unmodifiableSet(new LinkedHashSet<>(e.getValue())));
+        }
+        return Collections.unmodifiableMap(out);
+    }
+
+    /** 某树已点节点（不可变副本，保写入顺序）；没有记录 → 空集。 */
+    public Set<String> nodes(UUID id, String treeId) {
+        Player p = id == null ? null : players.get(id);
+        Set<String> set = (p == null || treeId == null) ? null : p.trees.get(treeId);
+        return set == null ? Set.of() : Collections.unmodifiableSet(new LinkedHashSet<>(set));
+    }
+
+    /** 某树某节点是否已点。 */
+    public boolean hasNode(UUID id, String treeId, String nodeId) {
+        Player p = id == null ? null : players.get(id);
+        Set<String> set = (p == null || treeId == null) ? null : p.trees.get(treeId);
+        return set != null && nodeId != null && set.contains(nodeId);
+    }
+
+    /**
+     * 追加一个已点节点；已存在 / 空 id → 返回 {@code false} 且不改存档。
+     * <p><b>不做任何语义校验</b>（节点存在性 / 前置 / 点数一律归上层）。
+     */
+    public boolean addNode(UUID id, String treeId, String nodeId) {
+        if (id == null || treeId == null || treeId.isEmpty() || nodeId == null || nodeId.isEmpty()) {
+            return false;
+        }
+        Set<String> set = players.computeIfAbsent(id, k -> new Player())
+                .trees.computeIfAbsent(treeId, k -> new LinkedHashSet<>());
+        if (!set.add(nodeId)) {
+            return false;
+        }
+        setDirty();
+        return true;
+    }
+
+    /** 移除一个已点节点；本来没有 → {@code false} 且不标脏。空树桶不删（保住树的插入序）。 */
+    public boolean removeNode(UUID id, String treeId, String nodeId) {
+        Player p = id == null ? null : players.get(id);
+        Set<String> set = (p == null || treeId == null) ? null : p.trees.get(treeId);
+        if (set == null || nodeId == null || !set.remove(nodeId)) {
+            return false;
+        }
+        setDirty();
+        return true;
+    }
+
+    /**
+     * 整段替换某树的已点节点（洗点 / 迁移用）：{@code null} 或空集合 = 清空该树。
+     * 保入参顺序、去重、丢弃 {@code null} 与空串。
+     */
+    public void setNodes(UUID id, String treeId, Collection<String> nodeIds) {
+        if (id == null || treeId == null || treeId.isEmpty()) {
+            return;
+        }
+        Set<String> next = new LinkedHashSet<>();
+        if (nodeIds != null) {
+            for (String n : nodeIds) {
+                if (n != null && !n.isEmpty()) {
+                    next.add(n);
+                }
+            }
+        }
+        players.computeIfAbsent(id, k -> new Player()).trees.put(treeId, next);
+        setDirty();
+    }
+
+    /** 清掉某棵树（洗点）；本来没有 → {@code false}。 */
+    public boolean clearTree(UUID id, String treeId) {
+        Player p = id == null ? null : players.get(id);
+        if (p == null || treeId == null || p.trees.remove(treeId) == null) {
+            return false;
+        }
+        setDirty();
+        return true;
     }
 
     /** 有记录的玩家 UUID（不可变副本，保插入顺序）。 */
@@ -167,6 +262,23 @@ public final class ProgressStore extends SavedData {
                     p.jobs.put(jobId, clamp(jobs.getLong(jobId)));
                 }
             }
+            if (row.contains(KEY_TREES, Tag.TAG_COMPOUND)) {
+                CompoundTag trees = row.getCompound(KEY_TREES);
+                for (String treeId : trees.getAllKeys()) {
+                    if (treeId.isEmpty() || !trees.contains(treeId, Tag.TAG_LIST)) {
+                        continue;
+                    }
+                    Set<String> nodes = new LinkedHashSet<>();
+                    ListTag nodeList = trees.getList(treeId, Tag.TAG_STRING);
+                    for (int k = 0; k < nodeList.size(); k++) {
+                        String n = nodeList.getString(k);
+                        if (n != null && !n.isEmpty()) {
+                            nodes.add(n);
+                        }
+                    }
+                    p.trees.put(treeId, nodes);
+                }
+            }
             store.players.put(id, p);
         }
         return store;
@@ -186,6 +298,15 @@ public final class ProgressStore extends SavedData {
                 jobs.putLong(j.getKey(), j.getValue());
             }
             row.put(KEY_JOBS, jobs);
+            CompoundTag trees = new CompoundTag();
+            for (Map.Entry<String, Set<String>> t : e.getValue().trees.entrySet()) {
+                ListTag nodes = new ListTag();
+                for (String n : t.getValue()) {
+                    nodes.add(StringTag.valueOf(n));
+                }
+                trees.put(t.getKey(), nodes);
+            }
+            row.put(KEY_TREES, trees);
             list.add(row);
         }
         root.put(KEY_PLAYERS, list);
@@ -216,5 +337,7 @@ public final class ProgressStore extends SavedData {
     private static final class Player {
         private long main;
         private final Map<String, Long> jobs = new LinkedHashMap<>();
+        /** v2：树 id → 已点节点（都保写入顺序）。节点 id 只在树内唯一，必须分桶（R51-a）。 */
+        private final Map<String, Set<String>> trees = new LinkedHashMap<>();
     }
 }
