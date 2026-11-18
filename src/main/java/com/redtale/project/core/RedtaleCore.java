@@ -252,6 +252,10 @@ public final class RedtaleCore {
                     com.redtale.project.items.SetBonus.apply(p);
                 }
             }
+            // 等级/职业跟着配置换代：曲线与按级属性立即生效，在线玩家重算（total_exp 不动，PROGRESSION §7）
+            if (srv != null) {
+                LOG.info("进度重算：{} 名在线玩家", com.redtale.project.core.progression.ProgressService.applyAll(srv));
+            }
 
             ScriptEngine.Outcome outcome = engine.load(ConfigStore.ofDirectory(all, "scripts"));
             config.writeReadme(registries);

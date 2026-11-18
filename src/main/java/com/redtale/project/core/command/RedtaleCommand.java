@@ -135,6 +135,8 @@ public final class RedtaleCommand {
                 .then(DropListCommand.node())
                 // /redtale progress [status|add|probe]（M7 第三层存档观测面，R43；同包无需 import）
                 .then(ProgressCommand.node())
+                .then(LevelCommand.node())
+                .then(ExpCommand.node())
                 // /redtale skill [list|cast|probe|cd]（M5-A 引擎观测面与 v1 触发入口；同包无需 import）
                 .then(SkillCommand.node()));
     }

@@ -79,6 +79,8 @@ public final class GameHooks {
             RedtaleCore.get().fire("player_join", ScriptContext.ofPlayer(player));
             // 登录先算一次，避免「刚进服 5 tick 内」读到上一世的残留
             AttackSpeedApplier.apply(player, RedtaleCore.get().attackSpeedRules());
+            // 等级/职业：登入按当前曲线重下发（改过曲线后重登即按新曲线，PROGRESSION §7）
+            com.redtale.project.core.progression.ProgressService.onLogin(player);
         }
     }
 

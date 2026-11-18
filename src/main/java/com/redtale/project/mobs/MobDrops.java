@@ -64,6 +64,14 @@ public final class MobDrops {
         }
         if (rolled.xp() > 0) {
             ExperienceOrb.award(level, entity.position(), Math.min(1_000_000, rolled.xp()));
+            // 等级/职业（M7 L4）：**同一处**再记一份 total_exp（§5：不新建第二份经验表，也不挂第二个事件）。
+            // 倍率 mob_exp_multiplier 在 ProgressService 内部只作用于 kill，经验球本身是原版口径；
+            // 玩家击杀时原版那份经验照旧另发 —— 与掉落物「表在原版之上加」同一语义（R41-d）。
+            if (level.getServer() != null && event.getSource() != null
+                    && event.getSource().getEntity() instanceof net.minecraft.server.level.ServerPlayer killer) {
+                com.redtale.project.core.progression.ProgressService.award(level.getServer(), killer,
+                        rolled.xp(), com.redtale.project.core.progression.ProgressService.SRC_KILL);
+            }
         }
     }
 
