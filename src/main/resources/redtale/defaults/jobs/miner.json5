@@ -1,0 +1,17 @@
+// 职业示范（M7 · R44）：poly 曲线 + 一条自建属性 + 只吃击杀经验。
+// 多职业并存（一个玩家可同时持有全部已定义职业，各存各自 total_exp），不做转职。
+// `exp_sources`：显式 [] 是合法的（该职业不接收经验），不写才回落 ["kill"]。
+{
+  id: "redtale_project:miner",
+  name: "矿工",
+  max_level: 50,
+  curve: {
+    mode: "polynomial",
+    base: 80.0,
+    exponent: 1.4,
+  },
+  attributes: {
+    "redtale_project:mining_efficiency": 0.02,
+  },
+  exp_sources: ["kill"],
+}

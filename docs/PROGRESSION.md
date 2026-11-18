@@ -118,7 +118,7 @@
 | 层 | 产物 | 谁做 | 为什么这个顺序 |
 |---|---|---|---|
 | L1 | `core/progression/ExpCurve`（纯函数，零 MC import） | S8（T-0038） | 曲线是唯一需要精确数学的部分，先独立可测 |
-| L2 | `core/progression/ProgressSpec`（`levels/` + `jobs/` 解析 + 快照 `ProgressRegistry`） | S8（后续卡） | 契约已由 §3/§4 写死 |
+| L2 | `core/progression/ProgressSpec`（解析，T-0039 ✅）+ `ProgressRegistry` 快照（80 条表校验 + 键归一 + 跨级去重，R44 ✅）+ `ProgressRules`（`progression.json5`，R44 ✅） | S8 解析 / S7 快照 | 契约已由 §3/§4 写死；校验不能在解析层（R44-a） |
 | L3 | `core/progression/ProgressStore`（`SavedData`，读/写/重登） | S7 | 涉及 world 生命周期 |
 | L4 | `core/progression/ProgressService`（② ③ ④ ⑤ 全链 + 属性下发） | S7 | 跨 3 个文件 + 判定取舍 |
 | L5 | `/redtale level [info|add|set|top]` + 脚本原语 `grant_exp` | S7 | 命令面在服务落地之后（R36-a 同一条：先快照后命令） |

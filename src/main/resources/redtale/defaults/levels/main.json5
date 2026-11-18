@@ -1,0 +1,18 @@
+// 主等级示范（M7 · R44）：一条 geometric 曲线，按级下发两条原版属性。
+// 这份只喂 ProgressSpec（解析）+ ProgressRegistry（80 条表校验 + 归一）两层；
+// 经验累加与属性下发在 ProgressService（L4），命令面在 `/redtale level`（T-0040）。
+// attributes 的键走 AttributeSpecs.resolve 的宽松解析，但归一后一律存全名。
+{
+  id: "redtale_project:main",
+  name: "主等级",
+  max_level: 100,
+  curve: {
+    mode: "geometric",
+    base: 100.0,
+    growth: 1.12,
+  },
+  attributes: {
+    "minecraft:generic.max_health": 0.5,
+    "minecraft:generic.attack_damage": 0.1,
+  },
+}
