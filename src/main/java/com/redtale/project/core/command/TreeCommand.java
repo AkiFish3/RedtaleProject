@@ -10,6 +10,7 @@ import com.redtale.project.core.progression.ProgressStore;
 import com.redtale.project.core.progression.SkillTreeSpec;
 import com.redtale.project.core.progression.TreePoints;
 import com.redtale.project.core.progression.TreeService;
+import com.redtale.project.core.progression.TreeUnlocks;
 import java.util.List;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -54,6 +55,10 @@ public final class TreeCommand {
                 .then(Commands.literal("respec")
                         .then(Commands.argument("tree", StringArgumentType.string())
                                 .executes(ctx -> respec(ctx.getSource(),
+                                        StringArgumentType.getString(ctx, "tree")))))
+                .then(Commands.literal("skills")
+                        .then(Commands.argument("tree", StringArgumentType.string())
+                                .executes(ctx -> skills(ctx.getSource(),
                                         StringArgumentType.getString(ctx, "tree")))))
                 .then(Commands.literal("probe").executes(TreeCommand::probe));
     }
@@ -125,6 +130,69 @@ public final class TreeCommand {
     public static String levelLine(SkillTreeSpec.Definition def, int level) {
         int cap = TreePoints.capFor(def.maxPoints(), def.pointsPerLevel(), level);
         return "\n  当前等级 " + level + " · 可拿 " + cap + " 点";
+    }
+
+    // ---- 解锁技能观测面（R58） ----
+
+    private static int skills(CommandSourceStack src, String rawTree) {
+        SkillTreeSpec.Definition def = TreeService.resolve(rawTree);
+        if (def == null) {
+            var trees = RedtaleCore.get().skillTrees();
+            src.sendFailure(Component.literal("[redtale] 没有技能树 " + trim(rawTree) + "（现有 "
+                    + trees.size() + " 棵：" + String.join(",", trees.sortedIds()) + "）"));
+            return 0;
+        }
+        String text = skillsText(def, src.getPlayer());
+        src.sendSuccess(() -> Component.literal(text), false);
+        return declaredSkills(def).size();
+    }
+
+    /**
+     * `tree skills` 的全文（R58，纯函数：只读 def / 玩家已点节点，不写任何状态）。
+     *
+     * <p>两个分支口径写死：
+     * <ul>
+     *   <li>{@code viewer == null}（控制台）→ 只报**声明集**，一行 {@code （控制台不读玩家存档）}，
+     *       不猜「大概解锁了什么」</li>
+     *   <li>有玩家 → 报声明集 + 已解锁条数，每条带 {@code · 已解锁} / {@code · 未解锁}；
+     *       标注走 {@link TreeService#isUnlocked}（全名/裸名同一条，R57-d）</li>
+     * </ul>
+     * 声明集的顺序 = {@link TreeUnlocks#unlocked} 的定义序（= {@code def.nodes()} 迭代序）。
+     */
+    public static String skillsText(SkillTreeSpec.Definition def, ServerPlayer viewer) {
+        List<String> declared = declaredSkills(def);
+        StringBuilder sb = new StringBuilder("[redtale] ").append(def.id())
+                .append(" · 声明技能 ").append(declared.size()).append(" 条");
+        if (viewer == null) {
+            sb.append("（控制台不读玩家存档）");
+            if (declared.isEmpty()) {
+                sb.append("\n  （该树没有 unlock_skill 声明）");
+            } else {
+                for (String s : declared) {
+                    sb.append("\n  ").append(s);
+                }
+            }
+            return sb.toString();
+        }
+        List<String> unlocked = TreeUnlocks.unlocked(def, TreeService.selected(viewer, def));
+        sb.append(" · 已解锁 ").append(unlocked.size()).append(" 条");
+        if (declared.isEmpty()) {
+            sb.append("\n  （该树没有 unlock_skill 声明）");
+        } else {
+            for (String s : declared) {
+                sb.append("\n  ").append(s)
+                        .append(TreeService.isUnlocked(viewer, s) ? " · 已解锁" : " · 未解锁");
+            }
+        }
+        return sb.toString();
+    }
+
+    /** 该树**声明**了哪些技能（= 假装全点之后的解锁集，不读存档）。 */
+    public static List<String> declaredSkills(SkillTreeSpec.Definition def) {
+        if (def == null) {
+            return List.of();
+        }
+        return TreeUnlocks.unlocked(def, def.nodes().keySet());
     }
 
     // ---- 写面（M7 L5） ----
@@ -440,6 +508,25 @@ public final class TreeCommand {
         boolean okQ = qText.startsWith("  ") && qText.contains("gale_slash") && !qText.endsWith("\n");
         pass += okQ ? 1 : 0;
         send(src, "  Q 解锁文案 → " + qText.replace("\n", " | ") + (okQ ? " ✓" : " ✗"));
+
+        // R：`tree skills <tree>` 观测面（R58）—— 声明集 2 条按定义序、玩家段带解锁标注、控制台只报声明
+        List<String> declaredR = declaredSkills(def);
+        String rTaken = skillsText(def, player);
+        TreeService.untake(player, tree, "gale");
+        String rFree = skillsText(def, player);
+        TreeService.take(player, tree, "gale");
+        String rConsole = skillsText(def, null);
+        total++;
+        boolean okR = declaredR.size() == 2
+                && declaredR.get(0).endsWith("gale_slash") && declaredR.get(1).endsWith("quake_slam")
+                && rTaken.contains("gale_slash · 已解锁") && rTaken.contains("quake_slam · 未解锁")
+                && rFree.contains("gale_slash · 未解锁")
+                && rConsole.contains("（控制台不读玩家存档）") && rConsole.split("\n").length == 3
+                && rConsole.endsWith("quake_slam");
+        pass += okR ? 1 : 0;
+        send(src, "  R tree skills → 声明 " + declaredR.size() + " 条 · 已解锁段 "
+                + (rTaken.contains("gale_slash · 已解锁") ? "命中" : "缺失") + " · 控制台 "
+                + rConsole.split("\n").length + " 行" + (okR ? " ✓" : " ✗"));
 
         // 收尾清场：FakePlayer 的等级与已点节点都不留（否则下一轮 / 其它探针读到上一轮的 1e9 经验）
         store.clearTree(player.getUUID(), tree);
