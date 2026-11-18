@@ -1,0 +1,97 @@
+"""起飞前对账总入口（R59）：依次跑全部 `check_*.py`，只汇总末行与退出码。
+
+为什么需要它：九个对账脚本各自只认自己那段配置，运营上线前要记九条命令、
+还得逐条看退出码。这里做成**一个入口一件事**——跑完给一张表，谁红了看谁。
+本脚本**不重实现任何检查**，只做进程编排：子进程的末行原样转述，不解析、不判断。
+
+用法：
+    python tools/check_all.py               # 全跑
+    python tools/check_all.py --only items  # 只跑名字含 items 的
+    python tools/check_all.py -v            # 失败时把子进程完整输出打出来
+
+退出码：0 = 全绿（含「脚本未实现，跳过」）；1 = 至少一个红；2 = 一个都没跑成。
+"""
+from __future__ import annotations
+
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent
+
+# 顺序即台账习惯的顺序：先地基（配置清单），再内容面，最后运营面。
+TOOLS = (
+    "check_defaults.py",   # 默认配置清单双向对账
+    "check_progress.py",   # 等级 / 职业
+    "check_items.py",      # 物品 / 词条 / 词条池 / 套装
+    "check_mobs.py",       # 怪物 / 掉落 / 刷怪规则
+    "check_enchants.py",   # 附魔 → 脚本
+    "check_skills.py",     # 技能原语
+    "check_trees.py",      # 技能树
+    "check_scripts.py",    # 脚本层
+    "check_lang.py",       # lang 键覆盖（T-0055 落地后自动接上）
+)
+
+
+def run(script: Path, verbose: bool) -> tuple[str, int, str]:
+    """跑一个对账脚本；返回 (末行, 退出码, 完整输出)。异常也算一条红，不中断整轮。"""
+    try:
+        proc = subprocess.run(
+            [sys.executable, str(script)],
+            cwd=str(ROOT.parent), capture_output=True, text=True,
+            encoding="utf-8", errors="replace", timeout=180,
+        )
+    except Exception as ex:  # 超时 / 起不来
+        return ("起不来：%s" % ex, 1, "")
+    out = (proc.stdout or "").rstrip()
+    last = out.splitlines()[-1] if out else "（无输出）"
+    if proc.returncode != 0 and proc.stderr.strip() and verbose:
+        out = out + "\n" + proc.stderr.rstrip()
+    return (last, proc.returncode, out)
+
+
+def main() -> int:
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+    only = ""
+    verbose = "-v" in sys.argv
+    for i, a in enumerate(sys.argv):
+        if a == "--only" and i + 1 < len(sys.argv):
+            only = sys.argv[i + 1]
+
+    picked = [n for n in TOOLS if only in n]
+    if not picked:
+        print("没有匹配的脚本：--only %s" % only)
+        return 2
+
+    rows, details, skipped, failed, ran = [], [], 0, 0, 0
+    for name in picked:
+        script = ROOT / name
+        if not script.is_file():
+            rows.append((name, "（未实现，跳过）", "-"))
+            skipped += 1
+            continue
+        last, code, out = run(script, verbose)
+        rows.append((name, last, "OK" if code == 0 else "红 %d" % code))
+        if code != 0:
+            failed += 1
+            details.append((name, out))
+        ran += 1
+
+    width = max(len(r[0]) for r in rows)
+    for name, last, verdict in rows:
+        print("%-*s  %-6s  %s" % (width, name, verdict, last))
+    for name, out in details:
+        print("\n--- %s 完整输出 ---" % name)
+        print(out)
+    print("\n共 %d 个脚本 · 跑成 %d · 跳过 %d · 红 %d" % (len(picked), ran, skipped, failed))
+
+    if ran == 0:
+        return 2
+    return 0 if failed == 0 else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

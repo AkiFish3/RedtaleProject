@@ -29,8 +29,13 @@ LINE_RE = re.compile(
     r'^\s+(v|c|cb)\("([^"]+)",\s*(?:[0-9.]+\s*,\s*)?([A-Z_]+),\s*"([^"]+)",\s*"([^"]+)"\)'
 )
 
+# 本脚本**只拥有** `attribute.redtale_project.*` 这 66 个键 + 下面 EXTRA 里列出的键，
+# 其余键（`item.*` 14 / `entity.*` 8 / `enchantment.*` 2 / 他人写的 `death.*`）一律原样保留。
+# R59 前是整体覆写：跑一次就把 93 键削成 67 键（`--check` 还报「过期」，误导人跑一次去「修」）。
+OWNED_PREFIX = "attribute.redtale_project."
+
 # 非属性类 lang 键（死亡消息、界面文案）。必须写在这里，
-# 否则每次重新生成都会被抹掉——脚本是整体覆写，不合并手改。
+# 否则每次重新生成都会被抹掉——脚本是合并写入，但只保留自己拥有的键。
 EXTRA = {
     "zh_cn": {
         "death.attack.redtale_verification_strike": "%1$s 被赤物语的校验打击击倒",
@@ -39,6 +44,21 @@ EXTRA = {
         "death.attack.redtale_verification_strike": "%1$s was struck down by a Redtale verification strike",
     },
 }
+
+
+def preserved(path: Path, owned: dict[str, str]) -> dict[str, str]:
+    """读现有 lang，返回「不属于本脚本」的键值（除 OWNED_PREFIX 与 EXTRA 之外的全部）。"""
+    if not path.exists():
+        return {}
+    try:
+        current = json.loads(path.read_text(encoding="utf-8"))
+    except Exception as ex:  # 坏 JSON 不当静默覆盖的借口
+        print(f"!! {path.name} 无法解析（{ex}），拒绝覆盖", file=sys.stderr)
+        raise SystemExit(2)
+    if not isinstance(current, dict):
+        print(f"!! {path.name} 顶层不是对象，拒绝覆盖", file=sys.stderr)
+        raise SystemExit(2)
+    return {k: v for k, v in current.items() if not str(k).startswith(OWNED_PREFIX) and k not in owned}
 
 
 def parse() -> list[dict]:
@@ -81,18 +101,19 @@ def main() -> int:
         LANG_DIR / "en_us.json": en,
     }
     for path, data in payloads.items():
-        data = {**data, **EXTRA[path.stem]}
-        text = json.dumps(dict(sorted(data.items())), ensure_ascii=False, indent=2) + "\n"
+        owned = {**data, **EXTRA[path.stem]}
+        merged = {**preserved(path, owned), **owned}
+        text = json.dumps(dict(sorted(merged.items())), ensure_ascii=False, indent=2) + "\n"
         if check:
             old = path.read_text(encoding="utf-8") if path.exists() else ""
             status = "OK" if old == text else "过期"
-            print(f"  {path.relative_to(ROOT)}：{status}（{len(data)} 键）")
+            print(f"  {path.relative_to(ROOT)}：{status}（{len(merged)} 键，自有 {len(owned)}）")
             if old != text:
                 return 1
         else:
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(text, encoding="utf-8")
-            print(f"  写入 {path.relative_to(ROOT)}（{len(data)} 键）")
+            path.write_text(text, encoding="utf-8", newline="\n")
+            print(f"  写入 {path.relative_to(ROOT)}（{len(merged)} 键，保留他人 {len(merged) - len(owned)}）")
     return 0
 
 
