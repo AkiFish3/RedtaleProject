@@ -2,6 +2,7 @@ package com.redtale.project.core.command;
 
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.redtale.project.core.RedtaleCore;
 import com.redtale.project.mobs.SpawnReplacer;
 import net.minecraft.commands.CommandSourceStack;
@@ -48,6 +49,9 @@ public final class SpawnCommand {
                         .executes(SpawnCommand::replaceStatus)
                         .then(Commands.literal("on").executes(ctx -> toggle(ctx, true)))
                         .then(Commands.literal("off").executes(ctx -> toggle(ctx, false)))
+                        .then(Commands.literal("cap")
+                                .then(Commands.argument("per_tick", IntegerArgumentType.integer(1, 4096))
+                                        .executes(SpawnCommand::cap)))
                         .then(Commands.literal("probe")
                                 .then(Commands.argument("entity", ResourceLocationArgument.id())
                                         .then(Commands.argument("pos", BlockPosArgument.blockPos())
@@ -130,13 +134,26 @@ public final class SpawnCommand {
 
     // ── spawn replace（M6 第三层，R48）────────────────────────────────────────────
 
-    /** {@code /redtale spawn replace} —— 开关与已命中规则数。 */
+    /** {@code /redtale spawn replace} —— 开关、每 tick 上限与已命中规则数。 */
     public static int replaceStatus(CommandContext<CommandSourceStack> ctx) {
         SpawnReplacer r = SpawnReplacer.get();
         final String line = "[redtale] 刷怪替换：" + (r.enabled() ? "开" : "关")
+                + " · 每 tick 上限 " + r.perTickCap()
                 + " · 已命中规则 " + r.hitRules() + " 条 · 钩子 MobSpawnEvent.PositionCheck";
         ctx.getSource().sendSuccess(() -> Component.literal(line), false);
         return r.enabled() ? 1 : 0;
+    }
+
+    /** {@code /redtale spawn replace cap <n>} —— 改每 tick 补生成上限并落盘（R55）。 */
+    public static int cap(CommandContext<CommandSourceStack> ctx) {
+        int value = IntegerArgumentType.getInteger(ctx, "per_tick");
+        SpawnReplacer r = SpawnReplacer.get();
+        int now = r.setPerTickCap(value);
+        boolean saved = r.persist();
+        final String line = "[redtale] 每 tick 上限已改为 " + now
+                + " · " + (saved ? "已写入 spawn.json5" : "落盘失败（内存已生效，重启会回缺省 8）");
+        ctx.getSource().sendSuccess(() -> Component.literal(line), false);
+        return now;
     }
 
     private static int toggle(CommandContext<CommandSourceStack> ctx, boolean on) {

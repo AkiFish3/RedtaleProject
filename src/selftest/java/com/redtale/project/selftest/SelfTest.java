@@ -234,6 +234,7 @@ public final class SelfTest {
         // ---- 汇总 -----------------------------------------------------------
         affix();
         tree();
+        spawn();
         System.out.println();
         if (failures.isEmpty()) {
             System.out.println("[selftest] PASS " + passed + " 项");
@@ -379,8 +380,49 @@ public final class SelfTest {
                         .available() == -2);
     }
 
-    private static void check(String name, boolean ok) {
-        if (ok) {
+    /**
+     * R55 刷怪开关：{@code spawn.json5} 两字段（{@code replace_enabled} / {@code per_tick_cap}）解析 + 坏值回落。
+     * 纯 Java、无 MC 依赖，所以能进离线单测。上限是防洪阀：0 / 负数 / 小数 / 超 4096 一律回落 8 并告警。
+     */
+    private static void spawn() {
+        var none = com.redtale.project.mobs.SpawnSettings.parse(null, null);
+        check("缺文件 → 开 + 上限 8", none.replaceEnabled() && none.perTickCap() == 8);
+
+        var empty = com.redtale.project.mobs.SpawnSettings.parse(new com.google.gson.JsonObject(), new ArrayList<>());
+        check("空对象 → 开 + 上限 8 且零告警",
+                empty.replaceEnabled() && empty.perTickCap() == 8);
+
+        List<String> w = new ArrayList<>();
+        var off = parse("{\"replace_enabled\": false, \"per_tick_cap\": 3}", w);
+        check("显式关 + 上限 3 + 零告警", !off.replaceEnabled() && off.perTickCap() == 3 && w.isEmpty());
+
+        w = new ArrayList<>();
+        var badBool = parse("{\"replace_enabled\": \"yes\"}", w);
+        check("bool 坏值 → 回落开 + 一条告警",
+                badBool.replaceEnabled() && w.size() == 1 && w.get(0).contains("replace_enabled"));
+
+        w = new ArrayList<>();
+        var zero = parse("{\"per_tick_cap\": 0}", w);
+        check("cap=0 → 回落 8 + 一条告警（0 不等于关闭）",
+                zero.perTickCap() == 8 && w.size() == 1 && w.get(0).contains("per_tick_cap"));
+
+        w = new ArrayList<>();
+        var frac = parse("{\"per_tick_cap\": 2.5}", w);
+        check("cap 小数 → 回落 8 + 一条告警", frac.perTickCap() == 8 && w.size() == 1);
+
+        w = new ArrayList<>();
+        var huge = parse("{\"per_tick_cap\": 99999}", w);
+        check("cap 超 4096 → 回落 8 + 一条告警", huge.perTickCap() == 8 && w.size() == 1);
+
+        check("describe 带上限", parse("{\"per_tick_cap\": 4}", null).describe().endsWith("每 tick 上限 4"));
+    }
+
+    private static com.redtale.project.mobs.SpawnSettings parse(String json, List<String> warnings) {
+        return com.redtale.project.mobs.SpawnSettings.parse(
+                com.google.gson.JsonParser.parseString(json).getAsJsonObject(), warnings);
+    }
+
+    private static void check(String name, boolean ok) {        if (ok) {
             passed++;
             System.out.println("  ok   " + name);
         } else {

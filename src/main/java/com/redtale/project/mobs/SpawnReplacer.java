@@ -39,8 +39,6 @@ public final class SpawnReplacer {
 
     private static final Logger LOG = LoggerFactory.getLogger("RedtaleProject");
     private static final SpawnReplacer INSTANCE = new SpawnReplacer();
-    /** 每 tick 最多补生成几 只：一批自然刷怪可能同时命中好几只，不设上限会在同一 tick 里堆实体。 */
-    private static final int DRAIN_PER_TICK = 8;
 
     /** 一次决策的结果（事件与命令探针共用，避免两份判定）。 */
     public record Verdict(boolean replace, boolean add, String ruleId, String mobId, String reason) {
@@ -55,6 +53,11 @@ public final class SpawnReplacer {
     private final Set<String> hitLogged = ConcurrentHashMap.newKeySet();
     private final Set<String> failLogged = ConcurrentHashMap.newKeySet();
     private volatile boolean enabled = true;
+    /**
+     * 每 tick 最多补生成几只（R55 从硬编常量挪进 {@code spawn.json5}）：一批自然刷怪可能同时命中好几只，
+     * 不设上限会在同一 tick 里堆实体。**这是防洪阀不是玩法旋钮**，缺省 8。
+     */
+    private volatile int perTickCap = SpawnSettings.DEFAULT_PER_TICK_CAP;
 
     private SpawnReplacer() {}
 
@@ -69,6 +72,22 @@ public final class SpawnReplacer {
 
     public boolean enabled() {
         return enabled;
+    }
+
+    /** 每 tick 补生成上限（R55，来自 {@code spawn.json5} 的 {@code per_tick_cap}）。 */
+    public int perTickCap() {
+        return perTickCap;
+    }
+
+    /** 运行期改上限（{@code /redtale spawn replace cap <n>} 调）；返回改后的值。 */
+    public int setPerTickCap(int value) {
+        int now = Math.max(1, Math.min(4096, value));
+        int old = perTickCap;
+        perTickCap = now;
+        if (old != now) {
+            LOG.info("刷怪替换每 tick 上限：{} → {}", old, now);
+        }
+        return now;
     }
 
     /** 切换开关；返回切换后的状态。关掉时队列里已排的补生成仍然执行（它们是被我们拦下来的）。 */
@@ -89,21 +108,25 @@ public final class SpawnReplacer {
     public void applySettings(SpawnSettings settings) {
         if (settings != null) {
             setEnabled(settings.replaceEnabled());
+            setPerTickCap(settings.perTickCap());
         }
     }
 
     /**
-     * 把当前开关写回 {@code config/redtale_project/spawn.json5}（只有 {@code replace on|off} 调）。
+     * 把当前开关与每 tick 上限写回 {@code config/redtale_project/spawn.json5}
+     * （{@code replace on|off} 与 {@code replace cap <n>} 调）。
      *
      * <p>返回值 = 有没有落盘成功；失败只 WARN 不抛 —— 开关在内存里已经生效，落盘失败不该让命令报错。
-     * 写的是完整文件（覆盖），所以注释跟着一起重写，内容与默认件同构。
+     * 写的是完整文件（覆盖），所以注释跟着一起重写，内容与默认件同构。**两个字段一起写**：
+     * 只写其中一个会把另一个手改值静默抹掉。
      */
     public boolean persist() {
         java.nio.file.Path file = RedtaleCore.get().config().root().resolve("spawn.json5");
         String text = "// 刷怪替换（D26 / M6 第三层）—— 运行期开关的落盘位置。\n"
-                + "// 由 `/redtale spawn replace on|off` 改写；手改也可以，下一次 `/redtale reload` 生效。\n"
-                + "// 缺这个文件 = 开关按「开」处理（replace_enabled 缺省 true），不告警。\n"
-                + "{\n  replace_enabled: " + enabled + ",\n}\n";
+                + "// 由 `/redtale spawn replace on|off|cap <n>` 改写；手改也可以，下一次 `/redtale reload` 生效。\n"
+                + "// 缺这个文件 = 开关按「开」、每 tick 上限按 8 处理，不告警。\n"
+                + "// per_tick_cap 是防洪阀不是玩法旋钮：写 0 / 负数 / 小数都会回落 8 并告警。\n"
+                + "{\n  replace_enabled: " + enabled + ",\n  per_tick_cap: " + perTickCap + ",\n}\n";
         try {
             java.nio.file.Files.createDirectories(file.getParent());
             java.nio.file.Files.writeString(file, text, java.nio.charset.StandardCharsets.UTF_8);
@@ -141,7 +164,7 @@ public final class SpawnReplacer {
 
     /** 每 tick 收尾（{@code GameHooks} 调）：把上一 tick 拦下的补生成落地。 */
     public void tick(MinecraftServer server) {
-        for (int i = 0; i < DRAIN_PER_TICK && !queue.isEmpty(); i++) {
+        for (int i = 0; i < perTickCap && !queue.isEmpty(); i++) {
             Pending p = queue.pollFirst();
             if (p == null) return;
             MobSpec.Definition def = RedtaleCore.get().mobs().get(p.mobId());

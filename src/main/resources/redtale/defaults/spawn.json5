@@ -1,6 +1,8 @@
 // 刷怪替换（D26 / M6 第三层）—— 运行期开关的落盘位置。
-// 由 `/redtale spawn replace on|off` 改写；手改也可以，下一次 `/redtale reload` 生效。
-// 缺这个文件 = 开关按「开」处理（replace_enabled 缺省 true），不告警。
+// 由 `/redtale spawn replace on|off|cap <n>` 改写；手改也可以，下一次 `/redtale reload` 生效。
+// 缺这个文件 = 开关按「开」、每 tick 上限按 8 处理，不告警。
+// per_tick_cap 是防洪阀不是玩法旋钮：写 0 / 负数 / 小数都会回落 8 并告警。
 {
   replace_enabled: true,
+  per_tick_cap: 8,
 }

@@ -158,12 +158,16 @@ if (cap > 0 && count >= cap) → 跳过这条规则
 | 项 | 值 |
 |---|---|
 | 文件 | `config/redtale_project/spawn.json5`（配置**根**，不在 `spawn_rules/` 里） |
-| 字段 | `replace_enabled`（布尔，缺省 `true`；非布尔 → 回落缺省 + 一条 WARN） |
-| 写入时机 | 只有 `replace on\|off`；写完命令文案尾部带 `· 已写入 spawn.json5`（失败写 `落盘失败（内存已生效，重启会回缺省）`） |
-| 读取时机 | `/redtale reload`（含开服起步那次）：按文件重设 `SpawnReplacer.enabled` |
-| 删文件 | 下一次 reload 重建为 `replace_enabled: true`（属 `DEFAULT_FILES`） |
-| 未落盘 | `per_tick_cap`（现硬编 8）挂账 |
+| 字段 | `replace_enabled`（布尔，缺省 `true`；非布尔 → 回落缺省 + 一条 WARN）<br>`per_tick_cap`（整数 `1~4096`，缺省 `8`；非数字 / 0 / 负数 / 小数 / 超界 → 回落 8 + 一条 WARN） |
+| 写入时机 | `replace on\|off` 与 `replace cap <n>` 都会写**整份文件**（两个字段一起写）；写完命令文案尾部带 `· 已写入 spawn.json5`（失败写 `落盘失败（内存已生效，重启会回缺省）`） |
+| 读取时机 | `/redtale reload`（含开服起步那次）：按文件重设 `SpawnReplacer.enabled` 与 `perTickCap` |
+| 删文件 | 下一次 reload 重建为 `replace_enabled: true` + `per_tick_cap: 8`（属 `DEFAULT_FILES`） |
+| 每 tick 上限 | R55 起从硬编 `DRAIN_PER_TICK = 8` 挪到配置面，运行期用 `/redtale spawn replace cap <n>` 改。**它是防洪阀不是玩法旋钮**：`0` 不表示关闭（D16 的 `0 = 关闭` 在这里会变成「每 tick 无限生成」） |
 
 验收证据（R52，测试服 3 次启停）：`off` → 磁盘 `replace_enabled: false` → reload 后仍「关」→ **重启后仍「关」**
 （第三条才是本条真正的断言：不落盘时前两条都过、第三条必红）。
+
+验收证据（R55，测试服 2 次启停）：`replace` 首行带 `每 tick 上限 8` → `cap 3` → 磁盘 `per_tick_cap: 3` →
+`replace off` 后文件**仍是** `per_tick_cap: 3`（两字段一起写）→ reload 保持 3 → **重启后仍 3** →
+手改 `per_tick_cap: "yes"` → reload 一条 WARN 且上限回落 8 → `cap 8` 复原。
 
