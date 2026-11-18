@@ -59,6 +59,8 @@ public final class RedtaleCore {
     private volatile com.redtale.project.mobs.MobRegistry mobs = com.redtale.project.mobs.MobRegistry.EMPTY;
     /** 掉落表（M6 第四层，{@code drops/*.json5}）。与物品/技能同样存裸 map：id 是裸名，不带命名空间。 */
     private volatile java.util.Map<String, com.redtale.project.mobs.DropSpec.Definition> drops = java.util.Map.of();
+    /** 刷怪规则快照（D26 / M6 第二层，{@code spawn_rules/*.json5}）。已按 priority 降序 + id 升序排好。 */
+    private volatile com.redtale.project.mobs.SpawnRegistry spawnRules = com.redtale.project.mobs.SpawnRegistry.EMPTY;
     /** 等级 / 职业快照（M7 第二层，{@code levels/*.json5} + {@code jobs/*.json5}）。属性键已过 80 条表校验并归一。 */
     private volatile com.redtale.project.core.progression.ProgressRegistry progress =
             com.redtale.project.core.progression.ProgressRegistry.EMPTY;
@@ -147,6 +149,11 @@ public final class RedtaleCore {
         return drops;
     }
 
+    /** 刷怪规则快照（D26 / M6 第二层）。执行层 L3 只读这一份，不要自己再解析一遍配置。 */
+    public com.redtale.project.mobs.SpawnRegistry spawnRules() {
+        return spawnRules;
+    }
+
     /** 等级 / 职业快照（M7 第二层）。属性键已归一成全名，命令与服务层只读这一份。 */
     public com.redtale.project.core.progression.ProgressRegistry progress() {
         return progress;
@@ -215,6 +222,9 @@ public final class RedtaleCore {
             // 怪物（M6）：解析层不校验「装备 id / 技能 id 是否存在」—— 那要等快照与内容都就位，
             // 交给执行期与 /redtale mob check（S8 卡 T-0032）
             mobs = com.redtale.project.mobs.MobRegistry.load(all, warnings);
+            // 刷怪规则（D26 / M6 第二层）：必须排在 mobs 之后 —— 交叉校验要查「mob 是否存在」。
+            // 悬空引用只告警不删规则（SPAWN-RULES §9），执行层 L3 见悬空直接不拦（§8 红线 5）
+            spawnRules = com.redtale.project.mobs.SpawnRegistry.load(all, mobs, warnings);
             // 掉落表（M6 第四层）：纯解析，id 存在性 / 物品存在性归 mob check 与掉落事件（本层不判）
             drops = com.redtale.project.mobs.DropSpec.parse(all, warnings);
             // 等级 / 职业（M7 第二层）：解析层不认属性表，这一层做 80 条校验 + 键归一，
@@ -265,13 +275,14 @@ public final class RedtaleCore {
             if (outcome.clean()) {
                 lastError = "";
                 lastErrorLines = List.of();
-                LOG.info("配置重载完成：{} 条脚本，{} 个文件，{} 件装备内容，{}，{} 张掉落表，{}，{}。攻速：{}",
+                LOG.info("配置重载完成：{} 条脚本，{} 个文件，{} 件装备内容，{}，{} 张掉落表，{}，{}，{}。攻速：{}",
                         outcome.loaded(), all.size(), contentItems.size(), skills.describe(),
-                        drops.size(), mobs.describe(), progress.describe(), attackSpeedRules.describe());
+                        drops.size(), mobs.describe(), spawnRules.describe(), progress.describe(), attackSpeedRules.describe());
                 return new ReloadResult(true,
                         "已载入 " + outcome.loaded() + " 条脚本 + " + contentItems.size()
                                 + " 件装备内容 + " + skills.size() + " 条技能 + " + mobs.size()
-                                + " 只怪物 + " + drops.size() + " 张掉落表 + " + progress.size()
+                                + " 只怪物 + " + drops.size() + " 张掉落表 + " + spawnRules.size() + " 条刷怪规则"
+                                + " + " + progress.size()
                                 + " 条等级定义（" + all.size() + " 份配置文件）" + tail,
                         List.of());
             }

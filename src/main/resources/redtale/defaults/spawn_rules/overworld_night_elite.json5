@@ -1,0 +1,19 @@
+// 刷怪替换默认示范（D26 / M6，R46 契约见 docs/SPAWN-RULES.md）。
+// 语义：主世界夜间，僵尸/尸壳有 25% 概率被换成 ember_guard；每区块最多 1 只。
+// 这份文件是「有内容可验」的最小集：改它 + /redtale reload 就生效，不用换 jar（D14/D17）。
+{
+  id: "redtale_project:overworld_night_elite",
+  name: "夜间精英替换",
+  match: ["minecraft:zombie", "minecraft:husk"],
+  action: "replace",
+  mob: "ember_guard",
+  chance: 0.25,
+  priority: 100,
+  per_chunk_cap: 1,
+  conditions: {
+    world: ["minecraft:overworld"],
+    light: { max: 7 },
+    time: "night",
+    outside: true,
+  },
+}

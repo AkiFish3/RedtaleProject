@@ -77,6 +77,9 @@ public final class ConfigStore {
             // 掉落表（M6 第四层，R41）：没有这份默认文件，ember_guard 的 drops 引用就悬空，
             // 死掉零产出 —— 「掉落接线通没通」这条验收永远没有内容可验
             "drops/ember_guard.json5",
+            // 刷怪替换（D26 / M6 最后一块，R47）：没有这份默认文件，spawn_rules/ 恒为空，
+            // SpawnRegistry 恒 0 条 —— 「L1 解析 / L2 快照 / L3 替换」三层都没内容可验
+            "spawn_rules/overworld_night_elite.json5",
             // 等级 / 职业（M7，R44）：没有这两份默认文件，levels/ 与 jobs/ 恒为空，
             // ProgressRegistry 恒 0 条，K1（只写 JSON5 就能加内容）无从验起。
             // progression.json5 是经验面唯一的全局旋钮（击杀倍率），缺了它 mob_exp_multiplier 恒走缺省
