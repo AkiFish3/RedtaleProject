@@ -1186,6 +1186,8 @@ S8 上线。机制 = **S7 派单 / S8 写码 / S7 验收**，卡板是唯一接�
 3. **`/redtale level info` 补「当前玩家等级」**（R45 的漏项，仍未做）。
 4. 挂账不变：V4「附魔台真刷出」、tooltip 真人客户端、pvp 真目标、玩家被 `stun`、真人 `/redtale skill mana` 面板、`mob spawn` 的客户端体积/名牌、客户端侧 `dash`、`tick` 路径真人 AI、**自然刷怪替换真人验收（需玩家在线，R37-b）**、真人 `progress add` / 等级属性面板、真人升级后 `level/` modifier 面板读数、真人击杀 → `MobDrops → ProgressService.award(kill)` 全链、`grant_exp` 在真实技能/附魔脚本里的落地。
 
+| R49 | 2026-11-18 | **验收 T-0044 + 补 `/redtale level info` 的「当前」段（R45 挂了两轮的漏项）+ 派 T-0045** | ①卡板：T-0044 `[DONE]` → **`[VERIFIED]`**（3/3：默认 `共 2 个文件 · 没有发现问题 ✓` EXIT=0 / `--dir E:/server-test/config/redtale_project` 同口径 EXIT=0 / 三份坏夹具各命中 `effects 引用的脚本 … 不存在`、`max_level 必须是 1~255 的整数`、`description 缺失（没有中文名）` 且 EXIT=1）。补测 4 项：跨文件重复 id（`id redtale_project:super_sharpness 与 enchantments/a.json5 重复`）、datapack 双向（配置有磁盘无 → `未生成：x.json` 计问题 / 磁盘有配置无 → `[提示] … 仅磁盘有：x.json` 计提示不计问题）、签名四函数按序齐、189 行。S8 四条口径全采纳，其中第 3 条裁定为**卡面笔误**（写「同一文件内」但文案是「与先出现的相对路径重复」，跨文件才对）。**派 T-0045**（`core/progression/SkillTreeSpec` 技能树解析器 v1，M7 最后一块的 L1，独占一个新类 ≤200 行），在制品 **1/3**。②自研：`LevelCommand` 补「当前」段——新增**纯函数** `currentLine(ExpCurve, long totalExp)`（零 MC 依赖，`Lv7 · 本级 21/44 · 累计 1234`，满级出「本级已满」不除零）+ `current(ServerPlayer, id, def)` 只在 **有玩家上下文** 时追加，控制台输出**逐字不变**（T-0040 既有验收文案零回归，实测确认）。③实测（测试服 1 次启停 `Done (1.954s)`，已停、25567/25577 无 LISTEN）：`level info "redtale_project:main"` 与 R45 基线**逐字相同**（3 行，无 `当前` 行）；`level list` / `reload`（33 份配置）/ `exp probe` **7/7**（A Lv7·23.0 / B 满级 69.5 / C 到顶不动 / D 归零 20.0 / E 双累加器 / F kill ×1.0 / G `mining_efficiency Δ0.06`）/ `validate 问题 0 条` 全回归。④数字：`build --offline` exit 0（jar **582962 B**）、`selftest` 78 PASS、S7 独立探针 `build/probe/LevelLineProbe.java` **16/16**、构建锁已删。 | **§13.52 R49-a~c**。探针当场抓到的一件事值得写下来：`ExpCurve` 构造里有 `maxLevel = Math.max(2, n)`，所以「上限 1」的退化曲线其实是 2 级——探针第一版按「maxLevel=1」写期望，红了两条，**错的是期望不是代码**（同 R43-a / R45 口径）。同时这条边界反过来证明「`/0` 不可能出现」：`level < maxLevel` 时 `expForLevel(level)` 恒 > 0，只有 `level >= maxLevel` 才进「已满」分支。**未验证**：`current()` 的玩家路径（`src.getPlayer() != null` 那 5 行胶水）——测试服无真人在线，RCON 是控制台上下文，`StringArgumentType.string()` 不吃未加引号的 `ns:id`（第四次复发，加引号才通）；这条与 R45 的「真人 `/attribute` 面板」同批挂账，等 Aki 上线一次验完。 |
+
 ### 13.51 R48 的六条口径（刷怪替换执行层）+ 下一步（R49）
 
 | # | 口径 | 理由 |
@@ -1204,4 +1206,19 @@ S8 上线。机制 = **S7 派单 / S8 写码 / S7 验收**，卡板是唯一接�
 3. **`/redtale level info` 补「当前玩家等级」**（R45 的漏项，已挂两轮）。
 4. **开关持久化**：现在 `spawn replace on|off` 只在内存（重启回 ON）→ 要么进 `spawn.json5`，要么写 `progression.json5` 同级旋钮（未定，倾向新建 `spawn.json5`，需记账 §5 路径）。
 5. 挂账不变：V4「附魔台真刷出」、tooltip 真人客户端、pvp 真目标、玩家被 `stun`、`mob spawn` 客户端体积/名牌、客户端侧 `dash`、`tick` 路径真人 AI、真人 `progress add` / 等级属性面板、真人击杀 → `MobDrops → ProgressService.award(kill)` 全链、`grant_exp` 在真实脚本里的落地。
+
+### 13.52 R49 的三条口径（验收工具与观测面）+ 下一步（R50）
+
+| # | 口径 | 理由 |
+|---|---|---|
+| R49-a | 观测面的**文案生成**一律抽成纯函数（`LevelCommand.currentLine(ExpCurve, long)`），**上下文绑定**（`src.getPlayer()`）留在外面单独 5 行 | 纯函数能被离线探针直测（本轮 16/16），绑了 `ServerPlayer` 就只能等真人上线；控制台执行时输出逐字不变，既有 `[VERIFIED]` 卡的文案断言零回归 |
+| R49-b | 对账工具与运行期**必须同解析口径**，不一致时改**工具**（承 R46-a 的镜像）；工具额外的「宽容」也算不一致 | `check_enchants` 的单引号预转换是必要妥协（`clean_json5` 只吃双引号），但块注释 `/* */` **两边都不支持**（Java `Json5` 只认 `//`）→ 工具判「解析失败」与运行期行为一致，不算假阳性。判据是「工具判错的东西，运行期也会坏」 |
+| R49-c | 卡面文案与卡面语义冲突时，**按语义判**（R43-a / R45 同源），并在卡里写明「笔误」而不是默默改 | T-0044 第 3 项写「同一文件内 id 重复」，但规定文案是「与**先出现的相对路径**重复」——跨文件才是唯一自洽解释。派单卡是 S8 的唯一接口，写错一次就多一轮返工 |
+
+下一步（R50）：
+
+1. **验收 T-0045**（`SkillTreeSpec`：build + jar 类 + 探针 ≥25 断言）。
+2. **M7 技能树 L2**：`progression/SkillTreeRegistry`（快照 + 交叉校验：`classes` 与 `ProgressRegistry.jobs()` 对齐、`unlock_skill` 的 `skill` 过 `SkillRegistry`）+ `skill_trees/` 进 `DEFAULT_FILES` + 默认 `warrior_vanguard.json5`（§3 例子原样）+ reload 接线。
+3. **开关持久化**：`spawn replace on|off` 现只在内存（重启回 ON）→ 新建 `spawn.json5`（`replacer_enabled` / `per_tick_cap`）+ 记账 §5 路径。
+4. 挂账不变，另加 **R49 的 `current()` 玩家路径**（需 Aki 上线，与控制台零回归已验）。
 

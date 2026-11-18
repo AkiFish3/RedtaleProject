@@ -4,9 +4,12 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.redtale.project.core.RedtaleCore;
 import com.redtale.project.core.progression.ProgressRegistry;
+import com.redtale.project.core.progression.ProgressSpec;
+import com.redtale.project.core.progression.ProgressStore;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -87,9 +90,33 @@ public final class LevelCommand {
             }
         }
         if (def.job()) sb.append("\n  经验来源：").append(sources(def.expSources()));
+        ServerPlayer player = src.getPlayer();
+        if (player != null) sb.append(current(player, id, def));
         String text = sb.toString();
         src.sendSuccess(() -> Component.literal(text), false);
         return 1;
+    }
+
+    /**
+     * 纯函数形态（R49-a）：等级派生 + 本级进度文案，**零 MC 依赖** → 探针可直测。
+     * 等级是派生值（R42-b），一律现算不读缓存；满级不出「/0」。
+     */
+    public static String currentLine(com.redtale.project.core.progression.ExpCurve curve, long totalExp) {
+        int level = curve.levelFor(totalExp);
+        if (level >= curve.maxLevel()) {
+            return "Lv" + level + " · 本级已满 · 累计 " + totalExp;
+        }
+        long cur = totalExp - curve.totalExpForLevel(level);
+        return "Lv" + level + " · 本级 " + cur + "/" + curve.expForLevel(level) + " · 累计 " + totalExp;
+    }
+
+    /**
+     * 「当前」段（R49）：只在该定义有玩家上下文时追加——控制台执行保持原输出不变（既有验收文案零回归）。
+     */
+    private static String current(ServerPlayer player, String id, ProgressSpec.Definition def) {
+        ProgressStore store = ProgressStore.get(player.server);
+        long total = def.job() ? store.jobExp(player.getUUID(), id) : store.mainExp(player.getUUID());
+        return "\n  当前 " + currentLine(def.curve(), total);
     }
 
     private static String step(int maxLevel, long exp) {
