@@ -312,14 +312,15 @@ public final class ProgressService {
 
     // ---- 生命周期 ----
 
-    /** 登入：确保存档有这一行 + 按当前等级重下发（等级可能因改曲线而变，§7）。 */
+    /** 登入：确保存档有这一行 + 按当前等级重下发（等级可能因改曲线而变，§7）+ 技能树重下发。 */
     public static void onLogin(ServerPlayer player) {
         if (player == null) {
             return;
         }
         int n = applyAttributes(player);
-        LOG.info("进度重算：{} · 主等级 {} · modifier {} 条", player.getGameProfile().getName(),
-                mainLevel(player.server, player.getUUID()), n);
+        int trees = TreeService.applyAll(player);
+        LOG.info("进度重算：{} · 主等级 {} · modifier {} 条 · 技能树 {} 条", player.getGameProfile().getName(),
+                mainLevel(player.server, player.getUUID()), n, trees);
     }
 
     /** {@code /redtale reload} 后：曲线/上限/属性表立即生效，在线玩家全部重算（{@code total_exp} 不动）。 */
@@ -330,6 +331,7 @@ public final class ProgressService {
         int players = 0;
         for (ServerPlayer p : server.getPlayerList().getPlayers()) {
             applyAttributes(p);
+            TreeService.applyAll(p);
             players++;
         }
         return players;
