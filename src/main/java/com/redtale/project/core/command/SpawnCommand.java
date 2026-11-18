@@ -140,8 +140,12 @@ public final class SpawnCommand {
     }
 
     private static int toggle(CommandContext<CommandSourceStack> ctx, boolean on) {
-        boolean now = SpawnReplacer.get().setEnabled(on);
-        final String line = "[redtale] 刷怪替换已" + (now ? "开启" : "关闭") + "（只影响后续刷怪，已拦下的仍会补生成）";
+        SpawnReplacer r = SpawnReplacer.get();
+        boolean now = r.setEnabled(on);
+        // R53：开关必须落盘 —— 只改内存的话重启即回「开」，运营以为关了其实没关
+        boolean saved = r.persist();
+        final String line = "[redtale] 刷怪替换已" + (now ? "开启" : "关闭") + "（只影响后续刷怪，已拦下的仍会补生成）"
+                + " · " + (saved ? "已写入 spawn.json5" : "落盘失败（内存已生效，重启会回缺省）");
         ctx.getSource().sendSuccess(() -> Component.literal(line), false);
         return now ? 1 : 0;
     }

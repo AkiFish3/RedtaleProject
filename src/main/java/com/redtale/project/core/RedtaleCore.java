@@ -237,6 +237,14 @@ public final class RedtaleCore {
             // 刷怪规则（D26 / M6 第二层）：必须排在 mobs 之后 —— 交叉校验要查「mob 是否存在」。
             // 悬空引用只告警不删规则（SPAWN-RULES §9），执行层 L3 见悬空直接不拦（§8 红线 5）
             spawnRules = com.redtale.project.mobs.SpawnRegistry.load(all, mobs, warnings);
+            // 刷怪替换开关（M6 收口，R53）：运行期状态落盘在 spawn.json5 —— 不接这一行，
+            // `replace off` 重启后自动回到「开」，运营以为关了其实没关。
+            com.redtale.project.mobs.SpawnSettings spawnSettings =
+                    com.redtale.project.mobs.SpawnSettings.parse(find(all, "spawn.json5"), warnings);
+            com.redtale.project.mobs.SpawnReplacer.get().applySettings(spawnSettings);
+            LOG.info("刷怪替换：{}（{}）", spawnSettings.describe(), spawnSettings.replaceEnabled()
+                    ? "自然刷怪命中规则时替换为自建怪"
+                    : "只观测不拦截（spawn replace on 可开）");
             // 掉落表（M6 第四层）：纯解析，id 存在性 / 物品存在性归 mob check 与掉落事件（本层不判）
             drops = com.redtale.project.mobs.DropSpec.parse(all, warnings);
             // 等级 / 职业（M7 第二层）：解析层不认属性表，这一层做 80 条校验 + 键归一，

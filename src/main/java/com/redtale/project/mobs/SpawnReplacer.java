@@ -81,6 +81,39 @@ public final class SpawnReplacer {
         return enabled;
     }
 
+    /**
+     * 按 {@code spawn.json5} 的结果设开关（{@code /redtale reload} 调）。
+     *
+     * <p>走 {@link #setEnabled} 而不是直接赋值：状态真的变了要留一行日志，重启后「谁把它关了」能追。
+     */
+    public void applySettings(SpawnSettings settings) {
+        if (settings != null) {
+            setEnabled(settings.replaceEnabled());
+        }
+    }
+
+    /**
+     * 把当前开关写回 {@code config/redtale_project/spawn.json5}（只有 {@code replace on|off} 调）。
+     *
+     * <p>返回值 = 有没有落盘成功；失败只 WARN 不抛 —— 开关在内存里已经生效，落盘失败不该让命令报错。
+     * 写的是完整文件（覆盖），所以注释跟着一起重写，内容与默认件同构。
+     */
+    public boolean persist() {
+        java.nio.file.Path file = RedtaleCore.get().config().root().resolve("spawn.json5");
+        String text = "// 刷怪替换（D26 / M6 第三层）—— 运行期开关的落盘位置。\n"
+                + "// 由 `/redtale spawn replace on|off` 改写；手改也可以，下一次 `/redtale reload` 生效。\n"
+                + "// 缺这个文件 = 开关按「开」处理（replace_enabled 缺省 true），不告警。\n"
+                + "{\n  replace_enabled: " + enabled + ",\n}\n";
+        try {
+            java.nio.file.Files.createDirectories(file.getParent());
+            java.nio.file.Files.writeString(file, text, java.nio.charset.StandardCharsets.UTF_8);
+            return true;
+        } catch (java.io.IOException e) {
+            LOG.warn("刷怪替换开关落盘失败（内存里已生效）：{}", e.toString());
+            return false;
+        }
+    }
+
     /** 已命中过的规则数（观测用）。 */
     public int hitRules() {
         return hitLogged.size();

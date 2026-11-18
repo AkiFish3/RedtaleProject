@@ -124,9 +124,9 @@
 |---|---|---|---|
 | L1 解析 | `core/progression/SkillTreeSpec` | ✅ R50（T-0045） | 3 record（`Effect`/`Node`/`Definition`）+ `parse`；167 行、零 MC import；探针 67/67（S8）+ 117/117（S7 独立） |
 | L2 快照 | `core/progression/SkillTreeRegistry` | ✅ R50 | 交叉校验（classes→`jobs/` 按 path 比、`unlock_skill`→`skills/`）、属性键归一成 `AttributeSpec.id()`、`treesForJob`；默认树 `warrior_vanguard` 上线零告警 |
-| L3 判定 | `core/progression/TreePoints` | ⬜ 派单中（T-0046） | 点数派生 + 五种 `Status`；`SKILL-TREE.md` §5 第 2 条 |
-| L4 持久化 | `ProgressStore` 升 v2（`trees: {treeId: [nodeId]}`） | ⬜ 未开工 | 归 S7（改存档结构） |
-| L5 下发 | `level/`·`job/` 同构的 `tree/<tree>/<node>` modifier | ⬜ 未开工 | §5 第 4 条（洗点按前缀批量移除） |
+| L3 判定 | `core/progression/TreePoints` | ✅ R51（T-0046） | 点数派生 + 五种 `Status`；`SKILL-TREE.md` §5 第 2 条 |
+| L4 持久化 | `ProgressStore` 升 v2（`trees: {treeId: [nodeId]}`） | ✅ R51 | 按树分桶；`trees/nodes/hasNode/addNode/removeNode/setNodes/clearTree` |
+| L5 下发 | `tree/<tree>/<node>` modifier | 🟡 R52：`TreePlan`（id 规则 + plan/declared）派单中（T-0048）；`TreeService` 待其合流 | §5 第 4 条（洗点按前缀批量移除） |
 | GUI | owo-lib 客户端 | ⬜ 未开工 | D30 |
 
 **与 §3 的四处落地偏差**（默认件 `skill_trees/warrior_vanguard.json5` 已按此写，属性表 D17 冻结、不改表）：

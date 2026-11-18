@@ -80,6 +80,9 @@ public final class ConfigStore {
             // 刷怪替换（D26 / M6 最后一块，R47）：没有这份默认文件，spawn_rules/ 恒为空，
             // SpawnRegistry 恒 0 条 —— 「L1 解析 / L2 快照 / L3 替换」三层都没内容可验
             "spawn_rules/overworld_night_elite.json5",
+            // 刷怪替换的全局开关（M6 收口，R53）：开关是运行期状态，落盘在这里而不是规则目录 ——
+            // 没有它，`replace off` 一重启就回「开」，运营以为关了其实没关
+            "spawn.json5",
             // 等级 / 职业（M7，R44）：没有这两份默认文件，levels/ 与 jobs/ 恒为空，
             // ProgressRegistry 恒 0 条，K1（只写 JSON5 就能加内容）无从验起。
             // progression.json5 是经验面唯一的全局旋钮（击杀倍率），缺了它 mob_exp_multiplier 恒走缺省

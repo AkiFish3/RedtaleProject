@@ -150,3 +150,20 @@ if (cap > 0 && count >= cap) → 跳过这条规则
 - R48 起，无玩家在线也能验执行层：`/redtale spawn replace fire <实体> <x> <y> <z>` 造一个**真事件** POST 到
   `NeoForge.EVENT_BUS`，返回 `DEFAULT`/`FAIL`/`SUCCEED`，下一 tick 看 `@e[type=...]` 与 scoreboard tag 是否落地。
   它证明「监听器挂上了 + 决策对 + 补生成通」，**不**证明「原版真的会走到这里」——后者仍要真人在线（R48-e）
+
+## 12. 开关持久化（R52 落地）
+
+`/redtale spawn replace on|off` 从 R48 起只改内存，**重启回「开」**（R48 遗留）。R52 补上落盘：
+
+| 项 | 值 |
+|---|---|
+| 文件 | `config/redtale_project/spawn.json5`（配置**根**，不在 `spawn_rules/` 里） |
+| 字段 | `replace_enabled`（布尔，缺省 `true`；非布尔 → 回落缺省 + 一条 WARN） |
+| 写入时机 | 只有 `replace on\|off`；写完命令文案尾部带 `· 已写入 spawn.json5`（失败写 `落盘失败（内存已生效，重启会回缺省）`） |
+| 读取时机 | `/redtale reload`（含开服起步那次）：按文件重设 `SpawnReplacer.enabled` |
+| 删文件 | 下一次 reload 重建为 `replace_enabled: true`（属 `DEFAULT_FILES`） |
+| 未落盘 | `per_tick_cap`（现硬编 8）挂账 |
+
+验收证据（R52，测试服 3 次启停）：`off` → 磁盘 `replace_enabled: false` → reload 后仍「关」→ **重启后仍「关」**
+（第三条才是本条真正的断言：不落盘时前两条都过、第三条必红）。
+
