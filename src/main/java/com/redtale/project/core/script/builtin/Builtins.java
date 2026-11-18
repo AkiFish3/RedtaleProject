@@ -34,6 +34,8 @@ public final class Builtins {
         registries.register(new DashEffect());
         // M5-C 投射第 1 条（T-0033）：沿视线射出投射物，只做「射出去」，on_hit 未支持
         registries.register(new ProjectileEffect());
+        // M7 L5（R46）：第三条经验来源 primitive —— 技能/附魔脚本给玩家发经验，走同一个 award
+        registries.register(new GrantExpEffect());
 
         // conditions
         registries.register(new AlwaysCondition());

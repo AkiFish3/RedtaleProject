@@ -36,6 +36,9 @@ public final class ExpCommand {
                         .then(Commands.argument("amount", LongArgumentType.longArg(1))
                                 .executes(ExpCommand::add)))
                 .then(Commands.literal("sync").executes(ExpCommand::sync))
+                .then(Commands.literal("primitive")
+                        .then(Commands.argument("amount", LongArgumentType.longArg(Long.MIN_VALUE))
+                                .executes(ExpCommand::primitive)))
                 .then(Commands.literal("probe").executes(ExpCommand::probe));
     }
 
@@ -253,5 +256,56 @@ public final class ExpCommand {
     /** 职业快照现状（给 {@code status} 之外的排查用；空表返回 0）。 */
     public static Map<String, Long> jobsOf(ServerPlayer player) {
         return ProgressStore.get(player.server).jobExps(player.getUUID());
+    }
+
+    /**
+     * {@code primitive} 来源的端到端探测（控制台可跑）：把 {@code grant_exp} 当一个**真实原语调用**跑，
+     * 走 {@code ScriptEngine.runCalls} → 注册表 → 原语 → {@code ProgressService.award}，不绕过任何一层。
+     *
+     * <p>输出三行：前/后累计经验与主等级、职业是否被写（{@code primitive} 不进 {@code kill} 职业）。
+     * 只读断言靠「前后差值」，不硬编码等级（R45-e）。
+     */
+    public static int primitive(CommandContext<CommandSourceStack> ctx) {
+        CommandSourceStack src = ctx.getSource();
+        long amount = LongArgumentType.getLong(ctx, "amount");
+        var level = src.getServer().overworld();
+        var player = net.neoforged.neoforge.common.util.FakePlayerFactory.getMinecraft(level);
+        ProgressStore store = ProgressStore.get(src.getServer());
+        java.util.UUID id = player.getUUID();
+        // 清场（R45-f）：FakePlayer 的 UUID 固定，不清会「上一轮加满 → 这一轮直接顶到顶」
+        store.clear(id);
+        ProgressService.applyAttributes(player);
+        long before = store.mainExp(id);
+        Map<String, Long> jobsBefore = store.jobExps(id);
+        int lvBefore = ProgressService.mainLevel(src.getServer(), id);
+
+        var args = new com.google.gson.JsonObject();
+        args.addProperty("amount", amount);
+        var calls = List.of(new com.redtale.project.core.script.ScriptCall("grant_exp", args));
+        int done = RedtaleCore.get().engine().runCalls(calls, com.redtale.project.core.script.ScriptContext.ofPlayer(player),
+                "grant_exp 探针");
+
+        long after = store.mainExp(id);
+        int lvAfter = ProgressService.mainLevel(src.getServer(), id);
+        Map<String, Long> jobsAfter = store.jobExps(id);
+        long jobDelta = 0L;
+        for (var e : jobsAfter.entrySet()) {
+            jobDelta += e.getValue() - jobsBefore.getOrDefault(e.getKey(), 0L);
+        }
+        long delta = after - before;
+        // 期望值按「原语自己的保护规则」算：<=0 不写；超硬顶按硬顶发（R45-e：别硬编码期望）
+        long want = amount <= 0L ? 0L : Math.min(amount, com.redtale.project.core.script.builtin.GrantExpEffect.HARD_CAP);
+        boolean ok = delta == want;
+        final long fDelta = delta;
+        final long fJobDelta = jobDelta;
+        final int fLvAfter = lvAfter;
+        src.sendSuccess(() -> Component.literal("[redtale] exp primitive（grant_exp 原语 · 调用 " + done + "/1）"
+                + " 累计 " + before + " → " + after + "（Δ" + fDelta + "，请求 " + amount + "，期望 " + want + "）"
+                + (ok ? " ✓" : " ✗")), false);
+        src.sendSuccess(() -> Component.literal("  主等级 " + lvBefore + " → " + fLvAfter
+                + " · 职业合计 Δ" + fJobDelta + "（primitive 不进只吃 kill 的职业）"), false);
+        store.clear(id);
+        ProgressService.applyAttributes(player);
+        return ok ? 1 : 0;
     }
 }

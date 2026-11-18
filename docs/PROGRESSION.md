@@ -86,7 +86,7 @@
 |---|---|---|---|
 | `kill` | `MobDrops` 发放掉落时的 `xp` | 表内 `xp` × `mob_exp_multiplier` | 已存在（R41-c 走 `ExperienceOrb.award`）；M7 在**同一处**再加一份 `total_exp` |
 | `command` | `/redtale exp add <amount>` | 参数 | 运营入口，也是验收入口 |
-| `primitive` | 脚本原语 `grant_exp` | `amount` | 技能/附魔可以给经验；**原语预算内**（SKILLS §4 总数不变，属于追加） |
+| `primitive` | 脚本原语 `grant_exp` ✅ R46 | `amount` + `target`（`caster`\|`target`，只对玩家生效） | 技能/附魔可以给经验；**原语预算 24 → 25**（R46 记账，`SKILLS.md` §4 已同步）。观测面 `/redtale exp primitive <amount>`（FakePlayer，控制台可跑） |
 
 - 倍率只有一个：`config/redtale_project/progression.json5` 的 `mob_exp_multiplier`（缺省 `1.0`，`< 0` → 0 + WARN）。
 - **不做**「按方块 / 按合成 / 按在线时长」——那些要新的方块/配方事件面，等专业真正接上再说（D24 后置）。

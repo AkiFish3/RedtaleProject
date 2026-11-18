@@ -198,6 +198,14 @@ public final class AttributeSpecs {
                 if (s != null) {
                     return s;
                 }
+            } else if (t.startsWith("generic.")) {
+                // 省略命名空间的写法：generic.attack_damage → minecraft:generic.attack_damage
+                // （R46：`tools/check_progress.py` 按这条宽松口径判「在不在 80 条表内」，
+                //  运行期必须同样认，否则对账工具放行、L2 校验层静默丢弃）
+                AttributeSpec s = BY_ID.get("minecraft:" + t);
+                if (s != null) {
+                    return s;
+                }
             }
         }
         if (t.startsWith("redtale_project:")) {
