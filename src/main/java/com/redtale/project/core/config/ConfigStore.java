@@ -85,6 +85,12 @@ public final class ConfigStore {
             // progression.json5 是经验面唯一的全局旋钮（击杀倍率），缺了它 mob_exp_multiplier 恒走缺省
             "levels/main.json5",
             "jobs/miner.json5",
+            // 技能树（M7 · D25，R50）：warrior_vanguard 是 §3 的示范树。
+            // 它同时需要两样东西存在才不告警：`jobs/warrior.json5`（classes 对齐 jobs/）
+            // 与 `skills/quake_slam.json5`（unlock_skill 对齐 skills/）
+            "jobs/warrior.json5",
+            "skills/quake_slam.json5",
+            "skill_trees/warrior_vanguard.json5",
             "progression.json5"
     );
 

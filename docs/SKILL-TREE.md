@@ -117,3 +117,25 @@
 - 不做「技能树内嵌属性点分配」——两套分开，避免玩家搞不清哪个能洗。
 - 不做跨树共享点数：一个角色可以有多棵树（按职业解锁），各自的点独立，`max_points` 各算各的。
 - 不做节点动画/连线特效（owo 能做，但会拖首屏时间，M7 之后再说）。
+
+## 7. 落地状态（分层，按轮次追加）
+
+| 层 | 类 | 状态 | 证据 |
+|---|---|---|---|
+| L1 解析 | `core/progression/SkillTreeSpec` | ✅ R50（T-0045） | 3 record（`Effect`/`Node`/`Definition`）+ `parse`；167 行、零 MC import；探针 67/67（S8）+ 117/117（S7 独立） |
+| L2 快照 | `core/progression/SkillTreeRegistry` | ✅ R50 | 交叉校验（classes→`jobs/` 按 path 比、`unlock_skill`→`skills/`）、属性键归一成 `AttributeSpec.id()`、`treesForJob`；默认树 `warrior_vanguard` 上线零告警 |
+| L3 判定 | `core/progression/TreePoints` | ⬜ 派单中（T-0046） | 点数派生 + 五种 `Status`；`SKILL-TREE.md` §5 第 2 条 |
+| L4 持久化 | `ProgressStore` 升 v2（`trees: {treeId: [nodeId]}`） | ⬜ 未开工 | 归 S7（改存档结构） |
+| L5 下发 | `level/`·`job/` 同构的 `tree/<tree>/<node>` modifier | ⬜ 未开工 | §5 第 4 条（洗点按前缀批量移除） |
+| GUI | owo-lib 客户端 | ⬜ 未开工 | D30 |
+
+**与 §3 的四处落地偏差**（默认件 `skill_trees/warrior_vanguard.json5` 已按此写，属性表 D17 冻结、不改表）：
+
+| §3 示例键 | 实际写成 | 原因 |
+|---|---|---|
+| `redtale_project:blunt_power` | `redtale_project:physical_damage` | 80 条表里没有 `blunt_power` |
+| `redtale_project:armor_toughness` | `minecraft:generic.armor_toughness` | 护甲韧性只有原版那条 |
+| `minecraft:generic.attack_knockback` | `redtale_project:knockback_power` | 表里只有 `knockback_resistance` 与自建 `knockback_power` |
+| `name` 用 `tree.redtale.*` lang 键 | 直接写中文 | 仓库没有 `tree.*` 的 lang 生成通道（同 R28-b 的技能口径） |
+
+另：`classes` 写**职业裸名**（`warrior`），与 `jobs/*.json5` 的全名 id 按 **path** 比较（R50-a）；空数组 = 所有职业可用。

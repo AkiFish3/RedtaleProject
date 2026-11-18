@@ -67,6 +67,13 @@ public final class RedtaleCore {
     /** 经验面全局规则（M7，{@code progression.json5}）。 */
     private volatile com.redtale.project.core.progression.ProgressRules progressRules =
             com.redtale.project.core.progression.ProgressRules.DEFAULT;
+    /**
+     * 技能树快照（M7 · D25 第二层，{@code skill_trees/*.json5}）。
+     * classes 已对齐 {@code jobs/}、{@code unlock_skill} 已对齐 {@code skills/}、属性键已归一成全名。
+     * L3 的点数判定与下发只读这一份，不要自己再解析一遍（R36-a / R47-b）。
+     */
+    private volatile com.redtale.project.core.progression.SkillTreeRegistry skillTrees =
+            com.redtale.project.core.progression.SkillTreeRegistry.EMPTY;
     /** 技能执行器（M5-A）：持有冷却表。**跨 reload 存活**（reload 清冷却 = 免费刷技能）。 */
     private final com.redtale.project.core.skill.SkillEngine skillEngine = new com.redtale.project.core.skill.SkillEngine();
     /** 最近一次 reload 的非致命告警（配置写歪了但被默认值兜住）。 */
@@ -164,6 +171,11 @@ public final class RedtaleCore {
         return progressRules;
     }
 
+    /** 技能树快照（D25 / M7 第二层）。为空 = 没有技能树内容，`/redtale tree` 与 L3 判定都无内容可做。 */
+    public com.redtale.project.core.progression.SkillTreeRegistry skillTrees() {
+        return skillTrees;
+    }
+
     /** 最近一次 reload 的非致命告警。 */
     public List<String> configWarnings() {
         return configWarnings;
@@ -231,6 +243,9 @@ public final class RedtaleCore {
             // 坏键丢弃并告警（PROGRESSION §8 红线 3）。累加与下发在 L4，不在这里。
             progress = com.redtale.project.core.progression.ProgressRegistry.load(all, warnings);
             progressRules = com.redtale.project.core.progression.ProgressRules.parse(find(all, "progression.json5"), warnings);
+            // 技能树（D25 / M7 第二层）：**必须排在 progress 与 skills 之后** —— classes 要对齐 jobs/、
+            // unlock_skill 要对齐 skills/，两者任一还是 EMPTY 时每棵树都会被判悬空（R47-a 的同一纪律）。
+            skillTrees = com.redtale.project.core.progression.SkillTreeRegistry.load(all, progress, skills, warnings);
             net.minecraft.server.MinecraftServer srv = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
             int written = 0;
             if (srv != null) { written += WeaponAttributesGenerator.generateAll(srv.getWorldPath(net.minecraft.world.level.storage.LevelResource.DATAPACK_DIR).resolve("redtale_project"), all, contentItems.all(), warnings); } else { LOG.warn("weapon_attributes 生成跳过：当前没有服务端实例"); }
@@ -275,15 +290,17 @@ public final class RedtaleCore {
             if (outcome.clean()) {
                 lastError = "";
                 lastErrorLines = List.of();
-                LOG.info("配置重载完成：{} 条脚本，{} 个文件，{} 件装备内容，{}，{} 张掉落表，{}，{}，{}。攻速：{}",
+                LOG.info("配置重载完成：{} 条脚本，{} 个文件，{} 件装备内容，{}，{} 张掉落表，{}，{}，{}，{}。攻速：{}",
                         outcome.loaded(), all.size(), contentItems.size(), skills.describe(),
-                        drops.size(), mobs.describe(), spawnRules.describe(), progress.describe(), attackSpeedRules.describe());
+                        drops.size(), mobs.describe(), spawnRules.describe(), progress.describe(),
+                        skillTrees.describe(), attackSpeedRules.describe());
                 return new ReloadResult(true,
                         "已载入 " + outcome.loaded() + " 条脚本 + " + contentItems.size()
                                 + " 件装备内容 + " + skills.size() + " 条技能 + " + mobs.size()
                                 + " 只怪物 + " + drops.size() + " 张掉落表 + " + spawnRules.size() + " 条刷怪规则"
                                 + " + " + progress.size()
-                                + " 条等级定义（" + all.size() + " 份配置文件）" + tail,
+                                + " 条等级定义 + " + skillTrees.size() + " 棵技能树"
+                                + "（" + all.size() + " 份配置文件）" + tail,
                         List.of());
             }
 

@@ -1,0 +1,17 @@
+// 职业示范 2（M7 · R50）：技能树 classes 要对齐 jobs/，而 warrior 树需要 warrior 职业存在。
+// 与 miner 并列（一个玩家可同时持有全部职业，各存各自 total_exp，不做转职）。
+{
+  id: "redtale_project:warrior",
+  name: "战士",
+  max_level: 60,
+  curve: {
+    mode: "geometric",
+    base: 90.0,
+    growth: 1.10,
+  },
+  attributes: {
+    "minecraft:generic.attack_damage": 0.15,
+    "redtale_project:physical_damage": 0.01,
+  },
+  exp_sources: ["kill", "primitive"],
+}

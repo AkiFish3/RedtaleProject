@@ -1,0 +1,66 @@
+// 技能树示范 1（M7 · R50，D25）：`docs/SKILL-TREE.md` §3 的战士·先锋树。
+// 与 §3 逐字一致，只有四处按 80 条属性表 / 现有技能表做了落地修正（不改 schema）：
+//   ① `redtale_project:blunt_power` → `redtale_project:physical_damage`（前者不在 80 条表里）；
+//   ② `redtale_project:armor_toughness` → `minecraft:generic.armor_toughness`（护甲韧性只有原版那条）；
+//   ③ `minecraft:generic.attack_knockback` → `redtale_project:knockback_power`（80 条表里没有原版攻击击退，
+//      只有击退抗性与自建击退强度）—— 属性表已冻结，按表写而不是加条目；
+//   ④ name 写中文 —— 仓库没有 `tree.*` 的 lang 生成通道（同 R28-b 的技能口径）。
+// 以上四条都会被 L2 的 80 条校验当场告警（`… 不在 80 条属性表里，已丢弃`），所以示范件必须先对上表。
+// `respec` 在这一层**原样忽略**（L1/L2 不实现洗点，只保证不告警）。
+// `max_points: 21` 是显式给定值；10 个节点的 cost 合计是 19（21 点要 21 级，见 §4）。
+{
+  id: "warrior_vanguard",
+  name: "战士 · 先锋",
+  icon: "minecraft:iron_axe",
+  classes: ["warrior"],
+  max_points: 21,
+  points_per_level: 1,
+  respec: { cost: { currency: "coin", amount: 500 }, cooldown_hours: 24 },
+
+  nodes: {
+    root: { name: "起点", cost: 0, pos: [1, 0], requires: [],
+            effects: [] },
+
+    atk_spd_1: { name: "迅捷 I", cost: 1, pos: [0, 1],
+                 requires: ["root"],
+                 effects: [{ type: "attribute", attribute: "minecraft:generic.attack_speed",
+                             operation: "add_multiplied_total", value: 0.05 }] },
+
+    atk_spd_2: { name: "迅捷 II", cost: 2, pos: [0, 2],
+                 requires: ["atk_spd_1"],
+                 effects: [{ type: "attribute", attribute: "minecraft:generic.attack_speed",
+                             operation: "add_multiplied_total", value: 0.05 }] },
+
+    gale: { name: "疾风斩", cost: 3, pos: [0, 3],
+            requires: ["atk_spd_2"],
+            effects: [{ type: "unlock_skill", skill: "redtale_project:gale_slash" }] },
+
+    heavy_1: { name: "重击 I", cost: 1, pos: [1, 1],
+               requires: ["root"],
+               effects: [{ type: "attribute", attribute: "redtale_project:physical_damage",
+                           operation: "add_value", value: 0.08 }] },
+
+    heavy_2: { name: "重击 II", cost: 2, pos: [1, 2],
+               requires: ["heavy_1"],
+               effects: [{ type: "attribute", attribute: "redtale_project:knockback_power",
+                           operation: "add_value", value: 0.5 }] },
+
+    quake: { name: "震地", cost: 4, pos: [1, 3],
+             requires: ["heavy_2"],
+             effects: [{ type: "unlock_skill", skill: "redtale_project:quake_slam" }] },
+
+    armor_1: { name: "坚甲 I", cost: 1, pos: [2, 1],
+               requires: ["root"],
+               effects: [{ type: "attribute", attribute: "minecraft:generic.armor",
+                           operation: "add_value", value: 2 }] },
+
+    armor_2: { name: "坚甲 II", cost: 2, pos: [2, 2],
+               requires: ["armor_1"],
+               effects: [{ type: "attribute", attribute: "minecraft:generic.armor_toughness",
+                           operation: "add_multiplied_total", value: 0.10 }] },
+
+    unyielding: { name: "不屈", cost: 3, pos: [2, 3],
+                  requires: ["armor_2"],
+                  effects: [{ type: "passive", id: "damage_reduction_when_low_hp" }] },
+  },
+}

@@ -1,0 +1,13 @@
+// 技能示范 4（M7 · R50）：物理群体 —— 技能树 `quake_slam` 节点解锁的那一条。
+// 用 damage_aoe（圈心 = 受害者脚下，无 target 时 = 施法者脚下）。
+{
+  id: "redtale_project:quake_slam",
+  name: "震地",
+  icon: "minecraft:iron_block",
+  cooldown_ticks: 300, // 15 秒
+
+  effects: [
+    { type: "console_log", args: { text: "[skill] quake_slam by %player%" } },
+    { type: "damage_aoe", args: { amount: 8.0, radius: 4.0, falloff: 0.5, max_targets: 6 } },
+  ],
+}
