@@ -93,8 +93,17 @@ public final class TreeService {
         return List.copyOf(new ArrayList<>(nodes));
     }
 
+    /** 点数状态：上限按**主等级**派生（R54-a，等级换点数），控制台 / 探针走同一支。 */
     public static TreePoints.State state(ServerPlayer player, SkillTreeSpec.Definition def) {
-        return TreePoints.state(def, selected(player, def));
+        return TreePoints.state(def, selected(player, def), levelOf(player));
+    }
+
+    /** 玩家主等级；{@code player == null} → 0（只影响展示，不影响存档）。 */
+    public static int levelOf(ServerPlayer player) {
+        if (player == null || player.server == null) return 0;
+        ProgressSpec.Definition main = ProgressService.mainDef();
+        if (main == null) return 0;
+        return ProgressService.levelOf(main, ProgressStore.get(player.server).mainExp(player.getUUID()));
     }
 
     // ---- 写：点 / 退 / 洗 ----
@@ -110,7 +119,8 @@ public final class TreeService {
         }
         String nodeId = rawNode == null ? "" : rawNode.trim();
         List<String> sel = selected(player, def);
-        TreePoints.Status st = TreePoints.canTake(def, sel, nodeId);
+        int level = levelOf(player);
+        TreePoints.Status st = TreePoints.canTake(def, sel, nodeId, level);
         switch (st) {
             case UNKNOWN_NODE -> {
                 return new Result(Status.UNKNOWN_NODE, def.id(), nodeId, List.of(), 0, 0);
@@ -123,7 +133,7 @@ public final class TreeService {
                         TreePoints.missingPrereqs(def, sel, nodeId), 0, 0);
             }
             case NO_POINTS -> {
-                TreePoints.State s = TreePoints.state(def, sel);
+                TreePoints.State s = TreePoints.state(def, sel, level);
                 return new Result(Status.NO_POINTS, def.id(), nodeId,
                         List.of(String.valueOf(s.available())), 0, 0);
             }

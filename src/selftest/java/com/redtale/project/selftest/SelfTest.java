@@ -233,6 +233,7 @@ public final class SelfTest {
 
         // ---- 汇总 -----------------------------------------------------------
         affix();
+        tree();
         System.out.println();
         if (failures.isEmpty()) {
             System.out.println("[selftest] PASS " + passed + " 项");
@@ -318,6 +319,64 @@ public final class SelfTest {
                 .roll(pool, defs, 1, null, null).affixIds().isEmpty());
         check("pool=null 返回空", com.redtale.project.items.AffixRoller
                 .roll(null, defs, 1, new java.util.Random(1), null).affixIds().isEmpty());
+    }
+
+    /**
+     * M7 出口：等级换点数（R54）。{@code capFor} 是唯一派生点，TreePoints 的两种入口都必须落在它上面。
+     */
+    private static void tree() {
+        // 上限派生：赚到 = 每级点数 × 等级，再与 max_points 取小
+        expect("capFor 1 点/级 × L1 = 1",
+                com.redtale.project.core.progression.TreePoints.capFor(21, 1, 1), 1);
+        expect("capFor 1 点/级 × L30 被 max_points 21 封顶",
+                com.redtale.project.core.progression.TreePoints.capFor(21, 1, 30), 21);
+        expect("capFor 2 点/级 × L3 = 6",
+                com.redtale.project.core.progression.TreePoints.capFor(21, 2, 3), 6);
+        expect("capFor max_points=0 表示不设上限（21 点/级 × L1 = 21）",
+                com.redtale.project.core.progression.TreePoints.capFor(0, 21, 1), 21);
+        expect("capFor 每级 0 点 = 关掉等级门槛（退回 max_points）",
+                com.redtale.project.core.progression.TreePoints.capFor(21, 0, 5), 21);
+        expect("capFor 等级 0 不报负",
+                com.redtale.project.core.progression.TreePoints.capFor(21, 1, 0), 0);
+        check("capFor 大数不溢出",
+                com.redtale.project.core.progression.TreePoints.capFor(0, Integer.MAX_VALUE, 3)
+                        == Integer.MAX_VALUE);
+
+        // 同一棵树：三节点（root 0 / a 1 / b 2），max_points 21、每级 1 点
+        var nodes = new java.util.LinkedHashMap<String, com.redtale.project.core.progression.SkillTreeSpec.Node>();
+        nodes.put("root", new com.redtale.project.core.progression.SkillTreeSpec.Node(
+                "root", "起点", 0, new int[]{0, 0}, List.of(), List.of()));
+        nodes.put("a", new com.redtale.project.core.progression.SkillTreeSpec.Node(
+                "a", "A", 1, new int[]{0, 1}, List.of("root"), List.of()));
+        nodes.put("b", new com.redtale.project.core.progression.SkillTreeSpec.Node(
+                "b", "B", 2, new int[]{0, 2}, List.of("a"), List.of()));
+        var def = new com.redtale.project.core.progression.SkillTreeSpec.Definition(
+                "t", "T", "minecraft:stone", List.of("warrior"), 21, 1, nodes, "selftest");
+
+        check("L1 selected=[] → 上限 1、剩余 1",
+                com.redtale.project.core.progression.TreePoints.state(def, List.of(), 1).maxPoints() == 1
+                        && com.redtale.project.core.progression.TreePoints.state(def, List.of(), 1).available() == 1);
+        check("L1 点 cost2 的 b → NO_POINTS（先点 a 让前置成立）",
+                com.redtale.project.core.progression.TreePoints.canTake(def, List.of("root", "a"), "b", 2)
+                        == com.redtale.project.core.progression.TreePoints.Status.NO_POINTS);
+        check("L3 点 cost2 的 b → OK",
+                com.redtale.project.core.progression.TreePoints.canTake(def, List.of("root", "a"), "b", 3)
+                        == com.redtale.project.core.progression.TreePoints.Status.OK);
+        check("L1 点 cost1 的 a → OK",
+                com.redtale.project.core.progression.TreePoints.canTake(def, List.of("root"), "a", 1)
+                        == com.redtale.project.core.progression.TreePoints.Status.OK);
+        check("带等级入口与 capFor 同源（L2 上限 2）",
+                com.redtale.project.core.progression.TreePoints.state(def, List.of("root", "a"), 2).maxPoints() == 2);
+        check("已用点数不变（等级只改上限）",
+                com.redtale.project.core.progression.TreePoints.state(def, List.of("root", "a"), 9).used() == 1);
+        check("旧两参入口仍按 max_points 算（R53 行为不变）",
+                com.redtale.project.core.progression.TreePoints.state(def, List.of("root")).maxPoints() == 21);
+        check("旧三参 canTake 仍按 max_points 判（探针不因等级掉点）",
+                com.redtale.project.core.progression.TreePoints.canTake(def, List.of("root", "a"), "b")
+                        == com.redtale.project.core.progression.TreePoints.Status.OK);
+        check("等级回档后剩余点数为负也不抛（超额配置保护）",
+                com.redtale.project.core.progression.TreePoints.state(def, List.of("root", "a", "b"), 1)
+                        .available() == -2);
     }
 
     private static void check(String name, boolean ok) {

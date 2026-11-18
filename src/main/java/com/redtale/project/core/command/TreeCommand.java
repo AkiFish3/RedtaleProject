@@ -130,7 +130,9 @@ public final class TreeCommand {
         }
         TreePoints.State s = TreeService.state(player, def);
         String text = "[redtale] " + def.id() + " · 点数 " + s.maxPoints() + " · 已用 " + s.used()
-                + " · 剩余 " + s.available() + " · 已点 " + s.taken() + " 个";
+                + " · 剩余 " + s.available() + " · 已点 " + s.taken() + " 个"
+                + " · 等级 " + TreeService.levelOf(player)
+                + "（" + def.pointsPerLevel() + " 点/级，上限 " + def.maxPoints() + "）";
         src.sendSuccess(() -> Component.literal(text), false);
         return s.taken();
     }
@@ -234,6 +236,10 @@ public final class TreeCommand {
         // 清场：FakePlayer 的 UUID 固定，上一轮的已点节点会串进这一轮
         store.clear(player.getUUID());
         TreeService.removeAll(player);
+        // R54：点数上限现在按主等级派生 → 先把等级顶到 max_points 之上，A~M 组才不会被 NO_POINTS 拦
+        store.setMainExp(player.getUUID(), 1_000_000_000L);
+        send(src, "[redtale] tree probe · 主等级 " + TreeService.levelOf(player)
+                + "（点数上限 " + TreeService.state(player, def).maxPoints() + "）");
 
         double atkBase = value(player, "minecraft:generic.attack_speed");
         double armorBase = value(player, "minecraft:generic.armor");
@@ -370,6 +376,25 @@ public final class TreeCommand {
         pass += okM ? 1 : 0;
         send(src, "  M 幽灵 modifier（tree/warrior_vanguard/ghost）被前缀清场 → "
                 + (okM ? "✓" : "✗") + " · 移速回 " + value(player, "minecraft:generic.movement_speed"));
+
+        // N：等级 → 点数上限（R54-a）—— 等级掉回 1，上限只剩 1 点，cost 2 的节点必须 NO_POINTS
+        store.setMainExp(player.getUUID(), 0L);
+        int lowLevel = TreeService.levelOf(player);
+        TreePoints.State lowState = TreeService.state(player, def);
+        TreeService.take(player, tree, "root"); // 0 费，只为了让 atk_spd_1 的前置成立
+        TreeService.Result n1 = TreeService.take(player, tree, "atk_spd_1");
+        TreeService.Result n2 = TreeService.take(player, tree, "atk_spd_2");
+        total++;
+        boolean okN = lowLevel == 1 && lowState.maxPoints() == Math.min(def.maxPoints(),
+                def.pointsPerLevel() * lowLevel) && n1.ok() && n2.status() == TreeService.Status.NO_POINTS;
+        pass += okN ? 1 : 0;
+        send(src, "  N 等级 " + lowLevel + " → 上限 " + lowState.maxPoints() + " · cost1 " + n1.status()
+                + " / cost2 " + n2.status() + (okN ? " ✓" : " ✗"));
+
+        // 收尾清场：FakePlayer 的等级与已点节点都不留（否则下一轮 / 其它探针读到上一轮的 1e9 经验）
+        store.clearTree(player.getUUID(), tree);
+        store.clear(player.getUUID());
+        TreeService.removeAll(player);
 
         int finalPass = pass;
         int finalTotal = total;
