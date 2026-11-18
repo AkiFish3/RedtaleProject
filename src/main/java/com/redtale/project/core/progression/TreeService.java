@@ -258,6 +258,98 @@ public final class TreeService {
         return removeByPrefix(player, RedtaleProject.MOD_ID + ":tree/");
     }
 
+    // ---- 读：技能解锁派生（R57：`unlock_skill` 的第一个消费方）----
+
+    /**
+     * 所有技能树里被 {@code unlock_skill} 声明过的技能（**归一到 path**，保定义序）。
+     *
+     * <p>拿法是把每棵树的**全部节点**当「已点」喂给 {@link TreeUnlocks#unlocked} —— 它只做纯派生、
+     * 不读存档，所以「声明全集」= 「假装全点」的结果。
+     */
+    public static Set<String> gatedSkillPaths() {
+        Set<String> out = new java.util.LinkedHashSet<>();
+        for (SkillTreeSpec.Definition def : RedtaleCore.get().skillTrees().all().values()) {
+            for (String skill : TreeUnlocks.unlocked(def, def.nodes().keySet())) {
+                String p = pathOf(skill);
+                if (!p.isEmpty()) {
+                    out.add(p);
+                }
+            }
+        }
+        return java.util.Collections.unmodifiableSet(out);
+    }
+
+    /** 该技能是否被任一棵树管着。**没被任何树声明的技能不设门槛**（历史内容 / 调试保留，R57-a）。 */
+    public static boolean gated(String rawSkillId) {
+        String p = pathOf(rawSkillId);
+        return !p.isEmpty() && gatedSkillPaths().contains(p);
+    }
+
+    /**
+     * 玩家已解锁的技能（**全名，按配置写法**；跨树合并、按 path 去重保首次）。
+     *
+     * <p>不落存档：解锁集是「已点节点 + 树配置」的派生值，第二次存就等于第二份真相（同 R50-c）。
+     */
+    public static List<String> unlockedSkills(ServerPlayer player) {
+        if (player == null) {
+            return List.of();
+        }
+        List<String> out = new ArrayList<>();
+        Set<String> seen = new java.util.HashSet<>();
+        for (SkillTreeSpec.Definition def : RedtaleCore.get().skillTrees().all().values()) {
+            for (String skill : TreeUnlocks.unlocked(def, selected(player, def))) {
+                String p = pathOf(skill);
+                if (p.isEmpty() || !seen.add(p)) {
+                    continue;
+                }
+                out.add(skill);
+            }
+        }
+        return java.util.Collections.unmodifiableList(out);
+    }
+
+    /** 全名 / 裸名都认（比对走 path，R50-b 同源）。 */
+    public static boolean isUnlocked(ServerPlayer player, String rawSkillId) {
+        String p = pathOf(rawSkillId);
+        if (p.isEmpty()) {
+            return false;
+        }
+        for (String s : unlockedSkills(player)) {
+            if (pathOf(s).equals(p)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 给人看的解锁清单：每行 {@code "  " + 技能全名}；空 → {@code "  （无）"}。 */
+    public static String unlockedText(ServerPlayer player) {
+        List<String> list = unlockedSkills(player);
+        if (list.isEmpty()) {
+            return "  （无）";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (String s : list) {
+            if (sb.length() > 0) {
+                sb.append('\n');
+            }
+            sb.append("  ").append(s);
+        }
+        return sb.toString();
+    }
+
+    private static String pathOf(String raw) {
+        if (raw == null) {
+            return "";
+        }
+        String s = raw.trim();
+        if (s.isEmpty()) {
+            return "";
+        }
+        int i = s.indexOf(':');
+        return i < 0 ? s : s.substring(i + 1);
+    }
+
     private static boolean addOne(ServerPlayer player, TreePlan.Modifier m) {
         if (m == null || m.attribute() == null) {
             return false;

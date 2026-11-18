@@ -406,6 +406,41 @@ public final class TreeCommand {
         send(src, "  N 等级 " + lowLevel + " → 上限 " + lowState.maxPoints() + " · cost1 " + n1.status()
                 + " / cost2 " + n2.status() + (okN ? " ✓" : " ✗"));
 
+        // O：`unlock_skill` 的第一个消费方（R57）—— 点通 atk_spd 链 + gale → 解锁 gale_slash
+        store.setMainExp(player.getUUID(), 1_000_000_000L);
+        TreeService.take(player, tree, "root");
+        TreeService.take(player, tree, "atk_spd_1");
+        TreeService.take(player, tree, "atk_spd_2");
+        TreeService.Result o1 = TreeService.take(player, tree, "gale");
+        boolean oFull = TreeService.isUnlocked(player, "redtale_project:gale_slash");
+        boolean oBare = TreeService.isUnlocked(player, "gale_slash");
+        boolean oGate = TreeService.gated("redtale_project:gale_slash")
+                && TreeService.gatedSkillPaths().contains("gale_slash")
+                && !TreeService.gated("redtale_project:arc_bolt");
+        total++;
+        boolean okO = o1.ok() && oFull && oBare && oGate;
+        pass += okO ? 1 : 0;
+        send(src, "  O 点 gale → " + o1.status() + " · 解锁 gale_slash 全名 " + oFull + " / 裸名 " + oBare
+                + " / 门槛（arc_bolt 免门槛）" + oGate + (okO ? " ✓" : " ✗"));
+
+        // P：退点后解锁集立刻回收（派生值、不落存档）；`unlockedText` 空态是固定文案
+        TreeService.untake(player, tree, "gale");
+        boolean pEmpty = TreeService.unlockedSkills(player).isEmpty();
+        boolean pText = "  （无）".equals(TreeService.unlockedText(player));
+        total++;
+        boolean okP = pEmpty && pText;
+        pass += okP ? 1 : 0;
+        send(src, "  P 退 gale → 解锁集 " + TreeService.unlockedSkills(player).size()
+                + " 条 / 文案空态 " + pText + (okP ? " ✓" : " ✗"));
+
+        // Q：重新点回 → `unlockedText` 带两空格前缀、含全名
+        TreeService.take(player, tree, "gale");
+        String qText = TreeService.unlockedText(player);
+        total++;
+        boolean okQ = qText.startsWith("  ") && qText.contains("gale_slash") && !qText.endsWith("\n");
+        pass += okQ ? 1 : 0;
+        send(src, "  Q 解锁文案 → " + qText.replace("\n", " | ") + (okQ ? " ✓" : " ✗"));
+
         // 收尾清场：FakePlayer 的等级与已点节点都不留（否则下一轮 / 其它探针读到上一轮的 1e9 经验）
         store.clearTree(player.getUUID(), tree);
         store.clear(player.getUUID());

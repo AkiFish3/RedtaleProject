@@ -111,6 +111,13 @@ public final class SkillCommand {
             src.sendFailure(Component.literal("[redtale] 这条命令要玩家执行（控制台没有 UUID，冷却记不住）"));
             return 0;
         }
+        // R57：`unlock_skill` 的唯一消费方 —— 被树管着的技能必须点出对应节点才能放
+        if (com.redtale.project.core.progression.TreeService.gated(skillId)
+                && !com.redtale.project.core.progression.TreeService.isUnlocked(player, skillId)) {
+            src.sendFailure(Component.literal("[redtale] 技能 " + skillId
+                    + " 未解锁（需要技能树节点，/redtale tree state 看已点）"));
+            return 0;
+        }
         SkillEngine engine = RedtaleCore.get().skillEngine();
         SkillEngine.Result result = engine.cast(player, skillId);
         if (result.status() == SkillEngine.Status.NO_MANA) {
