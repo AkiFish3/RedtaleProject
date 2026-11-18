@@ -32,6 +32,7 @@ TOOLS = (
     "check_lang.py",       # lang 键覆盖（T-0055 落地后自动接上）
     "check_deps.py",       # 依赖面 / 命名面（D6 / D11 / D12）—— R60 接上
     "check_attrs.py",      # 80 条属性表三向对账（docs ↔ java ↔ lang）—— R61 接上
+    "check_numeric.py",    # 数值面四份：attack_speed / crit / damage / progression —— R62 接上
 )
 
 
