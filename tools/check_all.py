@@ -37,6 +37,7 @@ TOOLS = (
     "check_docs.py",       # 文档面：仓库内路径引用存在性 + ROUND 孤儿提示 —— R64 接上
     "check_tasks.py",      # 卡板自检：状态 / 重复 id / 在制品 / 验收段 / 台账漂移 —— R66 接上
     "check_professions.py",  # 专业面：professions/*.json5 起飞前对账 —— R67 接上
+    "check_spawn.py",       # 刷怪全局配置：spawn.json5 主配置（per_tick_cap）—— R72 接上
 )
 
 
