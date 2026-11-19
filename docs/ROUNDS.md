@@ -84,3 +84,4 @@
 | R71 | 补完中断轮：验收 T-0066（`SpawnBudget`）+ 接两处委托 + 测试服验两路径语义（命令守卫 vs 配置回落）+ 派 T-0067（`check_spawn.py`） | `docs/ROUND-R71-BUDGET.md` |
 | R72 | 验收 T-0067（`check_spawn.py`）+ 接线 `check_all` 16→17 + 派 T-0068（`ConfigDiff` 纯函数） | `docs/ROUND-R72-CHECKSPAWN.md` |
 | R73 | 验收 T-0068（`ConfigDiff` 纯函数）+ 接过接线（`ConfigStore.mtimes()` + reload 变更摘要，测试服验四形态）+ 派 T-0069（`check_display.py`） | `docs/ROUND-R73-RELOADDIFF.md` |
+| R74 | 验收 T-0069（`check_display.py`）+ 接线 `check_all` 17→18 + 派 T-0070（`check_checkall.py`，清单安全网） | `docs/ROUND-R74-CHECKLIST.md` |

@@ -38,6 +38,7 @@ TOOLS = (
     "check_tasks.py",      # 卡板自检：状态 / 重复 id / 在制品 / 验收段 / 台账漂移 —— R66 接上
     "check_professions.py",  # 专业面：professions/*.json5 起飞前对账 —— R67 接上
     "check_spawn.py",       # 刷怪全局配置：spawn.json5 主配置（per_tick_cap）—— R72 接上
+    "check_display.py",     # 显示口径：display.json5 安全网 —— R74 接上
 )
 
 
