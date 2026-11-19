@@ -1,0 +1,76 @@
+# 轮次文档索引（R63 建，`check_docs.py` 的孤儿判据）
+
+> 为什么有这份文件：`docs/ROUND-R*.md` 写到现在 60 份，除了 `PLAN.md` §13 那张大表以外**没有任何入口**。
+> R62 做 `docs/REALPLAYER-WINDOW.md` 时就是因为「29 条挂账散在 20 多个小节里，靠人肉记忆必漏」——
+> 同一件事在轮次文档上又发生了一遍。本文件是它们的唯一入口。
+>
+> **维护规则**：每轮收尾**新加一份 `ROUND-*` 就必须在上表追加一行**（一行就够：轮次 · 一句话 · 路径）。
+> 不做的话 `check_docs.py` 会给一条 `[提示] 未被任何文档引用的孤儿：docs/ROUND-....md`——
+> 提示不计问题数、不影响退出码，但它是「这份文档以后没人找得到」的唯一信号。
+>
+> 表格按轮次号排序；早期两份标题里没写轮次号（`ROUND-M1-ATTR` / `ROUND-M3`）按时间顺序补成 R2 / R3。
+> 口径与决策记在 `PLAN.md` §13（每轮四~六条），本表只做导航，不承载结论。
+
+| 轮次 | 一句话 | 文件 |
+|---|---|---|
+| R1 | M0 地基（2026-11-15） | `docs/ROUND-M0.md` |
+| R2 | M1-ATTR · 80 条属性注册 + 来源拆解（2026-11-15 19:54–20:10） | `docs/ROUND-M1-ATTR.md` |
+| R3 | M3 · 数值核心 + 声明式攻速 + 第一个 mixin | `docs/ROUND-M3.md` |
+| R4 | M1 收尾：L2 伤害乘区（2026-11-15 21:55~22:05） | `docs/ROUND-M4-DAMAGE.md` |
+| R5 | M2 第一步：内容数据组件 + 14 基底物品 + 白板化 + tooltip | `docs/ROUND-R5-ITEMS.md` |
+| R6 | M2 第二步：条件乘区（pve / pvp / undead） | `docs/ROUND-R6-COND.md` |
+| R7 | 验收 T-0001 + 打通武器动作链路 | `docs/ROUND-R7-WEAPON.md` |
+| R8 | 数据包自动启用（R7 遗留闭合）+ 验收 T-0002 | `docs/ROUND-R8-PACK.md` |
+| R9 | 近战暴击入口（M2） | `docs/ROUND-R9-CRIT.md` |
+| R11 | 词条 roll 落地（D22 第二层）+ 验收 T-0004 | `docs/ROUND-R11-AFFIX.md` |
+| R12 | 物品更新落地（D33 的 `ensure` + 三个刷新点） | `docs/ROUND-R12-UPGRADE.md` |
+| R14 | D33 第 ④ 个刷新点（reload 后分帧全量刷新） | `docs/ROUND-R14-SWEEP.md` |
+| R15 | 消耗品右键生效（D23 第二层）+ 验收 T-0008 | `docs/ROUND-R15-CONSUME.md` |
+| R16 | 修理结算上线（D23 第二半）+ 验收 T-0009 / T-0010 | `docs/ROUND-R16-REPAIR.md` |
+| R17 | 2026-11-16 12:31-12:45 · 验收 T-0011 + D33 惰性兜底 ⑤（结算路径） | `docs/ROUND-R17-LAZY.md` |
+| R18 | 2026-11-16 13:39-14:0x · 验收 T-0012 + M3 第 3 步（`ContentData` 容器扩容 / schema 1→2） | `docs/ROUND-R18-SCHEMA.md` |
+| R19 | M3 第 4 步：镶嵌 / 取出结算 + 孔位接线 | `docs/ROUND-R19-SOCKET.md` |
+| R20 | M3 第 6 步：套装件数统计 + 属性下发 | `docs/ROUND-R20-SET.md` |
+| R21 | M4 开工：`redtale_project:scripted` 注册成功 + L1→L0 生成接线 | `docs/ROUND-R21-M4.md` |
+| R22 | M4 第二块：`post_attack` → 脚本层真跑通（V9/V10）+ V8 数值对账 | `docs/ROUND-R22-M4B.md` |
+| R23 | M4 第三块：基底附魔归属（内容武器终于吃得上附魔）+ 空互斥 tag 收口 | `docs/ROUND-R23-TAGS.md` |
+| R24 | `soul_reap` 真回血（M4 V9 落地）+ V11 硬指标演练 | `docs/ROUND-R24-HEAL.md` |
+| R25 | M5 开工：技能 schema + 24 条原语 + 派 T-0021 | `docs/ROUND-R25-SKILLS.md` |
+| R26 | 2026-11-17 05:22–06:10 · T-0019 验收（含测试服）+ 派 T-0022 + 伤害类别池落地 | `docs/ROUND-R26-CATEGORY.md` |
+| R27 | 2026-11-17 06:29-07:05 · M4 收尾（V4 可获取性 tag）+ M5-A 第一条原语 | `docs/ROUND-R27-OBTAIN.md` |
+| R28 | M5-A 第 1 步：技能快照层 + 验收 T-0021 | `docs/ROUND-R28-SKILLREG.md` |
+| R29 | M5-A 引擎（`SkillEngine` + `/redtale skill`） | `docs/ROUND-R29-SKILLENGINE.md` |
+| R30 | M5-B 物品绑定技能 + 冷却减免（2026-11-17 10:31-10:47） | `docs/ROUND-R30-M5B.md` |
+| R31 | 验收 T-0025 + `/redtale skill info` + 派 T-0027 | `docs/ROUND-R31-SKILLINFO.md` |
+| R32 | 验收 T-0026（`buff`）+ M5-C 放量（`damage_aoe` / `debuff`） | `docs/ROUND-R32-PRIMITIVES.md` |
+| R33 | 2026-11-17 · 验收 T-0027 + M5-C 控场前两条（`knockback` / `pull`） | `docs/ROUND-R33-SHUFFLE.md` |
+| R34 | `stun` 原语（M5-C 控件第 3 条）+ 验收 T-0028 + 派 T-0030 | `docs/ROUND-R34-STUN.md` |
+| R35 | M5 收口第一步：法力进引擎（`mana_cost` + 三条属性 + 六组探针） | `docs/ROUND-R35-MANA.md` |
+| R36 | 验收 T-0030 + M6 第二层（`MobRegistry` 快照） | `docs/ROUND-R36-MOBREG.md` |
+| R37 | 验收 T-0031（`dash`）+ 8 个模板 EntityType（M6 第三步第 1 小步） | `docs/ROUND-R37-DASH.md` |
+| R38 | 验收 T-0032（`/redtale mob check`）+ `MobSpawner` + `/redtale mob spawn`（M6 第三步第 2 小步） | `docs/ROUND-R38-SPAWN.md` |
+| R39 | 2026-11-17 · 验收 T-0033 + M6 第三步配套（`#minecraft:undead`）+ D14 资源重载补漏 | `docs/ROUND-R39-UNDEAD.md` |
+| R40 | 2026-11-18 · 验收 T-0034/T-0035 + 怪物技能释放（M6 第三步第 3 小步） | `docs/ROUND-R40-MOBCAST.md` |
+| R41 | M6 第四层：掉落接线（`MobSpec.drops` → `DropSpec` → `DropRoll` → 地上的物品） | `docs/ROUND-R41-DROPS.md` |
+| R42 | 验收 T-0037 + M7 契约定稿 + D26 钩子核验 | `docs/ROUND-R42-PROGRESSION.md` |
+| R43 | 2026-11-18 09:18-09:35 · 验收 T-0038 + M7 第三层存档落地 | `docs/ROUND-R43-PROGRESS.md` |
+| R44 | 验收 T-0039 + M7 第二层快照（ProgressRegistry / ProgressRules） | `docs/ROUND-R44-PROGRESSION.md` |
+| R45 | 2026-11-18 11:43-12:1x · 验收 T-0040 + M7 L4（`ProgressService`）+ 派 T-0041 | `docs/ROUND-R45-LEVELCMD.md` |
+| R46 | 验收 T-0041 + M7 L5 `grant_exp` + D26 schema 定稿 | `docs/ROUND-R46-EXP.md` |
+| R47 | 2026-11-18 · 验收 T-0042 + M6 第二层刷怪快照（D26） | `docs/ROUND-R47-SPAWNREG.md` |
+| R48 | M6 第三层：自然刷怪替换（`SpawnReplacer`） | `docs/ROUND-R48-SPAWNREPLACE.md` |
+| R49 | 2026-11-18 · 验收 T-0044 + `/redtale level info` 的「当前」段 + 派 T-0045 | `docs/ROUND-R49-LEVELNOW.md` |
+| R50 | M7 技能树 L2 快照层 + 验收 T-0045 | `docs/ROUND-R50-TREE.md` |
+| R51 | 2026-11-18 18:59-19:2x · 验收 T-0046 + 存档 v2（技能树分树持久化）+ 派 T-0047 | `docs/ROUND-R51-STORE.md` |
+| R52 | 验收 T-0047 + `spawn.json5` 开关持久化（M6 收口）+ 派 T-0048 | `docs/ROUND-R52-SPAWNTOGGLE.md` |
+| R53 | 验收 T-0048 + M7 L5 `TreeService`（技能树第一次真正影响面板） | `docs/ROUND-R53-TREESERVICE.md` |
+| R54 | 等级 → 技能点（M7 出口）+ 验收 T-0049 | `docs/ROUND-R54-POINTS.md` |
+| R55 | 2026-11-18 23:4x-00:2x · 验收 T-0050 + `per_tick_cap` 落盘（M6 最后一个挂账收口） | `docs/ROUND-R55-CAP.md` |
+| R56 | 验收 T-0051（`check_items`）+ `tree info` 补「当前等级能拿多少点」+ 派 T-0052 | `docs/ROUND-R56-TREEINFO.md` |
+| R57 | 验收 T-0052 + `unlock_skill` 接服务层（M7 出口闭环） | `docs/ROUND-R57-UNLOCK.md` |
+| R58 | 验收 T-0053 + `tree skills <tree>` 观测面 + 派 T-0054 | `docs/ROUND-R58-SKILLS.md` |
+| R59 | 验收 T-0054 + 修 `gen_attr_lang.py` 的破坏性覆写 + 对账总入口 | `docs/ROUND-R59-LANG.md` |
+| R60 | 验收 T-0055 + `check_deps.py`（依赖面 / 命名面）+ 派 T-0056 | `docs/ROUND-R60-DEPS.md` |
+| R61 | 验收 T-0056（`check_attrs.py`）+ 接线 `check_all`（10→11）+ 派 T-0057 | `docs/ROUND-R61-ATTRS.md` |
+| R62 | 验收 `check_numeric` + 契约面立项 + 真人窗口清单 | `docs/ROUND-R62-NUMERIC.md` |
+| R63 | 验收 `check_contracts` + 文档面收口（索引 / 路径 / 提示清零） | `docs/ROUND-R63-DOCS.md` |
