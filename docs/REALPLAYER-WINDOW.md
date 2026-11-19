@@ -81,7 +81,7 @@
 | F3 | `[ ]` 挖 1 个**泥土/草方块**（没配过的方块） | `mining` +1（`default` 兜底）；日志**零告警** | P3 |
 | F4 | `[ ]` 原木 → 4 木板，合 1 次；再把 `craft.default` 临时改 `1` + `/redtale reload` 后重做一次 | 第一次 `smelting` +0（`craft.default: 0`）；改后 +1 —— **不是 +4**（不乘产出件数） | P4 |
 | F5 | `[ ]` 熔 5 个铁矿（产出 `minecraft:iron_ingot`） | `smelting` +15（5 次 × 3，每件一次） | P5 |
-| F6 | `[ ]` `/redtale profession list` / `info mining`（T-0063 落地后） | 定义面三行文案逐字；玩家上下文 `info` 多一行 `玩家 <名字>：专业 …` | L5 |
+| F6 | `[ ]` `/redtale profession list` / `info mining`（T-0063 落地后） | 定义面三行文案逐字；玩家上下文 `info` 多一行 `玩家 <名字>：专业 …` | L5 · **控制台四段已验（R68），只差玩家行** |
 
 ## 记录方式
 

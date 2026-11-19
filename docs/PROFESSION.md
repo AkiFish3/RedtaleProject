@@ -127,7 +127,7 @@ grants: {
 | L2 | `ProfessionRegistry`（快照 + 两交叉校验 + 默认件） | S7（**R65 已落地**） | 校验需要 80 条表与 jobs 快照 |
 | L3 | `ProgressStore` v3 + 三个事件接线 + `/redtale exp profession <id> <n>` | S7（**R66 已落地**） | 存档升版必须早于任何写入路径 |
 | L4 | 属性下发接进 `ProgressService` 的同一次重算 | S7（**R66 已落地**） | 跨文件，且与等级/技能树共用一个重算点 |
-| L5 | `/redtale profession list|info` 观测面 | S8（**R67 派 T-0063**） | 命令面在服务落地之后（R36-a 同一条）；`exp profession` 已覆盖「临时看数」，L5 只做正式清单 |
+| L5 | `/redtale profession list|info` 观测面 | S8（**R67 派 T-0063**，**R68 已验收**） | 命令面在服务落地之后（R36-a 同一条）；`exp profession` 已覆盖「临时看数」，L5 只做正式清单 |
 | L6 | `check_professions.py` 起飞前对账（tools/ 下新建） | S8（**R66 提前派**，**R67 已验收**） | 原排「内容铺开后」；提前的理由：L6 不依赖 L3，纯配置面，S8 空转时先上安全网 |
 
 ## 9. 验收矩阵

@@ -78,3 +78,4 @@
 | R65 | 验收 T-0060（`ProfessionSpec`）+ D24 L2 `ProfessionRegistry` + 两份默认件 + 派 T-0061 | `docs/ROUND-R65-PROFREG.md` |
 | R66 | 验收 T-0061（`check_tasks.py`）+ 接线 14→15 + 派 T-0062 + D24 L3+L4（存档 v3 / 三事件 / 属性下发 / `exp profession`） | `docs/ROUND-R66-PROFESS.md` |
 | R67 | 验收 T-0062（`check_professions.py`）+ 接线 15→16 + 派 T-0063（`/redtale profession list\|info`）+ 真人窗口 F 组（专业 P1~P5） | `docs/ROUND-R67-PROFFIX.md` |
+| R68 | 验收 T-0063（`/redtale profession list\|info`，D24 L5 收口）+ 派 T-0064（`DisplaySpec`，Q-023 默认 A 的 L1） | `docs/ROUND-R68-PROFFIX-VERIFY.md` |

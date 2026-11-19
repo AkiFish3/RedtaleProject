@@ -137,6 +137,7 @@ public final class RedtaleCommand {
                 .then(ProgressCommand.node())
                 .then(LevelCommand.node())
                 .then(TreeCommand.node())
+                .then(ProfessionCommand.node())
                 .then(ExpCommand.node())
                 .then(SpawnCommand.node())
                 // /redtale skill [list|cast|probe|cd]（M5-A 引擎观测面与 v1 触发入口；同包无需 import）
