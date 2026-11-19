@@ -42,6 +42,7 @@ TOOLS = (
     "check_checkall.py",    # 清单安全网：TOOLS ↔ 磁盘 check_*.py 双向对账 —— R75 接上
     "check_commands.py",    # 命令树安全网：*Command.java ↔ RedtaleCommand 挂载引用 —— R76 接上
     "check_primitives.py",  # 原语注册安全网：builtin 类 + 内联 record ↔ Builtins 注册 —— R77 接上
+    "check_gen_prefix.py",  # 生成器前缀安全网：gen_*.py ↔ OWNED_PREFIX/KEY_PREFIX —— R78 接上
 )
 
 

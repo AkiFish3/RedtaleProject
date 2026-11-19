@@ -88,3 +88,4 @@
 | R75 | 验收 T-0070（`check_checkall.py`）+ 接线 `check_all` 18→19 + 派 T-0071（`check_commands.py`，命令树挂载对账） | `docs/ROUND-R75-COMMANDTREE.md` |
 | R76 | 验收 T-0071（`check_commands.py`）+ 接线 `check_all` 19→20 + 派 T-0072（原语注册对账）+ 修 `SKILLS.md` projectile 表漂移 | `docs/ROUND-R76-REGISTRY.md` |
 | R77 | 验收 T-0072（`check_primitives.py`）+ 接线 `check_all` 20→21 + 派 T-0073（lang 生成器前缀对账） | `docs/ROUND-R77-PREFIX.md` |
+| R78 | 验收 T-0073 + 接线 `check_all` 21→22 + 派 T-0074（轮次索引对账） | `docs/ROUND-R78-INDEX.md` |
