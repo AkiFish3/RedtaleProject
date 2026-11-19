@@ -114,7 +114,7 @@ grants: {
 | 层 | 拦什么 | 为什么在这层 |
 |---|---|---|
 | L1 解析（纯，零 MC） | 类型、必填、范围、未知键、未知源、重复 id | 离线可测，坏配置不炸注册表 |
-| L2 注册表（快照） | `attributes` 键归一后是否在 80 条表内；`professions` 与 `jobs` 的 id 是否重叠；`max_level` 与曲线能否产出等级 | 需要 `AttributeSpecs` 与 `ProgressRegistry` 的现成事实 |
+| L2 注册表（快照） | `attributes` 键归一后是否在 80 条表内；`professions` 与 `jobs` 的 id 是否重叠 | 需要 `AttributeSpecs` 与 `ProgressRegistry` 的现成事实。**曲线能否产出等级不在本层判**：`ExpCurve` 构造函数已把 `base ≤ 0 / growth ≤ 1 / exponent ≤ 0` 回落默认（R65-a，原表里的这一条是永不可测的死分支） |
 | 运行期 | tag 是否真存在（不拦，只影响命中） | tag 是 datapack 数据，只在世界里才有答案 |
 | 起飞前工具 | 配置层静态对账（`check_professions.py`，L6 新建） | 给运营在改完配置、起服之前用 |
 | `/redtale validate` | 不新增检查项（专业无跨文件引用） | 避免把「零引用」的东西塞进引用检查 |
@@ -124,7 +124,7 @@ grants: {
 | 层 | 产物 | 谁做 | 为什么这个顺序 |
 |---|---|---|---|
 | L1 | `ProfessionSpec`（解析 + `resolve` 纯函数，零 MC import） | S8 | 纯解析先落地，schema 一旦写错只改一份文件 |
-| L2 | `ProfessionRegistry`（快照 + 三交叉校验 + 默认件） | S7 | 校验需要 80 条表与 jobs 快照 |
+| L2 | `ProfessionRegistry`（快照 + 两交叉校验 + 默认件） | S7（**R65 已落地**） | 校验需要 80 条表与 jobs 快照 |
 | L3 | `ProgressStore` v3 + 三个事件接线 + `/redtale exp profession <id> <n>` | S7 | 存档升版必须早于任何写入路径 |
 | L4 | 属性下发接进 `ProgressService` 的同一次重算 | S7 | 跨文件，且与等级/技能树共用一个重算点 |
 | L5 | `/redtale profession list|info` 观测面 | S8 | 命令面在服务落地之后（R36-a 同一条） |

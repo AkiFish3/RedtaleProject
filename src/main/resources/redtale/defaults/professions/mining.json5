@@ -1,0 +1,28 @@
+// 专业示范 1（D24 / R65）：采矿。PROFESSION §3 的形态照抄，只在数值上取「运营能感知但不夸张」。
+// 存在的理由有两个：①professions/ 目录不空，L2 快照才有内容可验（0 个专业时一切对账都空转）；
+// ②`mine` 的三种写法（精确 id / tag / default）都在这一份里出现，L3 接线时一眼能看出哪条命中。
+{
+  id: "redtale_project:mining",
+  name: "采矿",
+  max_level: 100,
+  curve: {
+    mode: "polynomial",
+    base: 60.0,
+    exponent: 1.35,
+  },
+  attributes: {
+    // 每级 +1% 挖掘效率（L4 下发：per_level × (level - 1)，level < 2 只移除不加）
+    "redtale_project:mining_efficiency": 0.01,
+  },
+  grants: {
+    mine: {
+      "minecraft:stone": 3,
+      "minecraft:deepslate": 4,
+      // 方块 tag（mine 查 block tag）：写错不会报错，只是永远匹配不上 = 静默 0
+      "#minecraft:logs": 2,
+      "#minecraft:base_stone_overworld": 2,
+      // 兜底：挖到没配过的方块也给 1 点 —— 采集是长期积累，不该要求运营穷举方块表
+      default: 1,
+    },
+  },
+}

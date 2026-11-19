@@ -94,6 +94,11 @@ public final class ConfigStore {
             "jobs/warrior.json5",
             "skills/quake_slam.json5",
             "skill_trees/warrior_vanguard.json5",
+            // 专业（D24 · R65）：没有这两份默认文件，professions/ 恒为空，ProfessionRegistry 恒 0 个专业，
+            // 「挖方块发经验」这条永远没有内容可验。mining 同时演示精确 id / tag / default 三种写法，
+            // smelting 演示一个专业吃两个源（smelt + craft）
+            "professions/mining.json5",
+            "professions/smelting.json5",
             "progression.json5"
     );
 

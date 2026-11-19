@@ -1,0 +1,29 @@
+// 专业示范 2（D24 / R65）：冶炼。给 `smelt` 与 `craft` 各一段，证明「一个专业可以吃多个源」。
+// craft 只按**结果物品**发一次经验、不乘产出件数（PROFESSION §4.4）——「原木 → 4 木板」在这里是 1 份。
+{
+  id: "redtale_project:smelting",
+  name: "冶炼",
+  max_level: 80,
+  curve: {
+    mode: "geometric",
+    base: 70.0,
+    growth: 1.11,
+  },
+  attributes: {
+    // 冶炼专业给的是「经验加成」，不是「炉子更快」：加速熔炉属于玩法模组的地盘
+    "redtale_project:additional_experience": 0.005,
+  },
+  grants: {
+    smelt: {
+      "#minecraft:sand": 2,
+      "minecraft:iron_ingot": 3,
+      "minecraft:gold_ingot": 4,
+      default: 1,
+    },
+    craft: {
+      "minecraft:bread": 2,
+      "minecraft:iron_block": 5,
+      default: 0,
+    },
+  },
+}

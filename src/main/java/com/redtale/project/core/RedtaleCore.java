@@ -74,6 +74,12 @@ public final class RedtaleCore {
      */
     private volatile com.redtale.project.core.progression.SkillTreeRegistry skillTrees =
             com.redtale.project.core.progression.SkillTreeRegistry.EMPTY;
+    /**
+     * 专业快照（D24 第二层，{@code professions/*.json5}）。属性键已过 80 条表校验并归一，
+     * 与 {@code jobs/} 的 id 重叠已告警。L3 的存档与事件只读这一份，不要再解析一遍。
+     */
+    private volatile com.redtale.project.core.progression.ProfessionRegistry professions =
+            com.redtale.project.core.progression.ProfessionRegistry.EMPTY;
     /** 技能执行器（M5-A）：持有冷却表。**跨 reload 存活**（reload 清冷却 = 免费刷技能）。 */
     private final com.redtale.project.core.skill.SkillEngine skillEngine = new com.redtale.project.core.skill.SkillEngine();
     /** 最近一次 reload 的非致命告警（配置写歪了但被默认值兜住）。 */
@@ -176,6 +182,11 @@ public final class RedtaleCore {
         return skillTrees;
     }
 
+    /** 专业快照（D24 第二层）。属性键已归一成全名；为空 = 没有专业内容，L3/L4 都无内容可做。 */
+    public com.redtale.project.core.progression.ProfessionRegistry professions() {
+        return professions;
+    }
+
     /** 最近一次 reload 的非致命告警。 */
     public List<String> configWarnings() {
         return configWarnings;
@@ -250,6 +261,9 @@ public final class RedtaleCore {
             // 等级 / 职业（M7 第二层）：解析层不认属性表，这一层做 80 条校验 + 键归一，
             // 坏键丢弃并告警（PROGRESSION §8 红线 3）。累加与下发在 L4，不在这里。
             progress = com.redtale.project.core.progression.ProgressRegistry.load(all, warnings);
+            // 专业（D24 第二层）：**必须排在 progress 之后** —— id 重叠检查要拿 jobs/ 的现成事实比对。
+            // 属性键在这一层归一成全名（同 SkillTreeRegistry，否则 L4 下发时裸 path 会被补成 minecraft:）
+            professions = com.redtale.project.core.progression.ProfessionRegistry.load(all, progress, warnings);
             progressRules = com.redtale.project.core.progression.ProgressRules.parse(find(all, "progression.json5"), warnings);
             // 技能树（D25 / M7 第二层）：**必须排在 progress 与 skills 之后** —— classes 要对齐 jobs/、
             // unlock_skill 要对齐 skills/，两者任一还是 EMPTY 时每棵树都会被判悬空（R47-a 的同一纪律）。
@@ -298,16 +312,17 @@ public final class RedtaleCore {
             if (outcome.clean()) {
                 lastError = "";
                 lastErrorLines = List.of();
-                LOG.info("配置重载完成：{} 条脚本，{} 个文件，{} 件装备内容，{}，{} 张掉落表，{}，{}，{}，{}。攻速：{}",
+                LOG.info("配置重载完成：{} 条脚本，{} 个文件，{} 件装备内容，{}，{} 张掉落表，{}，{}，{}，{}，{}。攻速：{}",
                         outcome.loaded(), all.size(), contentItems.size(), skills.describe(),
                         drops.size(), mobs.describe(), spawnRules.describe(), progress.describe(),
-                        skillTrees.describe(), attackSpeedRules.describe());
+                        skillTrees.describe(), professions.describe(), attackSpeedRules.describe());
                 return new ReloadResult(true,
                         "已载入 " + outcome.loaded() + " 条脚本 + " + contentItems.size()
                                 + " 件装备内容 + " + skills.size() + " 条技能 + " + mobs.size()
                                 + " 只怪物 + " + drops.size() + " 张掉落表 + " + spawnRules.size() + " 条刷怪规则"
                                 + " + " + progress.size()
                                 + " 条等级定义 + " + skillTrees.size() + " 棵技能树"
+                                + " + " + professions.size() + " 个专业"
                                 + "（" + all.size() + " 份配置文件）" + tail,
                         List.of());
             }
