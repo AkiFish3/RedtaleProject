@@ -74,3 +74,4 @@
 | R61 | 验收 T-0056（`check_attrs.py`）+ 接线 `check_all`（10→11）+ 派 T-0057 | `docs/ROUND-R61-ATTRS.md` |
 | R62 | 验收 `check_numeric` + 契约面立项 + 真人窗口清单 | `docs/ROUND-R62-NUMERIC.md` |
 | R63 | 验收 `check_contracts` + 文档面收口（索引 / 路径 / 提示清零） | `docs/ROUND-R63-DOCS.md` |
+| R64 | 验收 `check_docs` + 接线 `check_all`（13→14）+ D24 专业契约 + 派 T-0060 | `docs/ROUND-R64-PROFSPEC.md` |

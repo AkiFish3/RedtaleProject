@@ -34,6 +34,7 @@ TOOLS = (
     "check_attrs.py",      # 80 条属性表三向对账（docs ↔ java ↔ lang）—— R61 接上
     "check_numeric.py",    # 数值面四份：attack_speed / crit / damage / progression —— R62 接上
     "check_contracts.py",  # 契约文档 docs/CONTRACTS.md ↔ 源码单向漂移 —— R63 接上
+    "check_docs.py",       # 文档面：仓库内路径引用存在性 + ROUND 孤儿提示 —— R64 接上
 )
 
 
