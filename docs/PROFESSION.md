@@ -127,8 +127,8 @@ grants: {
 | L2 | `ProfessionRegistry`（快照 + 两交叉校验 + 默认件） | S7（**R65 已落地**） | 校验需要 80 条表与 jobs 快照 |
 | L3 | `ProgressStore` v3 + 三个事件接线 + `/redtale exp profession <id> <n>` | S7（**R66 已落地**） | 存档升版必须早于任何写入路径 |
 | L4 | 属性下发接进 `ProgressService` 的同一次重算 | S7（**R66 已落地**） | 跨文件，且与等级/技能树共用一个重算点 |
-| L5 | `/redtale profession list|info` 观测面 | S8 | 命令面在服务落地之后（R36-a 同一条）；`exp profession` 已覆盖「临时看数」，L5 只做正式清单 |
-| L6 | `check_professions.py` 起飞前对账（tools/ 下新建） | S8（**R66 提前派**） | 原排「内容铺开后」；提前的理由：L6 不依赖 L3，纯配置面，S8 空转时先上安全网 |
+| L5 | `/redtale profession list|info` 观测面 | S8（**R67 派 T-0063**） | 命令面在服务落地之后（R36-a 同一条）；`exp profession` 已覆盖「临时看数」，L5 只做正式清单 |
+| L6 | `check_professions.py` 起飞前对账（tools/ 下新建） | S8（**R66 提前派**，**R67 已验收**） | 原排「内容铺开后」；提前的理由：L6 不依赖 L3，纯配置面，S8 空转时先上安全网 |
 
 ## 9. 验收矩阵
 
@@ -143,7 +143,7 @@ grants: {
 | P7 | 降级（`/redtale exp profession <id> set`） | 高档 modifier 被移除，不留残值 | 同上，前缀扫描 = 0 |
 | P8 | 存档 v2 → v3 | 旧档读起零告警；存回后带 `professions` 键，`main` / `jobs` / `trees` 逐字保留 | `redtale_project_progress.dat` |
 
-P1~P5 需要真人在线（`REALPLAYER-WINDOW.md` 追加一组 F），P6~P8 可用控制台 + 夹具验。
+P1~P5 需要真人在线（`REALPLAYER-WINDOW.md` **F 组**，R67 已追加）；P6~P8 可用控制台 + 夹具验。
 
 - **R66 实测**：P6 / P7 由 `/redtale exp profession probe` 的 F 组覆盖（升级 → 属性出现且值 = `per_level × 1`；归零 → 前缀清场残留 0 条）；P8 用手工 v2 夹具单独验过（`version: 3` + `professions: {}` + `main/jobs/trees` 逐字保留）。
 - **夹具形态**：`.dat` 是 `{ data: {...}, DataVersion: 3955 }` 双层包装，手工造档必须两层都写（缺 `DataVersion` 会被 DataFixer 打坏 → 静默读成空档，R66-b）。

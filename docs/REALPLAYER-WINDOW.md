@@ -6,7 +6,7 @@
 > 本文按「一次上线收完」排序，每条给命令 + 期望输出 + 判据。
 
 **前置**：测试服 `E:\server-test`（25567 / RCON 25577），jar 为当轮 `build/libs` 产物，
-`/redtale reload` 回 `37 份` 且 `validate` 回 `问题 0 条`。**收完停服**（正式服常驻 12G）。
+`/redtale reload` 回 `39 份` 且 `validate` 回 `问题 0 条`。**收完停服**（正式服常驻 12G）。
 
 图例：`[ ]` 未验 · 判据写「逐字」的必须按字面对，写「差值」的按数值对。
 
@@ -68,12 +68,27 @@
 
 ---
 
+## F 组 · 专业经验（D24 · P1~P5，需真人，10 分钟）
+
+> 前置：`/redtale exp profession` 记下 `mining` / `smelting` 的累计值，F1~F5 每条只比**差值**。
+> 之所以要真人：三个事件（`BlockEvent.BreakEvent` / `ItemCraftedEvent` / `ItemSmeltedEvent`）只有真玩家触发，
+> 控制台的 FakePlayer 不进这三个钩子（R66 探针是绕过事件直接调 `ProfessionService.award` 的）。
+
+| # | 动作 | 期望 | 判据 |
+|---|---|---|---|
+| F1 | `[ ]` 挖 1 个**石头** | `mining` +3（精确 id `minecraft:stone` 胜过后面的 tag） | P1 |
+| F2 | `[ ]` 挖 1 个**原木** | `mining` +2（只命中 `#minecraft:logs`）；同一次命中两条 tag 时取**大**不加和 | P2 |
+| F3 | `[ ]` 挖 1 个**泥土/草方块**（没配过的方块） | `mining` +1（`default` 兜底）；日志**零告警** | P3 |
+| F4 | `[ ]` 原木 → 4 木板，合 1 次；再把 `craft.default` 临时改 `1` + `/redtale reload` 后重做一次 | 第一次 `smelting` +0（`craft.default: 0`）；改后 +1 —— **不是 +4**（不乘产出件数） | P4 |
+| F5 | `[ ]` 熔 5 个铁矿（产出 `minecraft:iron_ingot`） | `smelting` +15（5 次 × 3，每件一次） | P5 |
+| F6 | `[ ]` `/redtale profession list` / `info mining`（T-0063 落地后） | 定义面三行文案逐字；玩家上下文 `info` 多一行 `玩家 <名字>：专业 …` | L5 |
+
 ## 记录方式
 
 每验完一组，在 `PLAN.md` §13 当轮行的「挂账」里划掉对应条目并写实测值；
 不过的项当轮记 `docs/ROUND-R<n>-*.md`，不要只写「有 bug」——写清**期望值 / 实测值 / 命令原文**。
 
-## 当前挂账总账（截至 R62）
+## 当前挂账总账（截至 R67）
 
-- 未验 **A1~A7 / B1~B4 / C1~C8 / D1~D4 / E1~E6**，其中 **D1~D3 = M4 出口**、**B2/B3 = M6 出口**、**C1~C7 = M7 出口**。
+- 未验 **A1~A7 / B1~B4 / C1~C8 / D1~D4 / E1~E6 / F1~F6**，其中 **D1~D3 = M4 出口**、**B2/B3 = M6 出口**、**C1~C7 + F1~F5 = M7 出口**。
 - 已绿但依赖真人回归的：V7（互斥）、V8（数值对账）、V9（脚本触发）、V10（脚本缺失不崩）、V11（加第 N 个附魔只写 JSON5）。
