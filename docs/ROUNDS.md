@@ -86,3 +86,4 @@
 | R73 | 验收 T-0068（`ConfigDiff` 纯函数）+ 接过接线（`ConfigStore.mtimes()` + reload 变更摘要，测试服验四形态）+ 派 T-0069（`check_display.py`） | `docs/ROUND-R73-RELOADDIFF.md` |
 | R74 | 验收 T-0069（`check_display.py`）+ 接线 `check_all` 17→18 + 派 T-0070（`check_checkall.py`，清单安全网） | `docs/ROUND-R74-CHECKLIST.md` |
 | R75 | 验收 T-0070（`check_checkall.py`）+ 接线 `check_all` 18→19 + 派 T-0071（`check_commands.py`，命令树挂载对账） | `docs/ROUND-R75-COMMANDTREE.md` |
+| R76 | 验收 T-0071（`check_commands.py`）+ 接线 `check_all` 19→20 + 派 T-0072（原语注册对账）+ 修 `SKILLS.md` projectile 表漂移 | `docs/ROUND-R76-REGISTRY.md` |
