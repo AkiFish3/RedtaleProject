@@ -81,3 +81,4 @@
 | R68 | 验收 T-0063（`/redtale profession list\|info`，D24 L5 收口）+ 派 T-0064（`DisplaySpec`，Q-023 默认 A 的 L1） | `docs/ROUND-R68-PROFFIX-VERIFY.md` |
 | R69 | 验收 T-0064（`DisplaySpec`）+ Q-023 L2 落地（`display.json5` / DPS 行 / 属性明细行）+ 派 T-0065（`/redtale display`） | `docs/ROUND-R69-DISPLAY.md` |
 | R70 | 验收 T-0065（`/redtale display`，Q-023 收口）+ 派 T-0066（`SpawnBudget` 纯函数收口 per_tick_cap 双份真相）+ CONTRACTS §4.41 登记显示观测面 | `docs/ROUND-R70-DISPLAY.md` |
+| R71 | 补完中断轮：验收 T-0066（`SpawnBudget`）+ 接两处委托 + 测试服验两路径语义（命令守卫 vs 配置回落）+ 派 T-0067（`check_spawn.py`） | `docs/ROUND-R71-BUDGET.md` |

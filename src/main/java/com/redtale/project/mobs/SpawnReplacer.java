@@ -79,9 +79,9 @@ public final class SpawnReplacer {
         return perTickCap;
     }
 
-    /** 运行期改上限（{@code /redtale spawn replace cap <n>} 调）；返回改后的值。 */
+    /** 运行期改上限（{@code /redtale spawn replace cap <n>} 调）；返回改后的值。R71：数值口径委托 {@link SpawnBudget#clamp}。 */
     public int setPerTickCap(int value) {
-        int now = Math.max(1, Math.min(4096, value));
+        int now = SpawnBudget.clamp(value);
         int old = perTickCap;
         perTickCap = now;
         if (old != now) {
