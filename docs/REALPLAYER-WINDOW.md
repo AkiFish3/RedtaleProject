@@ -6,7 +6,7 @@
 > 本文按「一次上线收完」排序，每条给命令 + 期望输出 + 判据。
 
 **前置**：测试服 `E:\server-test`（25567 / RCON 25577），jar 为当轮 `build/libs` 产物，
-`/redtale reload` 回 `39 份` 且 `validate` 回 `问题 0 条`。**收完停服**（正式服常驻 12G）。
+`/redtale reload` 回 `40 份` 且 `validate` 回 `问题 0 条`。**收完停服**（正式服常驻 12G）。
 
 图例：`[ ]` 未验 · 判据写「逐字」的必须按字面对，写「差值」的按数值对。
 
@@ -23,6 +23,7 @@
 | A5 | `[ ]` `/redtale level info redtale_project:main`（玩家执行） | 末行多一段「当前」：`Lv7 · 本级 21/44 · 累计 1234`（控制台执行时**没有**这段） | CONTRACTS §4.30 |
 | A6 | `[ ]` `/redtale skill mana`（玩家执行） | 法力面板出当前/上限/回复，数值与本轮 `ManaPool` 配置一致 | §4.21 |
 | A7 | `[ ]` `/redtale mob spawn test_husk <x> <y> <z>` | 客户端看得见**体积按配置缩放**、头上名牌正确；不是默认大小 | D4 |
+| A8 | `[ ]` 把 `display.json5` 的 `show_dps` 与 `show_attribute_breakdown` 都改 `true` → `/redtale reload` → 再看 A1 那把剑 | 多出两行：`DPS ≈ N（假想目标 minecraft:zombie…）` 与 `属性 N 项：…`；DPS 的 N = 单次伤害 × 次/秒（手算对得上） | Q-023 / D20 |
 
 ## B 组 · 刷怪（M6 最后两项）
 

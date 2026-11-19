@@ -3,6 +3,7 @@ package com.redtale.project.core;
 import com.redtale.project.core.attr.AttackSpeedRules;
 import com.redtale.project.core.config.ConfigFile;
 import com.redtale.project.core.config.ConfigStore;
+import com.redtale.project.core.config.DisplaySpec;
 import com.redtale.project.core.damage.DamageTrace;
 import com.redtale.project.core.math.DamageRules;
 import com.redtale.project.core.script.ScriptContext;
@@ -82,6 +83,11 @@ public final class RedtaleCore {
             com.redtale.project.core.progression.ProfessionRegistry.EMPTY;
     /** 技能执行器（M5-A）：持有冷却表。**跨 reload 存活**（reload 清冷却 = 免费刷技能）。 */
     private final com.redtale.project.core.skill.SkillEngine skillEngine = new com.redtale.project.core.skill.SkillEngine();
+    /**
+     * 显示口径（D20 / Q-023 默认 A，{@code display.json5}）。
+     * 只被 tooltip 读：DPS 行 / 属性明细行开不开。**不参与结算**（D20「显示与结算同一个 settle」）。
+     */
+    private volatile DisplaySpec.Settings display = DisplaySpec.DEFAULT;
     /** 最近一次 reload 的非致命告警（配置写歪了但被默认值兜住）。 */
     private volatile List<String> configWarnings = List.of();
 
@@ -187,6 +193,11 @@ public final class RedtaleCore {
         return professions;
     }
 
+    /** 显示口径（D20 / Q-023 默认 A）。tooltip 唯一的开关来源；空文件时是 {@code DisplaySpec.DEFAULT}。 */
+    public DisplaySpec.Settings display() {
+        return display;
+    }
+
     /** 最近一次 reload 的非致命告警。 */
     public List<String> configWarnings() {
         return configWarnings;
@@ -234,6 +245,8 @@ public final class RedtaleCore {
             attackSpeedRules = AttackSpeedRules.parse(find(all, "attack_speed.json5"), warnings);
             damageRules = DamageRules.parse(find(all, "damage.json5"), warnings);
             critRules = com.redtale.project.core.damage.CritRules.parse(find(all, "crit.json5"), warnings);
+            // 显示口径（D20 / Q-023 默认 A）：纯开关，解析完就冻着，tooltip 每帧读这份快照
+            display = DisplaySpec.parse(all, warnings);
             contentItems = com.redtale.project.items.ItemContentRegistry.load(all, warnings);
             // 词条（D22）：定义与池都走同一份配置列表，解析失败只告警不中断（R1-a）
             affixDefs = com.redtale.project.items.AffixPools.parseDefs(all, warnings);

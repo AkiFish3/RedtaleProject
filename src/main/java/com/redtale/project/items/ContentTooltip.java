@@ -1,6 +1,7 @@
 package com.redtale.project.items;
 
 import com.redtale.project.core.RedtaleCore;
+import com.redtale.project.core.config.DisplaySpec;
 import com.redtale.project.core.math.AttackSpeedCurve;
 import com.redtale.project.core.math.DamageRules;
 import com.redtale.project.core.math.Settle;
@@ -100,6 +101,20 @@ public final class ContentTooltip {
             out.add("攻速 " + StatFormat.num(delay) + " tick · " + StatFormat.num(20.0 / delay) + " 次/秒"
                     + (held ? "" : "（未持有，不含药水/急迫）"));
         }
+        // 显示口径（D20 / Q-023 默认 A，R69）：两个开关都在 display.json5，默认全关。
+        // DPS 用的是上面那两行**同一个** settle 值与同一个 perSecond ——
+        // 自己再算一遍就会出「写着 30 实际 22」（D20 同源纪律）。
+        DisplaySpec.Settings display = RedtaleCore.get().display();
+        if (display.showDps() && (weapon || attackDamage != 0)) {
+            out.add("DPS ≈ " + StatFormat.num(settled.value() * perSecond)
+                    + "（假想目标 " + display.assumeTarget() + "，不含护甲/暴击）");
+        }
+        if (display.showAttributeBreakdown()) {
+            List<String> parts = breakdown(stack);
+            if (!parts.isEmpty()) {
+                out.add("属性 " + parts.size() + " 项：" + String.join(" · ", parts));
+            }
+        }
         // 词条（D22）：只列 id 与条数。数值已经并进 rolledStats，上面那两行已体现，
         // 这里再写一遍数值会有两份真相（D20「显示与结算同源」）。
         if (!data.affixes().isEmpty()) {
@@ -152,8 +167,28 @@ public final class ContentTooltip {
         return out;
     }
 
-    /** 让配置里的逻辑 id（{@code physical_damage}）对得上 {@code rolledStats} 的全名 key。 */
-    private static String resolveKey(String key, ContentData data) {
+    /**
+     * 属性明细（{@code show_attribute_breakdown}）：把 {@code forEachModifier} 的**每一条** modifier
+     * 单独列出来 —— 基底 / 宝石 / 词条各是一条，所以这一行天然带来源拆分。
+     *
+     * <p>刻意不复用 {@code rolledStats}：那是「配置里写了多少」，这里是「物品组件里实际挂了多少」，
+     * 后者才是玩家面板上看到的（D21 白板化后两者会不一致）。数值格式走 {@link StatFormat#signed}，
+     * 与属性面板同一个口径。
+     */
+    private static List<String> breakdown(ItemStack stack) {
+        List<String> out = new ArrayList<>();
+        stack.forEachModifier(EquipmentSlot.MAINHAND, (holder, modifier) -> {
+            var key = net.minecraft.core.registries.BuiltInRegistries.ATTRIBUTE.getKey(holder.value());
+            String id = key == null ? "?" : key.toString();
+            var spec = com.redtale.project.core.attr.AttributeSpecs.resolve(id);
+            String name = spec == null ? id : spec.zh();
+            String value = spec == null ? String.valueOf(modifier.amount()) : StatFormat.signed(spec, modifier.amount());
+            out.add(name + " " + value + "（" + modifier.operation().getSerializedName() + "）");
+        });
+        return out;
+    }
+
+    /** 让配置里的逻辑 id（{@code physical_damage}）对得上 {@code rolledStats} 的全名 key。 */    private static String resolveKey(String key, ContentData data) {
         if (data.rolledStats().containsKey(key)) {
             return key;
         }

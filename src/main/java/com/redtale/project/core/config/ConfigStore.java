@@ -99,6 +99,9 @@ public final class ConfigStore {
             // smelting 演示一个专业吃两个源（smelt + craft）
             "professions/mining.json5",
             "professions/smelting.json5",
+            // 显示口径（D20 / Q-023 默认 A，R69）：三个开关服务端集中管。
+            // 没有这份默认文件，`grep show_dps` 永远 0 命中，运营不知道旋钮在哪
+            "display.json5",
             "progression.json5"
     );
 
