@@ -35,6 +35,7 @@ TOOLS = (
     "check_numeric.py",    # 数值面四份：attack_speed / crit / damage / progression —— R62 接上
     "check_contracts.py",  # 契约文档 docs/CONTRACTS.md ↔ 源码单向漂移 —— R63 接上
     "check_docs.py",       # 文档面：仓库内路径引用存在性 + ROUND 孤儿提示 —— R64 接上
+    "check_tasks.py",      # 卡板自检：状态 / 重复 id / 在制品 / 验收段 / 台账漂移 —— R66 接上
 )
 
 

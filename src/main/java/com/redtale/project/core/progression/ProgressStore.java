@@ -23,22 +23,26 @@ import java.util.UUID;
  * 契约：{@code docs/PROGRESSION.md} §7。**只存 {@code total_exp}，不存等级**（等级是派生值，§2）；
  * 主等级一份 + 每职业各一份，互不换算。纯数据层：不解析配置、不算曲线、不下发属性、不打日志。
  * <p>
- * 存档格式 v2（{@code version=2}，v1 可直接读）：
+ * 存档格式 v3（{@code version=3}，v1 / v2 可直接读）：
  * <pre>
- * { version: 2,
+ * { version: 3,
  *   players: [ { id: "&lt;uuid&gt;", main: &lt;long&gt;, jobs: { "&lt;jobId&gt;": &lt;long&gt; },
- *                trees: { "&lt;treeId&gt;": [ "&lt;nodeId&gt;", ... ] } } ] }
+ *                trees: { "&lt;treeId&gt;": [ "&lt;nodeId&gt;", ... ] },
+ *                professions: { "&lt;profId&gt;": &lt;long&gt; } } ] }
  * </pre>
  * UUID 用字符串存（不落 int 数组，跨版本最稳）；坏条目整条跳过，不抛、不删别人。
  * <p>
  * v2 增量 = {@code trees}（树 id → 已点节点；节点 id 只在树内唯一，所以必须分桶）。**存档层零语义**：节点存在与否、前置够不够、点数超没超，
  * 全部由 {@code TreePoints} / 上层的判定负责；这里只如实存、如实取（R51-a）。
+ * <p>
+ * v3 增量 = {@code professions}（专业 id → 累计经验，第三族累加器，{@code PROFESSION.md} §6）。
+ * <b>升版必须早于任何写入路径</b>：v3 档被 v2 代码读会丢专业经验且不可逆（R64/R66）。
  */
 public final class ProgressStore extends SavedData {
     /** 存档文件名（不含 {@code .dat}）。 */
     public static final String FILE_NAME = "redtale_project_progress";
-    /** 存档格式版本；改结构时 +1 并在 {@link #load} 里加迁移分支。v2 加 {@code nodes}。 */
-    public static final int VERSION = 2;
+    /** 存档格式版本；改结构时 +1 并在 {@link #load} 里加迁移分支。v3 加 {@code professions}。 */
+    public static final int VERSION = 3;
     /** 累计经验硬顶（D16 异常保护：负归零、超顶截断，不做平衡钳制）。 */
     public static final long MAX_TOTAL_EXP = 1_000_000_000_000_000L;
 
@@ -48,6 +52,7 @@ public final class ProgressStore extends SavedData {
     private static final String KEY_MAIN = "main";
     private static final String KEY_JOBS = "jobs";
     private static final String KEY_TREES = "trees";
+    private static final String KEY_PROFESSIONS = "professions";
 
     /** 一个玩家的两份累加器。 */
     private final Map<UUID, Player> players = new LinkedHashMap<>();
@@ -98,6 +103,45 @@ public final class ProgressStore extends SavedData {
     /** 有记录的玩家数。 */
     public int size() {
         return players.size();
+    }
+
+    // ---- 第三族累加器：专业经验（v3，PROFESSION §6） ----
+
+    /** 某专业累计经验；没有记录 → 0。 */
+    public long profExp(UUID id, String profId) {
+        Player p = id == null ? null : players.get(id);
+        if (p == null || profId == null) {
+            return 0L;
+        }
+        Long v = p.professions.get(profId);
+        return v == null ? 0L : v;
+    }
+
+    /** 某玩家的全部专业经验（不可变副本，保写入顺序）。 */
+    public Map<String, Long> profExps(UUID id) {
+        Player p = id == null ? null : players.get(id);
+        return p == null ? Map.of() : Collections.unmodifiableMap(new LinkedHashMap<>(p.professions));
+    }
+
+    /** 某专业加经验；返回加完后的累计值（{@code delta <= 0} 原样返回）。 */
+    public long addProfExp(UUID id, String profId, long delta) {
+        if (id == null || profId == null || profId.isEmpty() || delta <= 0L) {
+            return profExp(id, profId);
+        }
+        Player p = players.computeIfAbsent(id, k -> new Player());
+        long next = clamp(p.professions.getOrDefault(profId, 0L) + delta);
+        p.professions.put(profId, next);
+        setDirty();
+        return next;
+    }
+
+    /** 直接把某专业累计经验设成给定值（运营入口）；{@code value <= 0} → 归零（桶保留，与 jobs 一致）。 */
+    public void setProfExp(UUID id, String profId, long value) {
+        if (id == null || profId == null || profId.isEmpty()) {
+            return;
+        }
+        players.computeIfAbsent(id, k -> new Player()).professions.put(profId, clamp(value));
+        setDirty();
     }
 
     // ---- 技能树已点节点（v2；按树分桶，存档层零语义） ----
@@ -279,6 +323,15 @@ public final class ProgressStore extends SavedData {
                     p.trees.put(treeId, nodes);
                 }
             }
+            if (row.contains(KEY_PROFESSIONS, Tag.TAG_COMPOUND)) {
+                CompoundTag profs = row.getCompound(KEY_PROFESSIONS);
+                for (String profId : profs.getAllKeys()) {
+                    if (profId.isEmpty()) {
+                        continue;
+                    }
+                    p.professions.put(profId, clamp(profs.getLong(profId)));
+                }
+            }
             store.players.put(id, p);
         }
         return store;
@@ -307,6 +360,11 @@ public final class ProgressStore extends SavedData {
                 trees.put(t.getKey(), nodes);
             }
             row.put(KEY_TREES, trees);
+            CompoundTag profs = new CompoundTag();
+            for (Map.Entry<String, Long> pr : e.getValue().professions.entrySet()) {
+                profs.putLong(pr.getKey(), pr.getValue());
+            }
+            row.put(KEY_PROFESSIONS, profs);
             list.add(row);
         }
         root.put(KEY_PLAYERS, list);
@@ -339,5 +397,7 @@ public final class ProgressStore extends SavedData {
         private final Map<String, Long> jobs = new LinkedHashMap<>();
         /** v2：树 id → 已点节点（都保写入顺序）。节点 id 只在树内唯一，必须分桶（R51-a）。 */
         private final Map<String, Set<String>> trees = new LinkedHashMap<>();
+        /** v3：专业 id → 累计经验（第三族累加器，与 main / jobs 各自独立）。 */
+        private final Map<String, Long> professions = new LinkedHashMap<>();
     }
 }

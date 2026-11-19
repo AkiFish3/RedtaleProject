@@ -50,6 +50,10 @@ public final class GameHooks {
         // M6 第三层（R48 / D26）：自然刷怪替换。挂 MobSpawnEvent.PositionCheck，命中则 FAIL + 下一 tick 补生成。
         // 单例：开关与「已命中规则」计数要跨事件/命令共享。
         com.redtale.project.mobs.SpawnReplacer.install();
+        // D24 L3（R66）：专业三个经验源（mine / craft / smelt）。判定与写入在 ProfessionService，
+        // 这里只挂事件点 —— 「新经验源必须换 jar」与 trigger 原语同一条物理原因。
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(
+                new com.redtale.project.core.hook.ProfessionHooks());
     }
 
     @SubscribeEvent

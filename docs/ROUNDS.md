@@ -76,3 +76,4 @@
 | R63 | 验收 `check_contracts` + 文档面收口（索引 / 路径 / 提示清零） | `docs/ROUND-R63-DOCS.md` |
 | R64 | 验收 `check_docs` + 接线 `check_all`（13→14）+ D24 专业契约 + 派 T-0060 | `docs/ROUND-R64-PROFSPEC.md` |
 | R65 | 验收 T-0060（`ProfessionSpec`）+ D24 L2 `ProfessionRegistry` + 两份默认件 + 派 T-0061 | `docs/ROUND-R65-PROFREG.md` |
+| R66 | 验收 T-0061（`check_tasks.py`）+ 接线 14→15 + 派 T-0062 + D24 L3+L4（存档 v3 / 三事件 / 属性下发 / `exp profession`） | `docs/ROUND-R66-PROFESS.md` |

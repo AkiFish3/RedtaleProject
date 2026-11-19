@@ -39,7 +39,16 @@ public final class ExpCommand {
                 .then(Commands.literal("primitive")
                         .then(Commands.argument("amount", LongArgumentType.longArg(Long.MIN_VALUE))
                                 .executes(ExpCommand::primitive)))
-                .then(Commands.literal("probe").executes(ExpCommand::probe));
+                .then(Commands.literal("probe").executes(ExpCommand::probe))
+                .then(Commands.literal("profession")
+                        .executes(ExpCommand::professionStatus)
+                        .then(Commands.literal("probe").executes(ExpCommand::professionProbe))
+                        .then(Commands.argument("id", com.mojang.brigadier.arguments.StringArgumentType.word())
+                                .then(Commands.argument("amount", LongArgumentType.longArg(1))
+                                        .executes(ExpCommand::professionAdd))
+                                .then(Commands.literal("set")
+                                        .then(Commands.argument("value", LongArgumentType.longArg(0))
+                                                .executes(ExpCommand::professionSet)))));
     }
 
     /** 自己的等级概况：主等级 + 每个职业各一行（{@code 等级 = 曲线(total_exp)}）。 */
@@ -256,6 +265,209 @@ public final class ExpCommand {
     /** 职业快照现状（给 {@code status} 之外的排查用；空表返回 0）。 */
     public static Map<String, Long> jobsOf(ServerPlayer player) {
         return ProgressStore.get(player.server).jobExps(player.getUUID());
+    }
+
+    // ============================================================ 专业（D24 L3，R66）
+
+    /** 自己的专业概况：每个专业一行（专业 id / 名称 / 等级 / 累计 / 本级进度）。控制台可跑（报全部专业定义）。 */
+    public static int professionStatus(CommandContext<CommandSourceStack> ctx) {
+        CommandSourceStack src = ctx.getSource();
+        var reg = RedtaleCore.get().professions();
+        if (reg.size() == 0) {
+            src.sendSuccess(() -> Component.literal("[redtale] 专业 0 个"), false);
+            return 1;
+        }
+        ServerPlayer player = src.getEntity() instanceof ServerPlayer p ? p : null;
+        ProgressStore store = ProgressStore.get(src.getServer());
+        src.sendSuccess(() -> Component.literal("[redtale] 专业 " + reg.size() + " 个"
+                + (player == null ? "（控制台：只列定义，不读玩家存档）" : " · 玩家 " + player.getGameProfile().getName())), false);
+        for (String id : reg.sortedIds()) {
+            var def = reg.get(id);
+            long total = player == null ? 0L : store.profExp(player.getUUID(), def.id());
+            String line = player == null ? def.id() + " " + def.name() + " · 上限 " + def.curve().maxLevel()
+                    : professionLine(def, total);
+            src.sendSuccess(() -> Component.literal("  " + line), false);
+        }
+        return 1;
+    }
+
+    /** 一行专业现况（纯函数，便于离线断言）：等级 / 上限 / 累计 / 本级进度 / 还差多少。 */
+    public static String professionLine(com.redtale.project.core.progression.ProfessionSpec.Definition def, long total) {
+        int level = com.redtale.project.core.progression.ProfessionService.levelOf(def, total);
+        long floor = def.curve().totalExpForLevel(level);
+        long need = def.curve().expForLevel(level);
+        StringBuilder sb = new StringBuilder();
+        sb.append("专业 ").append(def.id()).append(" ").append(def.name())
+                .append(" · Lv ").append(level).append("/").append(def.curve().maxLevel())
+                .append(" · 累计 ").append(total);
+        if (level >= def.curve().maxLevel()) {
+            sb.append(" · 已满级");
+        } else {
+            sb.append(" · 本级 ").append(Math.max(0L, total - floor)).append("/").append(need)
+                    .append(" · 还差 ").append(Math.max(0L, floor + need - total));
+        }
+        return sb.toString();
+    }
+
+    /** {@code command} 来源：给某专业加经验（运营入口，不走 grants 表）。 */
+    public static int professionAdd(CommandContext<CommandSourceStack> ctx) {
+        CommandSourceStack src = ctx.getSource();
+        if (!(src.getEntity() instanceof ServerPlayer player)) {
+            src.sendFailure(Component.literal("[redtale] 这条命令只能由玩家执行（控制台没有 UUID）"));
+            return 0;
+        }
+        String raw = com.mojang.brigadier.arguments.StringArgumentType.getString(ctx, "id");
+        long amount = LongArgumentType.getLong(ctx, "amount");
+        var def = RedtaleCore.get().professions().find(raw);
+        if (def == null) {
+            src.sendFailure(Component.literal("[redtale] 没有这个专业：" + raw + "（用 /redtale exp profession 看清单）"));
+            return 0;
+        }
+        ProgressStore store = ProgressStore.get(src.getServer());
+        long before = store.profExp(player.getUUID(), def.id());
+        long after = store.addProfExp(player.getUUID(), def.id(), amount);
+        int n = com.redtale.project.core.progression.ProfessionService.applyAttributes(player);
+        src.sendSuccess(() -> Component.literal("[redtale] 专业 " + def.id() + " +" + amount
+                + " → 累计 " + after + " · " + levelText(def, after) + " · modifier " + n + " 条"), false);
+        if (after == before) {
+            src.sendSuccess(() -> Component.literal("  （累计未变：已到硬顶 1e15 或经验为 0）"), false);
+        }
+        return 1;
+    }
+
+    /** 直接把某专业累计经验设成给定值（降级 / 归零用；归零后前缀清场，不留残值 —— P7）。 */
+    public static int professionSet(CommandContext<CommandSourceStack> ctx) {
+        CommandSourceStack src = ctx.getSource();
+        if (!(src.getEntity() instanceof ServerPlayer player)) {
+            src.sendFailure(Component.literal("[redtale] 这条命令只能由玩家执行（控制台没有 UUID）"));
+            return 0;
+        }
+        String raw = com.mojang.brigadier.arguments.StringArgumentType.getString(ctx, "id");
+        long value = LongArgumentType.getLong(ctx, "value");
+        var def = RedtaleCore.get().professions().find(raw);
+        if (def == null) {
+            src.sendFailure(Component.literal("[redtale] 没有这个专业：" + raw + "（用 /redtale exp profession 看清单）"));
+            return 0;
+        }
+        ProgressStore store = ProgressStore.get(src.getServer());
+        long before = store.profExp(player.getUUID(), def.id());
+        store.setProfExp(player.getUUID(), def.id(), value);
+        int n = com.redtale.project.core.progression.ProfessionService.applyAttributes(player);
+        long after = store.profExp(player.getUUID(), def.id());
+        src.sendSuccess(() -> Component.literal("[redtale] 专业 " + def.id() + " 累计 " + before + " → " + after
+                + " · " + levelText(def, after) + " · modifier " + n + " 条"), false);
+        return 1;
+    }
+
+    private static String levelText(com.redtale.project.core.progression.ProfessionSpec.Definition def, long total) {
+        return "Lv " + com.redtale.project.core.progression.ProfessionService.levelOf(def, total)
+                + "/" + def.curve().maxLevel();
+    }
+
+    /**
+     * 专业端到端探测（控制台可跑）：纯函数匹配（精确 / tag 取大 / default）+ 存档桶 + 属性下发 + 归零清场。
+     * 断言逐条打印 {@code ✓/✗}，返回通过条数。
+     */
+    public static int professionProbe(CommandContext<CommandSourceStack> ctx) {
+        CommandSourceStack src = ctx.getSource();
+        var reg = RedtaleCore.get().professions();
+        var mining = reg.find("mining");
+        if (mining == null) {
+            src.sendFailure(Component.literal("[redtale] 没有 mining 专业定义，探针跳过"));
+            return 0;
+        }
+        int pass = 0;
+
+        // A 精确 id 命中：minecraft:stone = 3（默认件）
+        long a = com.redtale.project.core.progression.ProfessionService.amountFor(
+                mining, com.redtale.project.core.progression.ProfessionService.SRC_MINE, "minecraft:stone", java.util.Set.of());
+        boolean okA = a == 3L;
+        pass += okA ? 1 : 0;
+        src.sendSuccess(() -> Component.literal("  A 精确 id（stone）→ " + a + "（应 3）" + (okA ? " ✓" : " ✗")), false);
+
+        // B tag 命中：只命中 #minecraft:logs → 2（默认件）
+        long b = com.redtale.project.core.progression.ProfessionService.amountFor(
+                mining, com.redtale.project.core.progression.ProfessionService.SRC_MINE, "minecraft:oak_log",
+                java.util.Set.of("minecraft:logs"));
+        boolean okB = b == 2L;
+        pass += okB ? 1 : 0;
+        src.sendSuccess(() -> Component.literal("  B 只命中 tag（#minecraft:logs）→ " + b + "（应 2）" + (okB ? " ✓" : " ✗")), false);
+
+        // C 两 tag 同时命中取大 + 与声明顺序无关（合成定义：3 与 7 两个 tag，两种顺序都要 7）
+        boolean okC = tagMaxIsOrderIndependent();
+        pass += okC ? 1 : 0;
+        src.sendSuccess(() -> Component.literal("  C 两 tag 取大且与顺序无关 → " + (okC ? "7/7 ✓" : "✗")), false);
+
+        // D 未命中任何条目 → default = 1（挖没配过的方块给 1 点，不告警）
+        long d = com.redtale.project.core.progression.ProfessionService.amountFor(
+                mining, com.redtale.project.core.progression.ProfessionService.SRC_MINE, "minecraft:dirt", java.util.Set.of());
+        boolean okD = d == 1L;
+        pass += okD ? 1 : 0;
+        src.sendSuccess(() -> Component.literal("  D 未命中 → default " + d + "（应 1）" + (okD ? " ✓" : " ✗")), false);
+
+        // E 未命中任何一条 grant → 不发、不写桶（用 stick：mining 没有 craft 段，smelting 的 craft 只有 bread/iron_block）
+        var level = src.getServer().overworld();
+        var player = net.neoforged.neoforge.common.util.FakePlayerFactory.getMinecraft(level);
+        ProgressStore store = ProgressStore.get(src.getServer());
+        store.clear(player.getUUID());
+        java.util.Map<String, Long> e = com.redtale.project.core.progression.ProfessionService.award(
+                src.getServer(), player.getUUID(), com.redtale.project.core.progression.ProfessionService.SRC_CRAFT,
+                "minecraft:stick", java.util.Set.of());
+        boolean okE = e.isEmpty() && store.profExp(player.getUUID(), mining.id()) == 0L;
+        pass += okE ? 1 : 0;
+        src.sendSuccess(() -> Component.literal("  E 未命中任何 grant（craft stick）→ 发放 " + e.size()
+                + " 个专业 · 桶 " + store.profExp(player.getUUID(), mining.id())
+                + "（应 0 / 0）" + (okE ? " ✓" : " ✗")), false);
+
+        // F 发放 + 升级 + 属性下发（per_level × (level-1)）+ 归零前缀清场
+        long need2 = mining.curve().totalExpForLevel(2);
+        com.redtale.project.core.progression.ProfessionService.award(src.getServer(), player.getUUID(),
+                com.redtale.project.core.progression.ProfessionService.SRC_MINE, "minecraft:stone", java.util.Set.of());
+        long afterOne = store.profExp(player.getUUID(), mining.id());
+        boolean okF1 = afterOne == 3L;
+        store.setProfExp(player.getUUID(), mining.id(), need2);
+        int n = com.redtale.project.core.progression.ProfessionService.applyAttributes(player);
+        int lv = com.redtale.project.core.progression.ProfessionService.levelOf(mining, need2);
+        java.util.Map<String, Double> snap = com.redtale.project.core.progression.ProfessionService.snapshot(player);
+        boolean okF2 = lv == 2 && n == mining.attributes().size() && !snap.isEmpty();
+        boolean valueOk = true;
+        for (var en : mining.attributes().entrySet()) {
+            String key = com.redtale.project.core.progression.ProfessionService.idOf(mining, en.getKey());
+            Double got = snap.get(com.redtale.project.RedtaleProject.MOD_ID + ":" + key);
+            double want = Math.round(en.getValue() * 1_000_000.0) / 1_000_000.0;
+            if (got == null || Math.abs(got - want) > 1e-6) {
+                valueOk = false;
+            }
+        }
+        store.setProfExp(player.getUUID(), mining.id(), 0L);
+        int cleared = com.redtale.project.core.progression.ProfessionService.applyAttributes(player);
+        int left = com.redtale.project.core.progression.ProfessionService.snapshot(player).size();
+        boolean okF3 = left == 0 && cleared == 0;
+        boolean okF = okF1 && okF2 && valueOk && okF3;
+        pass += okF ? 1 : 0;
+        int flv = lv;
+        long fOne = afterOne;
+        boolean fValueOk = valueOk;
+        src.sendSuccess(() -> Component.literal("  F 发放/升级/下发/清场 → +" + fOne + " · Lv " + flv
+                + " · 值对=" + fValueOk + " · 归零残留 " + left + " 条（应 0）" + (okF ? " ✓" : " ✗")), false);
+
+        store.clear(player.getUUID());
+        com.redtale.project.core.progression.ProfessionService.applyAttributes(player);
+        int total = pass;
+        src.sendSuccess(() -> Component.literal("[redtale] profession probe " + total + "/6 通过"), false);
+        return total;
+    }
+
+    /** C 组：两个 tag 值不同时，两种声明顺序都必须返回大的那个（§4.2 顺序无关）。 */
+    private static boolean tagMaxIsOrderIndependent() {
+        var g1 = new com.redtale.project.core.progression.ProfessionSpec.Grant("#minecraft:logs", true, 3L);
+        var g2 = new com.redtale.project.core.progression.ProfessionSpec.Grant("#minecraft:planks", true, 7L);
+        java.util.List<com.redtale.project.core.progression.ProfessionSpec.Grant> one = java.util.List.of(g1, g2);
+        java.util.List<com.redtale.project.core.progression.ProfessionSpec.Grant> two = java.util.List.of(g2, g1);
+        java.util.Set<String> hits = java.util.Set.of("minecraft:logs", "minecraft:planks");
+        long x = com.redtale.project.core.progression.ProfessionSpec.resolve(one, "minecraft:oak_log", hits);
+        long y = com.redtale.project.core.progression.ProfessionSpec.resolve(two, "minecraft:oak_log", hits);
+        return x == 7L && y == 7L;
     }
 
     /**
