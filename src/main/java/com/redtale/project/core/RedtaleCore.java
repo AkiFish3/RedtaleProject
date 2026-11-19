@@ -1,6 +1,7 @@
 package com.redtale.project.core;
 
 import com.redtale.project.core.attr.AttackSpeedRules;
+import com.redtale.project.core.config.ConfigDiff;
 import com.redtale.project.core.config.ConfigFile;
 import com.redtale.project.core.config.ConfigStore;
 import com.redtale.project.core.config.DisplaySpec;
@@ -90,6 +91,8 @@ public final class RedtaleCore {
     private volatile DisplaySpec.Settings display = DisplaySpec.DEFAULT;
     /** 最近一次 reload 的非致命告警（配置写歪了但被默认值兜住）。 */
     private volatile List<String> configWarnings = List.of();
+    /** 最近一次成功 reload 时的配置快照；只用于跨 reload 变更摘要，不参与结算。 */
+    private volatile java.util.Map<String, Long> lastConfigMtimes = java.util.Map.of();
 
     private RedtaleCore() {
         Builtins.registerAll(registries);
@@ -329,6 +332,14 @@ public final class RedtaleCore {
                         outcome.loaded(), all.size(), contentItems.size(), skills.describe(),
                         drops.size(), mobs.describe(), spawnRules.describe(), progress.describe(),
                         skillTrees.describe(), professions.describe(), attackSpeedRules.describe());
+                // D14 变更摘要：与上次成功 reload 的快照差分。只在显式 reload 打印——
+                // 启动期首快照为空会得到全 added 的噪声；成功后无论哪条路径都推进快照。
+                java.util.Map<String, Long> snapshot = config.mtimes();
+                ConfigDiff.Report diff = ConfigDiff.between(lastConfigMtimes, snapshot);
+                if (allowResourceReload) {
+                    LOG.info("配置变更：{}", ConfigDiff.describe(diff));
+                }
+                lastConfigMtimes = snapshot;
                 return new ReloadResult(true,
                         "已载入 " + outcome.loaded() + " 条脚本 + " + contentItems.size()
                                 + " 件装备内容 + " + skills.size() + " 条技能 + " + mobs.size()

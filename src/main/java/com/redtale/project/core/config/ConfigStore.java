@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 /**
@@ -178,6 +179,38 @@ public final class ConfigStore {
     public static List<ConfigFile> ofDirectory(List<ConfigFile> all, String dir) {
         String prefix = dir.endsWith("/") ? dir : dir + "/";
         return all.stream().filter(f -> f.path().startsWith(prefix)).toList();
+    }
+
+    /**
+     * 配置快照：相对路径（/ 分隔）→ mtime(ms)。{@link #loadAll()} 的同一文件集合，
+     * 只扫 *.json5、跳过 "_" 开头。供 {@code ConfigDiff.between} 做跨 reload 差分。
+     * 单文件 mtime 读不到（正被外部改写）时跳过那一条，不让快照失败拖垮 reload。
+     */
+    public Map<String, Long> mtimes() {
+        java.util.Map<String, Long> out = new java.util.LinkedHashMap<>();
+        if (!Files.isDirectory(root)) {
+            return out;
+        }
+        List<Path> paths;
+        try (Stream<Path> walk = Files.walk(root)) {
+            paths = walk
+                    .filter(Files::isRegularFile)
+                    .filter(p -> p.getFileName().toString().endsWith(".json5"))
+                    .filter(p -> !p.getFileName().toString().startsWith("_"))
+                    .sorted(Comparator.comparing(Path::toString))
+                    .toList();
+        } catch (IOException e) {
+            return out;
+        }
+        for (Path path : paths) {
+            String rel = root.relativize(path).toString().replace('\\', '/');
+            try {
+                out.put(rel, Files.getLastModifiedTime(path).toMillis());
+            } catch (IOException ignored) {
+                // 外部正在改写：跳过这一条，下一轮快照自然会体现
+            }
+        }
+        return out;
     }
 
     // ------------------------------------------------------------ README

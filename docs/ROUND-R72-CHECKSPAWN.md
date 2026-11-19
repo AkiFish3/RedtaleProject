@@ -37,3 +37,4 @@
 
 - Q-021（respec 扣费）/ Q-022（M5 原语范围）无答复，按默认「免费」「按需补」走。
 - 真人窗口 A~G 全组等 Aki，不排期。
+- **推送挂账**：本地提交 `a81a9af` 已生成，`git push origin main` 两次 `Connection reset by 20.205.243.160 port 443`（RC=128）；wiki 镜像本地重建 + `SCAN clean`，推送同样跳过。未 force / 未 rebase。下轮第一件事：重推源码与镜像，不重建内容。
