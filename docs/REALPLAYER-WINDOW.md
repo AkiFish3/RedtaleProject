@@ -23,7 +23,7 @@
 | A5 | `[ ]` `/redtale level info redtale_project:main`（玩家执行） | 末行多一段「当前」：`Lv7 · 本级 21/44 · 累计 1234`（控制台执行时**没有**这段） | CONTRACTS §4.30 |
 | A6 | `[ ]` `/redtale skill mana`（玩家执行） | 法力面板出当前/上限/回复，数值与本轮 `ManaPool` 配置一致 | §4.21 |
 | A7 | `[ ]` `/redtale mob spawn test_husk <x> <y> <z>` | 客户端看得见**体积按配置缩放**、头上名牌正确；不是默认大小 | D4 |
-| A8 | `[ ]` 把 `display.json5` 的 `show_dps` 与 `show_attribute_breakdown` 都改 `true` → `/redtale reload` → 再看 A1 那把剑 | 多出两行：`DPS ≈ N（假想目标 minecraft:zombie…）` 与 `属性 N 项：…`；DPS 的 N = 单次伤害 × 次/秒（手算对得上） | Q-023 / D20 |
+| A8 | `[ ]` 把 `display.json5` 的 `show_dps` 与 `show_attribute_breakdown` 都改 `true` → `/redtale reload` → 再看 A1 那把剑 | 多出两行：`DPS ≈ N（假想目标 minecraft:zombie…）` 与 `属性 N 项：…`；DPS 的 N = 单次伤害 × 次/秒（手算对得上）。**注意**：服务端口径本身（开关→快照→`/redtale display` 文案 + tooltip lore 行）R70 已用 RCON 逐字验过（`DPS ≈ 19.354 = 12.096×1.6`）；这一条只剩**真人客户端实际渲染**那一步 | Q-023 / D20 / CONTRACTS §4.41 |
 
 ## B 组 · 刷怪（M6 最后两项）
 

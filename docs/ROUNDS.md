@@ -80,3 +80,4 @@
 | R67 | 验收 T-0062（`check_professions.py`）+ 接线 15→16 + 派 T-0063（`/redtale profession list\|info`）+ 真人窗口 F 组（专业 P1~P5） | `docs/ROUND-R67-PROFFIX.md` |
 | R68 | 验收 T-0063（`/redtale profession list\|info`，D24 L5 收口）+ 派 T-0064（`DisplaySpec`，Q-023 默认 A 的 L1） | `docs/ROUND-R68-PROFFIX-VERIFY.md` |
 | R69 | 验收 T-0064（`DisplaySpec`）+ Q-023 L2 落地（`display.json5` / DPS 行 / 属性明细行）+ 派 T-0065（`/redtale display`） | `docs/ROUND-R69-DISPLAY.md` |
+| R70 | 验收 T-0065（`/redtale display`，Q-023 收口）+ 派 T-0066（`SpawnBudget` 纯函数收口 per_tick_cap 双份真相）+ CONTRACTS §4.41 登记显示观测面 | `docs/ROUND-R70-DISPLAY.md` |
