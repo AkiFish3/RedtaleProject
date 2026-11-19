@@ -39,6 +39,7 @@ TOOLS = (
     "check_professions.py",  # 专业面：professions/*.json5 起飞前对账 —— R67 接上
     "check_spawn.py",       # 刷怪全局配置：spawn.json5 主配置（per_tick_cap）—— R72 接上
     "check_display.py",     # 显示口径：display.json5 安全网 —— R74 接上
+    "check_checkall.py",    # 清单安全网：TOOLS ↔ 磁盘 check_*.py 双向对账 —— R75 接上
 )
 
 
