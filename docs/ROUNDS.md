@@ -97,3 +97,4 @@
 | R84 | 验收 T-0079 + 接线 `check_all` 27→28 + 派 T-0080（刷怪规则 conditions 六维值域对账） | `docs/ROUND-R84-SPAWNCOND.md` |
 | R85 | 验收 T-0080 + 接线 `check_all` 28→29 + 派 T-0081（技能 conditions args 值域对账） | `docs/ROUND-R85-SKILLARGS.md` |
 | R86 | 验收 T-0081 + 接线 `check_all` 29→30 + 派 T-0082（脚本 conditions args 值域对账） | `docs/ROUND-R86-SCRIPTARGS.md` |
+| R87 | 验收 T-0082 + 接线 `check_all` 30→31 + 派 T-0083（效果 target 枚举值域对账） | `docs/ROUND-R87-EFFECTTARGET.md` |
