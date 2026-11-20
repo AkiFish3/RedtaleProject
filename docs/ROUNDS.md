@@ -94,3 +94,4 @@
 | R81 | 验收 T-0076 + 接线 `check_all` 24→25 + 派 T-0077（在制品卡独占文件重叠对账） | `docs/ROUND-R81-OWNERSHIP.md` |
 | R82 | 验收 T-0077 + 接线 `check_all` 25→26 + 派 T-0078（事件监听器注册对账） | `docs/ROUND-R82-EVENTREG.md` |
 | R83 | 验收 T-0078 + 接线 `check_all` 26→27 + 派 T-0079（伤害类型引用 ↔ 注册对账） | `docs/ROUND-R83-DAMAGETYPE.md` |
+| R84 | 验收 T-0079 + 接线 `check_all` 27→28 + 派 T-0080（刷怪规则 conditions 六维值域对账） | `docs/ROUND-R84-SPAWNCOND.md` |
