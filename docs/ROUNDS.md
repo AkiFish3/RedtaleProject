@@ -96,3 +96,4 @@
 | R83 | 验收 T-0078 + 接线 `check_all` 26→27 + 派 T-0079（伤害类型引用 ↔ 注册对账） | `docs/ROUND-R83-DAMAGETYPE.md` |
 | R84 | 验收 T-0079 + 接线 `check_all` 27→28 + 派 T-0080（刷怪规则 conditions 六维值域对账） | `docs/ROUND-R84-SPAWNCOND.md` |
 | R85 | 验收 T-0080 + 接线 `check_all` 28→29 + 派 T-0081（技能 conditions args 值域对账） | `docs/ROUND-R85-SKILLARGS.md` |
+| R86 | 验收 T-0081 + 接线 `check_all` 29→30 + 派 T-0082（脚本 conditions args 值域对账） | `docs/ROUND-R86-SCRIPTARGS.md` |

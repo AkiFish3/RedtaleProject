@@ -50,6 +50,7 @@ TOOLS = (
     "check_event_registration.py",  # 事件总线安全网：@SubscribeEvent ↔ EVENT_BUS.register —— R83 接上
     "check_damage_types.py",       # 伤害类型安全网：配置 damage_type 引用 ↔ datapack 注册 —— R84 接上
     "check_spawn_conditions.py",   # 刷怪条件安全网：spawn_rules conditions 七维值域 —— R85 接上
+    "check_skill_args.py",         # 技能条件值域安全网：conditions args [0,1] —— R86 接上
 )
 
 
