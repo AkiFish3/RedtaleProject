@@ -92,3 +92,4 @@
 | R79 | 验收 T-0074 + 接线 `check_all` 22→23 + 派 T-0075（原语 id ↔ 原语表对账） | `docs/ROUND-R79-PRIMID.md` |
 | R80 | 验收 T-0075 + 接线 `check_all` 23→24 + 派 T-0076（lang 文件内重复键对账） | `docs/ROUND-R80-LANGDUP.md` |
 | R81 | 验收 T-0076 + 接线 `check_all` 24→25 + 派 T-0077（在制品卡独占文件重叠对账） | `docs/ROUND-R81-OWNERSHIP.md` |
+| R82 | 验收 T-0077 + 接线 `check_all` 25→26 + 派 T-0078（事件监听器注册对账） | `docs/ROUND-R82-EVENTREG.md` |
