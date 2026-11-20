@@ -99,3 +99,4 @@
 | R86 | 验收 T-0081 + 接线 `check_all` 29→30 + 派 T-0082（脚本 conditions args 值域对账） | `docs/ROUND-R86-SCRIPTARGS.md` |
 | R87 | 验收 T-0082 + 接线 `check_all` 30→31 + 派 T-0083（效果 target 枚举值域对账） | `docs/ROUND-R87-EFFECTTARGET.md` |
 | R88 | 验收 T-0083 + 接线 `check_all` 31→32 + 派 T-0084（怪物装备物品 id ↔ 14 基底对账） | `docs/ROUND-R88-MOBEQUIP.md` |
+| R89 | 验收 T-0084 + 接线 `check_all` 32→33 + 派 T-0085（消耗品 use.script 原语 id 对账） | `docs/ROUND-R89-USESCRIPT.md` |
