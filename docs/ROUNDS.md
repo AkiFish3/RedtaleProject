@@ -101,3 +101,4 @@
 | R88 | 验收 T-0083 + 接线 `check_all` 31→32 + 派 T-0084（怪物装备物品 id ↔ 14 基底对账） | `docs/ROUND-R88-MOBEQUIP.md` |
 | R89 | 验收 T-0084 + 接线 `check_all` 32→33 + 派 T-0085（消耗品 use.script 原语 id 对账） | `docs/ROUND-R89-USESCRIPT.md` |
 | R90 | 验收 T-0085 + 接线 `check_all` 33→34 + 派 T-0086（伤害乘区 damage_types 白名单形态对账） | `docs/ROUND-R90-DMGWHITELIST.md` |
+| R91 | 验收 T-0086 + 接线 `check_all` 34→35 + 派 T-0087（技能树 requires 可达性对账） | `docs/ROUND-R91-TREEREACH.md` |
