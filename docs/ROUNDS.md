@@ -98,3 +98,4 @@
 | R85 | 验收 T-0080 + 接线 `check_all` 28→29 + 派 T-0081（技能 conditions args 值域对账） | `docs/ROUND-R85-SKILLARGS.md` |
 | R86 | 验收 T-0081 + 接线 `check_all` 29→30 + 派 T-0082（脚本 conditions args 值域对账） | `docs/ROUND-R86-SCRIPTARGS.md` |
 | R87 | 验收 T-0082 + 接线 `check_all` 30→31 + 派 T-0083（效果 target 枚举值域对账） | `docs/ROUND-R87-EFFECTTARGET.md` |
+| R88 | 验收 T-0083 + 接线 `check_all` 31→32 + 派 T-0084（怪物装备物品 id ↔ 14 基底对账） | `docs/ROUND-R88-MOBEQUIP.md` |

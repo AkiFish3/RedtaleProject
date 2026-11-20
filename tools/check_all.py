@@ -52,6 +52,7 @@ TOOLS = (
     "check_spawn_conditions.py",   # 刷怪条件安全网：spawn_rules conditions 七维值域 —— R85 接上
     "check_skill_args.py",         # 技能条件值域安全网：conditions args [0,1] —— R86 接上
     "check_script_args.py",        # 脚本条件值域安全网：conditions args [0,1] —— R87 接上
+    "check_effect_target.py",      # 效果 target 枚举安全网：effects[].args.target ∈ {caster,target} —— R88 接上
 )
 
 
