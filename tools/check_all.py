@@ -54,6 +54,7 @@ TOOLS = (
     "check_script_args.py",        # 脚本条件值域安全网：conditions args [0,1] —— R87 接上
     "check_effect_target.py",      # 效果 target 枚举安全网：effects[].args.target ∈ {caster,target} —— R88 接上
     "check_mob_equipment.py",      # 怪物装备 id 安全网：mobs equipment[slot] ↔ 14 基底 —— R89 接上
+    "check_use_script.py",         # 消耗品脚本原语安全网：items use.script[].effect ↔ 27 原语 —— R90 接上
 )
 
 
