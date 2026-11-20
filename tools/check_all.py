@@ -47,6 +47,7 @@ TOOLS = (
     "check_primitive_ids.py",  # 原语 id 安全网：Effect id() ↔ SKILLS.md 表 —— R80 接上
     "check_lang_dupes.py",     # lang 内部安全网：单份 JSON 重复键 —— R81 接上
     "check_ownership.py",      # 卡板安全网：WIP 卡独占文件重叠 —— R82 接上
+    "check_event_registration.py",  # 事件总线安全网：@SubscribeEvent ↔ EVENT_BUS.register —— R83 接上
 )
 
 

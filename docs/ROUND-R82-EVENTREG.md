@@ -2,7 +2,7 @@
 
 ## 1. 验收 T-0077（`check_ownership.py`）
 
-- `[DONE]` → **`[VERIFIED]`**。验收 1 的基线取自领卡时状态：`git show HEAD:docs/TASKS.md` → `build/ownerfix/base_tasks.md`，跑出 `已对账 1 张在制品卡 · 2 个独占文件声明` + `共 1 份卡板 · 0 条问题` EXIT=0。当前工作树里 T-0077 已 DONE、自指消失，复跑为 0 卡 / 0 声明 EXIT=0 —— 按 S8 交付注记处理，不打回。
+- `[DONE]` → **`[VERIFIED]`**。验收 1 的基线取自领卡时状态：`git show HEAD:docs/TASKS.md` → <该基线快照路径>，跑出 `已对账 1 张在制品卡 · 2 个独占文件声明` + `共 1 份卡板 · 0 条问题` EXIT=0。当前工作树里 T-0077 已 DONE、自指消失，复跑为 0 卡 / 0 声明 EXIT=0 —— 按 S8 交付注记处理，不打回。
 - 三夹具各自从干净最小卡板重来（`build/ownerfix/`，用完已清）：A 两张 WIP 同写 `foo.py` → 1 条 `独占文件 <该夹具路径> 被 T-9001 / T-9002 同时声明`；B OPEN + VERIFIED 同文件 → 0 条；C 三张 WIP 两两重叠 → 2 条，顺序 `build/fix` 先、`foo.py` 后（夹具原文见卡面）。EXIT=1/0/1，逐字对上。
 - 静态：wc=105 ≤ 200、`grep -c "def check_overlaps"`=1、禁用 grep=0、`py_compile` OK、`--tasks NO_SUCH` → 恰好 1 条 `卡板读取失败` EXIT=1 不抛栈。
 - S7 独立边界 11/11：模板 `T-XXXX` 不算卡、body 止于下一个标题、1-based 标题行号、缺文件返回空、`./` 前缀与尾部 `/` 归一、同卡重复 token 去重、兄弟 `- ` 行截断、三卡同路径卡 id 升序、同卡重复不报、多路径按 path 升序、空声明集。首轮 3 个 FAIL 全是 S7 夹具期望写错（行号按每卡一行算、membership 当子串、无 `- ` 的自由文本本就不在接口扫描集），按 R65-a 修正期望后 11/11，非代码缺陷。
