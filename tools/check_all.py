@@ -45,6 +45,7 @@ TOOLS = (
     "check_gen_prefix.py",  # 生成器前缀安全网：gen_*.py ↔ OWNED_PREFIX/KEY_PREFIX —— R78 接上
     "check_rounds.py",      # 轮次索引安全网：ROUNDS.md ↔ 磁盘 ROUND-*.md —— R79 接上
     "check_primitive_ids.py",  # 原语 id 安全网：Effect id() ↔ SKILLS.md 表 —— R80 接上
+    "check_lang_dupes.py",     # lang 内部安全网：单份 JSON 重复键 —— R81 接上
 )
 
 
