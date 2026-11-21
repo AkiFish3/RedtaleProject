@@ -61,6 +61,7 @@ TOOLS = (
     "check_gem_types.py",          # 宝石孔位安全网：gem.type ↔ sockets.types 开放词汇可达性 —— R94 接上
     "check_enchant_args_sync.py",  # 附魔参数同步安全网：scripted.args ↔ 脚本 effects[].args 数值 —— R95 接上
     "check_affix_reach.py",        # 词条可达安全网：item_level + kind ↔ 池段槽位 —— R96 接上
+    "check_set_reach.py",          # 套装档位可达安全网：bonuses[].count ↔ pieces 覆盖装备槽数 —— R97 接上
 )
 
 

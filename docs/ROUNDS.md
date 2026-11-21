@@ -107,3 +107,4 @@
 | R94 | 验收 T-0089 + 接线 `check_all` 37→38 + 派 T-0090（附魔脚本参数同步对账） | `docs/ROUND-R94-ENCHARGSYNC.md` |
 | R95 | 验收 T-0090 + 接线 `check_all` 38→39 + 派 T-0091（词条等级可达性对账） | `docs/ROUND-R95-AFFIXREACH.md` |
 | R96 | 验收 T-0091 + 接线 `check_all` 39→40 + 派 T-0092（套装档位装备槽可达性对账） | `docs/ROUND-R96-SETREACH.md` |
+| R97 | 验收 T-0092 + 接线 `check_all` 40→41 + 派 T-0093（物品绑定技能完整 id 引用对账） | `docs/ROUND-R97-ABILITYREFS.md` |
