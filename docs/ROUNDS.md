@@ -111,3 +111,4 @@
 | R98 | 验收 T-0093 + 接线 `check_all` 41→42 + 派 T-0094（怪物绑定技能完整 id 引用对账） | `docs/ROUND-R98-MOBSKILLS.md` |
 | R99 | 验收 T-0094 + 接线 `check_all` 42→43 + 派 T-0095（词条池词条 id 完整字符串引用对账） | `docs/ROUND-R99-AFFIXPOOLREF.md` |
 | R100 | 验收 T-0095 + 接线 `check_all` 43→44 + 派 T-0096（修理模式激活字段有效性对账） | `docs/ROUND-R100-REPAIRACTIVE.md` |
+| R101 | 验收 T-0096 + 接线 `check_all` 44→45 + 派 T-0097（伤害类别 type 完整形态对账） | `docs/ROUND-R101-CATEGORYTYPE.md` |
