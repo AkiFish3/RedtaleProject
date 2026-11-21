@@ -103,3 +103,4 @@
 | R90 | 验收 T-0085 + 接线 `check_all` 33→34 + 派 T-0086（伤害乘区 damage_types 白名单形态对账） | `docs/ROUND-R90-DMGWHITELIST.md` |
 | R91 | 验收 T-0086 + 接线 `check_all` 34→35 + 派 T-0087（技能树 requires 可达性对账） | `docs/ROUND-R91-TREEREACH.md` |
 | R92 | 验收 T-0087 + 接线 `check_all` 35→36 + 派 T-0088（附魔 exclusive_set 引用形态对账） | `docs/ROUND-R92-ENCHEXCLUSIVE.md` |
+| R93 | 验收 T-0088 + 接线 `check_all` 36→37 + 派 T-0089（宝石类型孔位可达性对账） | `docs/ROUND-R93-GEMTYPES.md` |
