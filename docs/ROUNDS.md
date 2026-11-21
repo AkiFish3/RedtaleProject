@@ -109,3 +109,4 @@
 | R96 | 验收 T-0091 + 接线 `check_all` 39→40 + 派 T-0092（套装档位装备槽可达性对账） | `docs/ROUND-R96-SETREACH.md` |
 | R97 | 验收 T-0092 + 接线 `check_all` 40→41 + 派 T-0093（物品绑定技能完整 id 引用对账） | `docs/ROUND-R97-ABILITYREFS.md` |
 | R98 | 验收 T-0093 + 接线 `check_all` 41→42 + 派 T-0094（怪物绑定技能完整 id 引用对账） | `docs/ROUND-R98-MOBSKILLS.md` |
+| R99 | 验收 T-0094 + 接线 `check_all` 42→43 + 派 T-0095（词条池词条 id 完整字符串引用对账） | `docs/ROUND-R99-AFFIXPOOLREF.md` |
