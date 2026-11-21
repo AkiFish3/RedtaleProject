@@ -66,6 +66,7 @@ TOOLS = (
     "check_mob_skills.py",         # 怪物技能引用安全网：mobs skills[].skill ↔ skills 完整字符串 id —— R99 接上
     "check_affix_pool_refs.py",    # 词条池引用安全网：池三段键 ↔ 词条定义完整字符串 id —— R100 接上
     "check_repair_active.py",      # 修理有效性安全网：repair.mode ↔ amount/percent 激活字段 —— R101 接上
+    "check_category_types.py",     # 伤害类别安全网：category_attributes[].type 完整形态 —— R102 接上
 )
 
 
