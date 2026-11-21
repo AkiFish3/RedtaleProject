@@ -59,6 +59,7 @@ TOOLS = (
     "check_tree_reach.py",         # 技能树可达性安全网：nodes[*].requires 图可达性 —— R92 接上
     "check_enchant_exclusive.py",  # 附魔互斥引用安全网：exclusive_set 引用形态 —— R93 接上
     "check_gem_types.py",          # 宝石孔位安全网：gem.type ↔ sockets.types 开放词汇可达性 —— R94 接上
+    "check_enchant_args_sync.py",  # 附魔参数同步安全网：scripted.args ↔ 脚本 effects[].args 数值 —— R95 接上
 )
 
 
