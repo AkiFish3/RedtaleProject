@@ -56,6 +56,7 @@ TOOLS = (
     "check_mob_equipment.py",      # 怪物装备 id 安全网：mobs equipment[slot] ↔ 14 基底 —— R89 接上
     "check_use_script.py",         # 消耗品脚本原语安全网：items use.script[].effect ↔ 27 原语 —— R90 接上
     "check_damage_whitelist.py",   # 伤害白名单安全网：damage.json5 multiplier.damage_types[] 形态 —— R91 接上
+    "check_tree_reach.py",         # 技能树可达性安全网：nodes[*].requires 图可达性 —— R92 接上
 )
 
 
