@@ -64,6 +64,7 @@ TOOLS = (
     "check_set_reach.py",          # 套装档位可达安全网：bonuses[].count ↔ pieces 覆盖装备槽数 —— R97 接上
     "check_ability_refs.py",       # 物品技能引用安全网：items abilities[] ↔ skills 完整字符串 id —— R98 接上
     "check_mob_skills.py",         # 怪物技能引用安全网：mobs skills[].skill ↔ skills 完整字符串 id —— R99 接上
+    "check_affix_pool_refs.py",    # 词条池引用安全网：池三段键 ↔ 词条定义完整字符串 id —— R100 接上
 )
 
 
