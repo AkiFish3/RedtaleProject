@@ -58,6 +58,7 @@ TOOLS = (
     "check_damage_whitelist.py",   # 伤害白名单安全网：damage.json5 multiplier.damage_types[] 形态 —— R91 接上
     "check_tree_reach.py",         # 技能树可达性安全网：nodes[*].requires 图可达性 —— R92 接上
     "check_enchant_exclusive.py",  # 附魔互斥引用安全网：exclusive_set 引用形态 —— R93 接上
+    "check_gem_types.py",          # 宝石孔位安全网：gem.type ↔ sockets.types 开放词汇可达性 —— R94 接上
 )
 
 
