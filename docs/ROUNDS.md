@@ -122,3 +122,4 @@
 | R109 | 验收 T-0103 + 接线 `check_all` 51→52 + 派 T-0104（怪物技能 chance 值域口径） | `docs/ROUND-R109-MOBSKILLCHANCE.md` |
 | R110 | 验收 T-0104 + 接线 `check_all` 52→53 + 派 T-0105（怪物技能 cooldown_ticks 值域口径） | `docs/ROUND-R110-MOBCOOLDOWN.md` |
 | R111 | 验收 T-0105 + 接线 `check_all` 53→54 + 派 T-0106（掉落表 xp/min/max 边界口径） | `docs/ROUND-R111-DROPVALUES.md` |
+| R112 | 验收 T-0106 + 接线 `check_all` 54→55 + 派 T-0107（技能树 points_per_level 整数形态） | `docs/ROUND-R112-TREEPOINT.md` |

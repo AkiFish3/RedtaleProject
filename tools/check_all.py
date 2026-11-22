@@ -75,6 +75,7 @@ TOOLS = (
     "check_drop_rolls.py",         # 掉落掷骰安全网：drops[].rolls 显式值 ∈ [1,16] 整数 —— R109 接上
     "check_mob_skill_chance.py",   # 怪物技能概率安全网：skills[].chance 显式值 ∈ [0,1] —— R110 接上
     "check_mob_skill_cooldowns.py",  # 怪物技能冷却安全网：skills[].cooldown_ticks ∈ [1,1000000] 整数 —— R111 接上
+    "check_drop_values.py",          # 掉落数值安全网：xp / min / max 绝对边界 —— R112 接上
 )
 
 
