@@ -120,3 +120,4 @@
 | R107 | 验收 T-0101 + 接线 `check_all` 49→50 + 派 T-0102（怪物 scale 下界口径） | `docs/ROUND-R107-MOBSCALE.md` |
 | R108 | 验收 T-0102 + 接线 `check_all` 50→51 + 派 T-0103（掉落表 rolls 上界口径） | `docs/ROUND-R108-DROPROLLS.md` |
 | R109 | 验收 T-0103 + 接线 `check_all` 51→52 + 派 T-0104（怪物技能 chance 值域口径） | `docs/ROUND-R109-MOBSKILLCHANCE.md` |
+| R110 | 验收 T-0104 + 接线 `check_all` 52→53 + 派 T-0105（怪物技能 cooldown_ticks 值域口径） | `docs/ROUND-R110-MOBCOOLDOWN.md` |

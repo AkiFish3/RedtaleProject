@@ -73,6 +73,7 @@ TOOLS = (
     "check_mob_levels.py",         # 怪物等级安全网：mobs level 1..1000 整数（bool 不算）—— R107 接上
     "check_mob_scales.py",         # 怪物体积安全网：mobs scale [0.25,4.0] 有限数字（bool 不算）—— R108 接上
     "check_drop_rolls.py",         # 掉落掷骰安全网：drops[].rolls 显式值 ∈ [1,16] 整数 —— R109 接上
+    "check_mob_skill_chance.py",   # 怪物技能概率安全网：skills[].chance 显式值 ∈ [0,1] —— R110 接上
 )
 
 
