@@ -72,6 +72,7 @@ TOOLS = (
     "check_use_args.py",           # 消耗品脚本参数键安全网：items use.script[] args ↔ 原语签名 —— R106 接上
     "check_mob_levels.py",         # 怪物等级安全网：mobs level 1..1000 整数（bool 不算）—— R107 接上
     "check_mob_scales.py",         # 怪物体积安全网：mobs scale [0.25,4.0] 有限数字（bool 不算）—— R108 接上
+    "check_drop_rolls.py",         # 掉落掷骰安全网：drops[].rolls 显式值 ∈ [1,16] 整数 —— R109 接上
 )
 
 

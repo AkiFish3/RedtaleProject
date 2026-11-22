@@ -119,3 +119,4 @@
 | R106 | 验收 T-0100 + 接线 `check_all` 48→49 + 派 T-0101（怪物 level 整数口径） | `docs/ROUND-R106-MOBLEVEL.md` |
 | R107 | 验收 T-0101 + 接线 `check_all` 49→50 + 派 T-0102（怪物 scale 下界口径） | `docs/ROUND-R107-MOBSCALE.md` |
 | R108 | 验收 T-0102 + 接线 `check_all` 50→51 + 派 T-0103（掉落表 rolls 上界口径） | `docs/ROUND-R108-DROPROLLS.md` |
+| R109 | 验收 T-0103 + 接线 `check_all` 51→52 + 派 T-0104（怪物技能 chance 值域口径） | `docs/ROUND-R109-MOBSKILLCHANCE.md` |
