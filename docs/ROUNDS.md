@@ -114,3 +114,4 @@
 | R101 | 验收 T-0096 + 接线 `check_all` 44→45 + 派 T-0097（伤害类别 type 完整形态对账） | `docs/ROUND-R101-CATEGORYTYPE.md` |
 | R102 | 验收 T-0097 + 接线 `check_all` 45→46 + 派 T-0098（怪物装备槽位 ↔ 基底槽位对账） | `docs/ROUND-R102-EQSLOT.md` |
 | R103 | 验收 T-0098 + 接线 `check_all` 46→47 + 派 T-0099（原语 args 键名签名对账） | `docs/ROUND-R103-ARGKEYS.md` |
+| R104 | 验收 T-0099 + 接线 `check_all` 47→48 + 全类排除后不派卡（内容面盘点） | `docs/ROUND-R104-ARGKEYS.md` |
