@@ -67,6 +67,7 @@ TOOLS = (
     "check_affix_pool_refs.py",    # 词条池引用安全网：池三段键 ↔ 词条定义完整字符串 id —— R100 接上
     "check_repair_active.py",      # 修理有效性安全网：repair.mode ↔ amount/percent 激活字段 —— R101 接上
     "check_category_types.py",     # 伤害类别安全网：category_attributes[].type 完整形态 —— R102 接上
+    "check_equipment_slots.py",    # 装备槽位安全网：mobs equipment[slot] ↔ 基底声明槽位 —— R103 接上
 )
 
 
