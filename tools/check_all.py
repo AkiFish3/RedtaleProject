@@ -70,6 +70,7 @@ TOOLS = (
     "check_equipment_slots.py",    # 装备槽位安全网：mobs equipment[slot] ↔ 基底声明槽位 —— R103 接上
     "check_arg_keys.py",           # 原语参数键安全网：skills/scripts args 键 ↔ 原语签名 —— R104 接上
     "check_use_args.py",           # 消耗品脚本参数键安全网：items use.script[] args ↔ 原语签名 —— R106 接上
+    "check_mob_levels.py",         # 怪物等级安全网：mobs level 1..1000 整数（bool 不算）—— R107 接上
 )
 
 

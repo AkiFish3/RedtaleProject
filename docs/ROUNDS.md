@@ -117,3 +117,4 @@
 | R104 | 验收 T-0099 + 接线 `check_all` 47→48 + 全类排除后不派卡（内容面盘点） | `docs/ROUND-R104-ARGKEYS.md` |
 | R105 | 无卡可验守 48 + 派 T-0100（消耗品 use.script args 键名）+ 冻结 6 原型字段 | `docs/ROUND-R105-USEARGS.md` |
 | R106 | 验收 T-0100 + 接线 `check_all` 48→49 + 派 T-0101（怪物 level 整数口径） | `docs/ROUND-R106-MOBLEVEL.md` |
+| R107 | 验收 T-0101 + 接线 `check_all` 49→50 + 派 T-0102（怪物 scale 下界口径） | `docs/ROUND-R107-MOBSCALE.md` |
