@@ -82,6 +82,7 @@ TOOLS = (
     "check_use_ints.py",             # 消耗品整数安全网：use 四处整数小数截断静默改写 —— R116 接上
     "check_affix_weights.py",        # 词条权重安全网：定义/池段权重小数 (int) 静默截断 —— R117 接上
     "check_affix_levels.py",         # 词条等级安全网：item_level.min/max 小数 (int) 静默截断 —— R118 接上
+    "check_tree_icons.py",           # 技能树图标安全网：icon 非字符串/空白静默回落 —— R119 接上
 )
 
 

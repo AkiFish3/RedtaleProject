@@ -129,3 +129,4 @@
 | R116 | 验收 T-0110 + 接线 `check_all` 58→59 + 派 T-0111（词条权重整数静默截断） | `docs/ROUND-R116-AFFIXWEIGHT.md` |
 | R117 | 验收 T-0111 + 接线 `check_all` 59→60 + 派 T-0112（词条 item_level 整数形态对账） | `docs/ROUND-R117-AFFIXLEVEL.md` |
 | R118 | 验收 T-0112 + 接线 `check_all` 60→61 + 派 T-0113（技能树 icon 静默回落） | `docs/ROUND-R118-TREEICON.md` |
+| R119 | 验收 T-0113 + 接线 `check_all` 61→62 + 派 T-0114（范围伤害 args 静默改写） | `docs/ROUND-R119-AOEARGS.md` |
