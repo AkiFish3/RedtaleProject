@@ -126,3 +126,4 @@
 | R113 | 验收 T-0107 + 接线 `check_all` 55→56 + 派 T-0108（专业曲线 base 静默改写/夹顶） | `docs/ROUND-R113-PROFBASE.md` |
 | R114 | 验收 T-0108 + 接线 `check_all` 56→57 + 派 T-0109（物品耐久 `(int)` 静默截断/夹顶） | `docs/ROUND-R114-DURABILITY.md` |
 | R115 | 验收 T-0109 + 接线 `check_all` 57→58 + 派 T-0110（消耗品 use 整数静默截断） | `docs/ROUND-R115-USEINTS.md` |
+| R116 | 验收 T-0110 + 接线 `check_all` 58→59 + 派 T-0111（词条权重整数静默截断） | `docs/ROUND-R116-AFFIXWEIGHT.md` |

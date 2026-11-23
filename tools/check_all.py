@@ -79,6 +79,7 @@ TOOLS = (
     "check_tree_ppl.py",             # 技能树点数安全网：points_per_level 非负整数形态 —— R113 接上
     "check_profession_base.py",      # 专业起点经验安全网：curve.base 零值/硬顶静默改写 —— R114 接上
     "check_item_durability.py",      # 物品耐久安全网：durability 小数截断 / int 硬顶静默改写 —— R115 接上
+    "check_use_ints.py",             # 消耗品整数安全网：use 四处整数小数截断静默改写 —— R116 接上
 )
 
 
