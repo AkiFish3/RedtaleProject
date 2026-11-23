@@ -81,6 +81,7 @@ TOOLS = (
     "check_item_durability.py",      # 物品耐久安全网：durability 小数截断 / int 硬顶静默改写 —— R115 接上
     "check_use_ints.py",             # 消耗品整数安全网：use 四处整数小数截断静默改写 —— R116 接上
     "check_affix_weights.py",        # 词条权重安全网：定义/池段权重小数 (int) 静默截断 —— R117 接上
+    "check_affix_levels.py",         # 词条等级安全网：item_level.min/max 小数 (int) 静默截断 —— R118 接上
 )
 
 

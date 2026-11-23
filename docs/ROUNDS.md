@@ -128,3 +128,4 @@
 | R115 | 验收 T-0109 + 接线 `check_all` 57→58 + 派 T-0110（消耗品 use 整数静默截断） | `docs/ROUND-R115-USEINTS.md` |
 | R116 | 验收 T-0110 + 接线 `check_all` 58→59 + 派 T-0111（词条权重整数静默截断） | `docs/ROUND-R116-AFFIXWEIGHT.md` |
 | R117 | 验收 T-0111 + 接线 `check_all` 59→60 + 派 T-0112（词条 item_level 整数形态对账） | `docs/ROUND-R117-AFFIXLEVEL.md` |
+| R118 | 验收 T-0112 + 接线 `check_all` 60→61 + 派 T-0113（技能树 icon 静默回落） | `docs/ROUND-R118-TREEICON.md` |
