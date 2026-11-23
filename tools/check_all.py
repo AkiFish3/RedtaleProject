@@ -77,6 +77,7 @@ TOOLS = (
     "check_mob_skill_cooldowns.py",  # 怪物技能冷却安全网：skills[].cooldown_ticks ∈ [1,1000000] 整数 —— R111 接上
     "check_drop_values.py",          # 掉落数值安全网：xp / min / max 绝对边界 —— R112 接上
     "check_tree_ppl.py",             # 技能树点数安全网：points_per_level 非负整数形态 —— R113 接上
+    "check_profession_base.py",      # 专业起点经验安全网：curve.base 零值/硬顶静默改写 —— R114 接上
 )
 
 

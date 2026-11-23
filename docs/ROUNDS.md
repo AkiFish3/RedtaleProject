@@ -124,3 +124,4 @@
 | R111 | 验收 T-0105 + 接线 `check_all` 53→54 + 派 T-0106（掉落表 xp/min/max 边界口径） | `docs/ROUND-R111-DROPVALUES.md` |
 | R112 | 验收 T-0106 + 接线 `check_all` 54→55 + 派 T-0107（技能树 points_per_level 整数形态） | `docs/ROUND-R112-TREEPOINT.md` |
 | R113 | 验收 T-0107 + 接线 `check_all` 55→56 + 派 T-0108（专业曲线 base 静默改写/夹顶） | `docs/ROUND-R113-PROFBASE.md` |
+| R114 | 验收 T-0108 + 接线 `check_all` 56→57 + 派 T-0109（物品耐久 `(int)` 静默截断/夹顶） | `docs/ROUND-R114-DURABILITY.md` |
