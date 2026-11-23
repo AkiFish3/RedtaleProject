@@ -84,6 +84,8 @@ TOOLS = (
     "check_affix_levels.py",         # 词条等级安全网：item_level.min/max 小数 (int) 静默截断 —— R118 接上
     "check_tree_icons.py",           # 技能树图标安全网：icon 非字符串/空白静默回落 —— R119 接上
     "check_damage_aoe_args.py",      # 范围伤害参数安全网：radius/falloff/max_targets 静默改写 —— R120 接上
+    "check_socket_fallbacks.py",     # 孔位回落安全网：sockets.types / gem.type / exclusive_group 静默回落 —— R121 接上
+    "check_name_coercions.py",       # 名称安全网：items/tree/node name 非字符串静默改写 —— R122 接上
 )
 
 

@@ -131,3 +131,5 @@
 | R118 | 验收 T-0112 + 接线 `check_all` 60→61 + 派 T-0113（技能树 icon 静默回落） | `docs/ROUND-R118-TREEICON.md` |
 | R119 | 验收 T-0113 + 接线 `check_all` 61→62 + 派 T-0114（范围伤害 args 静默改写） | `docs/ROUND-R119-AOEARGS.md` |
 | R120 | 验收 T-0114 + 接线 `check_all` 62→63 + 派 T-0115（宝石/孔位静默回落族） | `docs/ROUND-R120-SOCKETFALLBACK.md` |
+| R121 | 验收 T-0115 + 接线 `check_all` 63→64 + 派 T-0116（名称字段静默改写） | `docs/ROUND-R121-NAMECOERCION.md` |
+| R122 | 验收 T-0116 + 接线 `check_all` 64→65 + 派 T-0117（孔位整段丢弃静默早退） | `docs/ROUND-R122-SOCKETDISCARD.md` |
