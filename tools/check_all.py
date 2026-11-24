@@ -86,6 +86,7 @@ TOOLS = (
     "check_damage_aoe_args.py",      # 范围伤害参数安全网：radius/falloff/max_targets 静默改写 —— R120 接上
     "check_socket_fallbacks.py",     # 孔位回落安全网：sockets.types / gem.type / exclusive_group 静默回落 —— R121 接上
     "check_name_coercions.py",       # 名称安全网：items/tree/node name 非字符串静默改写 —— R122 接上
+    "check_socket_discards.py",      # 孔位丢弃安全网：count=0/缺键但 types 非空整段早退 —— R123 接上
 )
 
 

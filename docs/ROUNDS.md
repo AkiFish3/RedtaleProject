@@ -133,3 +133,4 @@
 | R120 | 验收 T-0114 + 接线 `check_all` 62→63 + 派 T-0115（宝石/孔位静默回落族） | `docs/ROUND-R120-SOCKETFALLBACK.md` |
 | R121 | 验收 T-0115 + 接线 `check_all` 63→64 + 派 T-0116（名称字段静默改写） | `docs/ROUND-R121-NAMECOERCION.md` |
 | R122 | 验收 T-0116 + 接线 `check_all` 64→65 + 派 T-0117（孔位整段丢弃静默早退） | `docs/ROUND-R122-SOCKETDISCARD.md` |
+| R123 | 验收 T-0117 + 接线 `check_all` 65→66 + 派 T-0118（刷怪大整数静默饱和） | `docs/ROUND-R123-SPAWNINTSAT.md` |
