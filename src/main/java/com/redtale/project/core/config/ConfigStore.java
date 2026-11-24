@@ -79,6 +79,9 @@ public final class ConfigStore {
             // 原本只有 caster / elite 有内容，这两份落地后 `/redtale mob list` 才覆盖 4 个原型
             "mobs/stone_footman.json5",
             "mobs/frost_archer.json5",
+            // 怪物示范 5/6（M6 · R125 / T-0120）：补 summoner / charger 两个原型 ——
+            "mobs/bone_summoner.json5",
+            "mobs/iron_horn_charger.json5",
             // 掉落表（M6 第四层，R41）：没有这份默认文件，ember_guard 的 drops 引用就悬空，
             // 死掉零产出 —— 「掉落接线通没通」这条验收永远没有内容可验
             "drops/ember_guard.json5",

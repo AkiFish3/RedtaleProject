@@ -1,0 +1,25 @@
+// 怪物示范 5（M6 · R125 / T-0120）：summoner 原型，靠 max_mana + mana_regeneration 撑两条法术引用。
+// 召唤原语（summon）尚未实现（Q-022 按需补），所以这只怪先用既有两条法术技能占位，
+// 等 summon 落地只改本文件的 skills 段，不换 jar。
+{
+  id: "bone_summoner",
+  name: "枯骨唤者",
+  base: "summoner",
+  scale: 1.05,
+  level: 10,
+  attributes: {
+    max_health: { base: 26, per_item_level: 3 },
+    max_mana: 120,
+    mana_regeneration: 3.0,
+    magical_damage: 0.2,
+    armor: 2,
+  },
+  equipment: {
+    mainhand: "redtale_project:staff",
+    head: "redtale_project:helmet",
+  },
+  skills: [
+    { skill: "redtale_project:arc_bolt", cooldown_ticks: 120, chance: 0.4 },
+    { skill: "redtale_project:ember_burst", cooldown_ticks: 260, chance: 0.2 },
+  ],
+}

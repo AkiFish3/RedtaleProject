@@ -1,0 +1,23 @@
+// 怪物示范 6（M6 · R125 / T-0120）：charger 原型，高移动速度 + 群体技（quake_slam）。
+// 冲锋位移原语未实现，靠 movement_speed + 群体技体现「撞进来」的观感；
+// quake_slam 的技能自身冷却是 300 tick，这里引用冷却写同值，不抢技能自身的节奏。
+{
+  id: "iron_horn_charger",
+  name: "铁角冲兽",
+  base: "charger",
+  scale: 1.2,
+  level: 9,
+  attributes: {
+    max_health: { base: 34, per_item_level: 3 },
+    attack_damage: 7,
+    armor: 4,
+    movement_speed: 0.035,
+  },
+  equipment: {
+    mainhand: "redtale_project:sword",
+  },
+  skills: [
+    { skill: "redtale_project:quake_slam", cooldown_ticks: 300, chance: 0.3 },
+    { skill: "redtale_project:gale_slash", cooldown_ticks: 100, chance: 0.35 },
+  ],
+}
