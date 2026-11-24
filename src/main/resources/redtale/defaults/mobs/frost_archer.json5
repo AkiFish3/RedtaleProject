@@ -1,0 +1,21 @@
+// 怪物示范 4（M6 · R124 / T-0119）：ranged 原型，靠 projectile_damage 吃远程加成。
+// 主手用 bow 基底（14 基底之一），胸甲给 chestplate 基底；两件都是自家注册 id。
+{
+  id: "frost_archer",
+  name: "霜羽弓手",
+  base: "ranged",
+  scale: 1.0,
+  level: 7,
+  attributes: {
+    max_health: { base: 18, per_item_level: 2 },
+    projectile_damage: 0.2,
+    movement_speed: 0.015,
+  },
+  equipment: {
+    mainhand: "redtale_project:bow",
+    chest: "redtale_project:chestplate",
+  },
+  skills: [
+    { skill: "redtale_project:arc_bolt", cooldown_ticks: 100, chance: 0.3 },
+  ],
+}

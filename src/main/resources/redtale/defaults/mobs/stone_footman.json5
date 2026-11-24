@@ -1,0 +1,22 @@
+// 怪物示范 3（M6 · R124 / T-0119）：melee 原型，最基础的前排杂兵。
+// 只喂 MobSpec/MobRegistry 两层（解析 + 快照），不是真 EntityType（等 M6 第三步模板实体）。
+// 技能引用走完整字符串 id；写裸 id 会取不到（T-0094 对账网第二十五例）。
+{
+  id: "stone_footman",
+  name: "灰岩步卒",
+  base: "melee",
+  scale: 0.95,
+  level: 5,
+  attributes: {
+    max_health: { base: 20, per_item_level: 2 },
+    attack_damage: 5,
+    armor: 3,
+    movement_speed: 0.01,
+  },
+  equipment: {
+    mainhand: "redtale_project:sword",
+  },
+  skills: [
+    { skill: "redtale_project:gale_slash", cooldown_ticks: 160, chance: 0.25 },
+  ],
+}
