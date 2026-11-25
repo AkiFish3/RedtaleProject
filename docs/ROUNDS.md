@@ -138,3 +138,4 @@
 | R125 | 回收 T-0119 自做并验收（`melee`/`ranged` 两只默认怪）+ 真机 4 只 + 派 T-0120（`summoner`/`charger`） | `docs/ROUND-R125-MOBPAIR.md` |
 | R126 | 验收 T-0120（`summoner`/`charger` 两只默认怪）+ 真机 6 只 + 派 T-0121（`flyer` 原型） | `docs/ROUND-R126-MOBFLYER.md` |
 | R127 | 验收 T-0121（`flyer` 原型）+ 真机 7 只 7 原型 + 派 T-0122（`ambient` 原型，8/8 最后一格） | `docs/ROUND-R127-MOBAMBIENT.md` |
+| R128 | 验收 T-0122（`ambient` 原型，M6 内容面 8/8）+ 真机 8 只 8 原型 + 派 T-0123（进度曲线 `curve.base` 超硬顶） | `docs/ROUND-R128-PROGRESSBASE.md` |

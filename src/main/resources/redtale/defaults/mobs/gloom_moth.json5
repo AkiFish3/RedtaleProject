@@ -1,0 +1,14 @@
+// 怪物示范 8（M6 · R127 / T-0122）：ambient 原型，纯氛围装饰 —— 血量低、体积小、不吃技能不吃装备。
+// 原型语义见 C71：不给技能、不给装备、drops 留空，只做「站着看」的样本；
+// 若 Aki 要它带技能或掉落，改本文件即可，不换 jar（D17）。
+{
+  id: "gloom_moth",
+  name: "幽尘蛾",
+  base: "ambient",
+  scale: 0.5,
+  level: 2,
+  attributes: {
+    max_health: { base: 6, per_item_level: 1 },
+    movement_speed: 0.02,
+  },
+}

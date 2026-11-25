@@ -84,6 +84,8 @@ public final class ConfigStore {
             "mobs/iron_horn_charger.json5",
             // 怪物示范 7（M6 · R126 / T-0121）：补 flyer 原型，落地后 `mob list` 覆盖 7 个原型
             "mobs/gale_harrier.json5",
+            // 怪物示范 8（M6 · R127 / T-0122）：补 ambient 原型，落地后 8 个原型全部有默认怪
+            "mobs/gloom_moth.json5",
             // 掉落表（M6 第四层，R41）：没有这份默认文件，ember_guard 的 drops 引用就悬空，
             // 死掉零产出 —— 「掉落接线通没通」这条验收永远没有内容可验
             "drops/ember_guard.json5",
