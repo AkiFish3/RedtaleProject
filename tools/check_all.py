@@ -89,6 +89,7 @@ TOOLS = (
     "check_socket_discards.py",      # 孔位丢弃安全网：count=0/缺键但 types 非空整段早退 —— R123 接上
     "check_spawn_int_saturation.py", # 刷怪整数安全网：priority/per_chunk_cap 超 int 静默饱和 —— R124 接上
     "check_progress_base.py",        # 进度曲线安全网：levels/jobs curve.base 超硬顶静默夹顶 —— R129 接上
+    "check_enchant_definition_ints.py",  # 附魔定义整数字段安全网：weight/anvil_cost 非整数形态静默透传 —— R130 接上
 )
 
 
