@@ -137,3 +137,4 @@
 | R124 | 回收 T-0118 自做并验收（刷怪整数静默饱和）+ 接线 `check_all` 66→67 + 派 T-0119（`melee`/`ranged` 两只默认怪） | `docs/ROUND-R124-SPAWNINTSAT-SELFDO.md` |
 | R125 | 回收 T-0119 自做并验收（`melee`/`ranged` 两只默认怪）+ 真机 4 只 + 派 T-0120（`summoner`/`charger`） | `docs/ROUND-R125-MOBPAIR.md` |
 | R126 | 验收 T-0120（`summoner`/`charger` 两只默认怪）+ 真机 6 只 + 派 T-0121（`flyer` 原型） | `docs/ROUND-R126-MOBFLYER.md` |
+| R127 | 验收 T-0121（`flyer` 原型）+ 真机 7 只 7 原型 + 派 T-0122（`ambient` 原型，8/8 最后一格） | `docs/ROUND-R127-MOBAMBIENT.md` |

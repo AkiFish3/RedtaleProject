@@ -1,0 +1,21 @@
+// 怪物示范 7（M6 · R126 / T-0121）：flyer 原型，靠 projectile_damage + 高移动速度吃远程加成。
+// 飞行行为原语（悬停 / 滑翔）尚未实现（Q-022 按需补），所以这只怪先用 bow + arc_bolt 占位，
+// 等飞行落地只改本文件的 attributes / skills 段，不换 jar。
+{
+  id: "gale_harrier",
+  name: "掠风隼",
+  base: "flyer",
+  scale: 1.0,
+  level: 6,
+  attributes: {
+    max_health: { base: 14, per_item_level: 2 },
+    projectile_damage: 0.25,
+    movement_speed: 0.025,
+  },
+  equipment: {
+    mainhand: "redtale_project:bow",
+  },
+  skills: [
+    { skill: "redtale_project:arc_bolt", cooldown_ticks: 110, chance: 0.35 },
+  ],
+}
