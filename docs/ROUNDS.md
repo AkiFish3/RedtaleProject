@@ -141,3 +141,4 @@
 | R128 | 验收 T-0122（`ambient` 原型，M6 内容面 8/8）+ 真机 8 只 8 原型 + 派 T-0123（进度曲线 `curve.base` 超硬顶） | `docs/ROUND-R128-PROGRESSBASE.md` |
 | R129 | 验收 T-0123（进度曲线 `curve.base` 超硬顶）+ 接线 `check_all` 67→68 + 派 T-0124（附魔 `weight`/`anvil_cost` 非整数透传） | `docs/ROUND-R129-ENCHANTINTS.md` |
 | R130 | 验收 T-0124（附魔 `weight`/`anvil_cost` 非整数透传）+ 接线 `check_all` 68→69 + 派 T-0125（附魔 `min_cost`/`max_cost` 形态透传） | `docs/ROUND-R130-ENCHANTCOST.md` |
+| R131 | 验收 T-0125（附魔 `min_cost`/`max_cost` 形态）+ 接线 `check_all` 69→70 + 派 T-0126（附魔 `slots` 形态透传） | `docs/ROUND-R131-SLOTFORM.md` |

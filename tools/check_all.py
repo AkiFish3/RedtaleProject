@@ -90,6 +90,7 @@ TOOLS = (
     "check_spawn_int_saturation.py", # 刷怪整数安全网：priority/per_chunk_cap 超 int 静默饱和 —— R124 接上
     "check_progress_base.py",        # 进度曲线安全网：levels/jobs curve.base 超硬顶静默夹顶 —— R129 接上
     "check_enchant_definition_ints.py",  # 附魔定义整数字段安全网：weight/anvil_cost 非整数形态静默透传 —— R130 接上
+    "check_enchant_cost_forms.py",   # 附魔代价字段安全网：min_cost/max_cost 形态静默透传 —— R131 接上
 )
 
 
