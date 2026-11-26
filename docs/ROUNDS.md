@@ -144,3 +144,4 @@
 | R131 | 验收 T-0125（附魔 `min_cost`/`max_cost` 形态）+ 接线 `check_all` 69→70 + 派 T-0126（附魔 `slots` 形态透传） | `docs/ROUND-R131-SLOTFORM.md` |
 | R132 | 客户端真机尝试（`rt-test` 独立 gameDir 跑通 NeoForge 21.1.257）+ 发现 14 基底零模型（紫黑格）+ 派 T-0127（补 14 份 `models/item`） | `docs/ROUND-R132-CLIENT.md` |
 | R133 | 验收 T-0126（附魔 `slots` 形态透传）+ 接线 `check_all` 70→71 + 派 T-0128（D1 武器线补档：匕首 / 战锤两把内容） | `docs/ROUND-R133-SLOTFORM-VERIFY.md` |
+| R134 | 验收 T-0127（14 基底模型，打回 1 处 `shield` 死贴图引用）+ 派 T-0129（`assets/` 面首尺：基底 ↔ 模型 ↔ 原版贴图）+ **误杀正式服事故与恢复**（PID 27448） | `docs/ROUND-R134-PRODMODEL.md` |
