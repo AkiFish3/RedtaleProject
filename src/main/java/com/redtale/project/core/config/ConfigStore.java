@@ -50,6 +50,9 @@ public final class ConfigStore {
             // M3 宝石验收件：没有它们，demo_longsword 的孔位永远是空的（只能靠管理员手写）
             "items/gem_ruby.json5",
             "items/gem_sapphire.json5",
+            // D1 武器线补档：匕首（快/低伤）与战锤（慢/高伤），D15 动作差异取样
+            "items/demo_dagger.json5",
+            "items/demo_warhammer.json5",
             "affixes/sharp.json5",
             "affixes/heavy.json5",
             "affixes/of_the_bear.json5",

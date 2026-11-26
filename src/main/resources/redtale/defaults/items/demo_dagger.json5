@@ -1,0 +1,23 @@
+{
+  // 示范匕首（D1 武器线补档；D15 武器动作差异取样：快、低伤、暴击高）。
+  id: "demo_dagger",
+  base: "dagger",
+  name: "示范匕首",
+  durability: 700,
+  rarity: "uncommon",
+  rev: 1,
+
+  sockets: {
+    count: 1,
+    types: ["offensive"],
+  },
+
+  weapon_attributes: "bettercombat:dagger",
+
+  stats: {
+    attack_damage: 3.5,
+    attack_speed: 2.4,
+    critical_strike_chance: 0.2,
+    critical_strike_power: 0.3,
+  },
+}

@@ -1,0 +1,21 @@
+{
+  // 示范战锤（D1 武器线补档；D15 武器动作差异取样：慢、高伤、无暴击加成）。
+  id: "demo_warhammer",
+  base: "hammer",
+  name: "示范战锤",
+  durability: 1600,
+  rarity: "rare",
+  rev: 1,
+
+  sockets: {
+    count: 2,
+    types: ["offensive", "any"],
+  },
+
+  weapon_attributes: "bettercombat:hammer",
+
+  stats: {
+    attack_damage: 10.0,
+    attack_speed: 0.9,
+  },
+}
