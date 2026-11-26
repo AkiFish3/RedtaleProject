@@ -92,6 +92,7 @@ TOOLS = (
     "check_enchant_definition_ints.py",  # 附魔定义整数字段安全网：weight/anvil_cost 非整数形态静默透传 —— R130 接上
     "check_enchant_cost_forms.py",   # 附魔代价字段安全网：min_cost/max_cost 形态静默透传 —— R131 接上
     "check_enchant_slot_forms.py",   # 附魔槽位字段安全网：slots 形态静默透传 —— R133 接上
+    "check_item_models.py",          # 资源面安全网：基底 ↔ 模型 ↔ 原版贴图三方对账 —— R136 接上
 )
 
 
