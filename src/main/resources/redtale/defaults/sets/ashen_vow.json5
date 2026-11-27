@@ -1,0 +1,12 @@
+{
+  // 套装默认配置 2（M3 · D1）：三件套 = 三格护甲，count 3 可达。
+  // 生效规则同 emberforged：所有 count <= 当前件数 的档全部生效（不是只取最高档）。
+  id: "ashen_vow",
+  name: "灰烬誓约",
+  pieces: ["demo_helmet", "demo_greaves", "demo_boots"],
+  bonuses: [
+    { count: 1, stats: { max_health: 2 } },
+    { count: 2, stats: { armor: 2, movement_speed: 0.02 } },
+    { count: 3, stats: { max_health: 6, armor: 3 }, name: "灰烬誓约·全" },
+  ],
+}

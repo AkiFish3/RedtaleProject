@@ -1,0 +1,14 @@
+{
+  // 套装验收件（M3 · D1 装备线）：灰烬誓约三件套之一，HEAD 槽。
+  id: "demo_helmet",
+  base: "helmet",
+  name: "灰烬头盔",
+  durability: 400,
+  rarity: "rare",
+  rev: 1,
+  set_id: "ashen_vow",
+  stats: {
+    armor: 6,
+    max_health: 2,
+  },
+}

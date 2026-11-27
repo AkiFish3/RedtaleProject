@@ -238,13 +238,21 @@ public final class SetCommand {
         SetBonus.apply(player);
 
         String setIdFinal = def.id();
-        com.redtale.project.core.attr.AttributeSpec hp =
-                com.redtale.project.core.attr.AttributeSpecs.resolve("max_health");
-        com.redtale.project.core.attr.AttributeSpec dmg =
-                com.redtale.project.core.attr.AttributeSpecs.resolve("attack_damage");
         List<Integer> tiers = SetBonus.declaredCounts(def);
-        int firstTier = tiers.get(0);
-        int lastTier = tiers.get(tiers.size() - 1);
+        // 档位 -> 该档声明的属性（按配置 key 现解析，不假定「最高档给攻击伤害」）
+        java.util.Map<Integer, java.util.List<com.redtale.project.core.attr.AttributeSpec>> declared =
+                new java.util.LinkedHashMap<>();
+        for (SetSpec.Bonus bonus : def.bonuses()) {
+            java.util.List<com.redtale.project.core.attr.AttributeSpec> specs = new java.util.ArrayList<>();
+            for (String key : bonus.stats().keySet()) {
+                com.redtale.project.core.attr.AttributeSpec spec =
+                        com.redtale.project.core.attr.AttributeSpecs.resolve(key);
+                if (spec != null) {
+                    specs.add(spec);
+                }
+            }
+            declared.put(bonus.count(), specs);
+        }
 
         src.sendSuccess(() -> Component.literal("套装探测 " + setIdFinal + "（FakePlayer 真穿真脱）："), false);
         src.sendSuccess(() -> Component.literal("  定义：pieces " + def.pieces().size()
@@ -254,94 +262,71 @@ public final class SetCommand {
         int fail = 0;
 
         // ① 0 件：不穿就不该有任何档位 modifier
-        int c0 = SetBonus.countOf(player, setIdFinal);
-        boolean clean0 = true;
-        for (int tier : tiers) {
-            if (SetBonus.amount(player, setIdFinal, tier, hp) != 0
-                    || SetBonus.amount(player, setIdFinal, tier, dmg) != 0) {
-                clean0 = false;
-            }
-        }
-        if (c0 == 0 && clean0) {
+        java.util.List<String> issues0 = tierMismatches(player, setIdFinal, tiers, declared, 0);
+        if (SetBonus.countOf(player, setIdFinal) == 0 && issues0.isEmpty()) {
             pass++;
             src.sendSuccess(() -> Component.literal("  ✓ 0 件：件数 0 · 无残留档位 modifier"), false);
         } else {
             fail++;
-            final boolean residue = clean0;
-            src.sendFailure(Component.literal("  ✗ 0 件：件数 " + c0 + " · 残留档位 "
-                    + (residue ? "无" : "有")));
+            final String detail0 = issues0.isEmpty()
+                    ? "件数 " + SetBonus.countOf(player, setIdFinal) : issues0.toString();
+            src.sendFailure(Component.literal("  ✗ 0 件：" + detail0));
         }
 
-        // ② 1 件
-        ItemStack first = com.redtale.project.items.ItemFactory.build(pieces.get(0), null);
-        player.setItemSlot(SetBonus.slotOf(pieces.get(0).base()), first);
-        double hpBefore = player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
-        SetBonus.apply(player);
-        int c1 = SetBonus.countOf(player, setIdFinal);
-        double hpAfter = player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
-        if (c1 == 1 && SetBonus.amount(player, setIdFinal, firstTier, hp) != 0) {
-            pass++;
-            src.sendSuccess(() -> Component.literal("  ✓ 1 件：件数 1 · " + firstTier + " 件档已下发 · 最大生命 "
-                    + hpBefore + " → " + hpAfter), false);
-        } else {
-            fail++;
-            src.sendFailure(Component.literal("  ✗ 1 件：件数 " + c1 + " · 档位值 "
-                    + SetBonus.amount(player, setIdFinal, firstTier, hp)
-                    + " · 最大生命 " + hpBefore + " → " + hpAfter));
+        // ②~③ 逐件真穿：每加一件，count<=件数 的档必须全在位、更高档必须全不在位
+        int equipped = 0;
+        int reached = Math.min(tiers.size(), pieces.size());
+        for (int i = 0; i < reached; i++) {
+            ItemStack stack = com.redtale.project.items.ItemFactory.build(pieces.get(i), null);
+            player.setItemSlot(SetBonus.slotOf(pieces.get(i).base()), stack);
+            double hpBefore = player.getAttributeValue(
+                    net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
+            SetBonus.apply(player);
+            double hpAfter = player.getAttributeValue(
+                    net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
+            equipped++;
+            final int worn = equipped;
+            java.util.List<String> issues = tierMismatches(player, setIdFinal, tiers, declared, worn);
+            int count = SetBonus.countOf(player, setIdFinal);
+            if (count == worn && issues.isEmpty()) {
+                pass++;
+                src.sendSuccess(() -> Component.literal("  ✓ " + worn + " 件：件数 " + worn
+                        + " · 在档 " + inPlay(tiers, worn)
+                        + " · 最大生命 " + hpBefore + " → " + hpAfter), false);
+            } else {
+                fail++;
+                final String detail = issues.isEmpty() ? "件数 " + count : issues.toString();
+                src.sendFailure(Component.literal("  ✗ " + worn + " 件：件数 " + count + " · " + detail));
+            }
         }
 
-        // ③ 2 件（第二件必须占**另一个**槽位，否则只是换掉第一件）
-        ItemStack second = com.redtale.project.items.ItemFactory.build(pieces.get(1), null);
-        player.setItemSlot(SetBonus.slotOf(pieces.get(1).base()), second);
-        double dmgBefore = player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
-        SetBonus.apply(player);
-        int c2 = SetBonus.countOf(player, setIdFinal);
-        double dmgAfter = player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
-        if (c2 == 2 && SetBonus.amount(player, setIdFinal, lastTier, dmg) != 0) {
-            pass++;
-            src.sendSuccess(() -> Component.literal("  ✓ 2 件：件数 2 · " + lastTier + " 件档已下发（"
-                    + SetBonus.modifierId(setIdFinal, lastTier) + "）· 攻击伤害 "
-                    + dmgBefore + " → " + dmgAfter), false);
-        } else {
-            fail++;
-            src.sendFailure(Component.literal("  ✗ 2 件：件数 " + c2 + " · 档位值 "
-                    + SetBonus.amount(player, setIdFinal, lastTier, dmg)
-                    + " · 攻击伤害 " + dmgBefore + " → " + dmgAfter));
+        // ④ 脱回 1 件：更高档必须消失、最低档必须保留（只增不减是这套机制最容易漏的地方）
+        for (int i = 1; i < pieces.size(); i++) {
+            player.setItemSlot(SetBonus.slotOf(pieces.get(i).base()), ItemStack.EMPTY);
         }
-
-        // ④ 脱回 1 件：高档位必须消失（属性只增不减是这套机制最容易漏的地方）
-        player.setItemSlot(SetBonus.slotOf(pieces.get(1).base()), ItemStack.EMPTY);
         SetBonus.apply(player);
         int c3 = SetBonus.countOf(player, setIdFinal);
-        boolean highGone = SetBonus.amount(player, setIdFinal, lastTier, dmg) == 0;
-        boolean lowKept = SetBonus.amount(player, setIdFinal, firstTier, hp) != 0;
-        if (c3 == 1 && highGone && lowKept) {
+        java.util.List<String> issues1 = tierMismatches(player, setIdFinal, tiers, declared, 1);
+        if (c3 == 1 && issues1.isEmpty()) {
             pass++;
-            src.sendSuccess(() -> Component.literal("  ✓ 脱回 1 件：件数 1 · " + lastTier
-                    + " 件档已移除 · " + firstTier + " 件档保留"), false);
+            src.sendSuccess(() -> Component.literal("  ✓ 脱回 1 件：件数 1 · 在档 " + inPlay(tiers, 1)), false);
         } else {
             fail++;
-            final boolean high = highGone;
-            final boolean low = lowKept;
-            src.sendFailure(Component.literal("  ✗ 脱回 1 件：件数 " + c3 + " · 高档残留 " + !high
-                    + " · 低档丢失 " + !low));
+            final String detail1 = issues1.isEmpty() ? "件数 " + c3 : issues1.toString();
+            src.sendFailure(Component.literal("  ✗ 脱回 1 件：" + detail1));
         }
 
         // ⑤ clear：全部消失（登出 / 关掉套装走的路径）
         SetBonus.clear(player);
         player.setItemSlot(SetBonus.slotOf(pieces.get(0).base()), ItemStack.EMPTY);
-        boolean allGone = true;
-        for (int tier : tiers) {
-            if (SetBonus.amount(player, setIdFinal, tier, hp) != 0) {
-                allGone = false;
-            }
-        }
-        if (allGone) {
+        java.util.List<String> issuesClear = tierMismatches(player, setIdFinal, tiers, declared, 0);
+        if (issuesClear.isEmpty()) {
             pass++;
             src.sendSuccess(() -> Component.literal("  ✓ clear：全部档位 modifier 已移除"), false);
         } else {
             fail++;
-            src.sendFailure(Component.literal("  ✗ clear：仍有残留"));
+            final String detailClear = issuesClear.toString();
+            src.sendFailure(Component.literal("  ✗ clear：仍有残留 " + detailClear));
         }
 
         final int p = pass;
@@ -349,5 +334,36 @@ public final class SetCommand {
         src.sendSuccess(() -> Component.literal("  结论：" + (f == 0 ? "全部通过" : "有失败项")
                 + "（pass " + p + " / fail " + f + "）"), false);
         return f == 0 ? 1 : 0;
+    }
+
+    /** worn 件时 count<=worn 的档必须全在位、count>worn 的档必须全不在位；返回差异清单。 */
+    private static java.util.List<String> tierMismatches(net.minecraft.world.entity.player.Player player,
+            String setId, List<Integer> tiers,
+            java.util.Map<Integer, java.util.List<com.redtale.project.core.attr.AttributeSpec>> declared,
+            int worn) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        for (int tier : tiers) {
+            boolean shouldHave = tier <= worn;
+            for (com.redtale.project.core.attr.AttributeSpec spec : declared.getOrDefault(tier, java.util.List.of())) {
+                double value = SetBonus.amount(player, setId, tier, spec);
+                if (shouldHave && value == 0.0) {
+                    out.add(tier + " 件档缺 " + spec.id());
+                } else if (!shouldHave && value != 0.0) {
+                    out.add(tier + " 件档残留 " + spec.id() + "=" + value);
+                }
+            }
+        }
+        return out;
+    }
+
+    /** 「[1, 2]」这种在当前件数下生效的档位串，用于回显。 */
+    private static String inPlay(List<Integer> tiers, int worn) {
+        java.util.List<Integer> hit = new java.util.ArrayList<>();
+        for (int tier : tiers) {
+            if (tier <= worn) {
+                hit.add(tier);
+            }
+        }
+        return hit.toString();
     }
 }

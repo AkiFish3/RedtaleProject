@@ -53,6 +53,9 @@ public final class ConfigStore {
             // D1 武器线补档：匕首（快/低伤）与战锤（慢/高伤），D15 动作差异取样
             "items/demo_dagger.json5",
             "items/demo_warhammer.json5",
+            "items/demo_helmet.json5",
+            "items/demo_greaves.json5",
+            "items/demo_boots.json5",
             "affixes/sharp.json5",
             "affixes/heavy.json5",
             "affixes/of_the_bear.json5",
@@ -60,6 +63,7 @@ public final class ConfigStore {
             // 套装（M3）：没有这份默认文件，demo_longsword / demo_chestplate / demo_robe
             // 的 set_id 就指向一个不存在的定义（静默不生效）
             "sets/emberforged.json5",
+            "sets/ashen_vow.json5",
             // 附魔（M4 / D32）：L1 schema 的两份示范——一份纯数值、一份脚本化。
             // 没有它们，生成的 L0 数据包目录是空的，V3 之后全部无从验起
             "enchantments/super_sharpness.json5",

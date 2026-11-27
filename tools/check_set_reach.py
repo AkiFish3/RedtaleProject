@@ -165,7 +165,7 @@ def main():
               % (len(sets), pieces_total, tiers, slots_total))
     for rel, msg in sorted(problems, key=lambda x: x[1]):
         print("[问题] %s %s" % (rel, msg))
-    print("共 1 份套装档位可达性表 · %d 条问题" % len(problems))
+    print("共 %d 份套装档位可达性表 · %d 条问题" % (len(sets), len(problems)))
     return 1 if problems else 0
 
 

@@ -1,0 +1,14 @@
+{
+  // 套装验收件（M3 · D1 装备线）：灰烬誓约三件套之一，FEET 槽。
+  id: "demo_boots",
+  base: "boots",
+  name: "灰烬战靴",
+  durability: 350,
+  rarity: "rare",
+  rev: 1,
+  set_id: "ashen_vow",
+  stats: {
+    armor: 5,
+    movement_speed: 0.02,
+  },
+}

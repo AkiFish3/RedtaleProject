@@ -147,3 +147,4 @@
 | R134 | 验收 T-0127（14 基底模型，打回 1 处 `shield` 死贴图引用）+ 派 T-0129（`assets/` 面首尺：基底 ↔ 模型 ↔ 原版贴图）+ **误杀正式服事故与恢复**（PID 27448） | `docs/ROUND-R134-PRODMODEL.md` |
 | R135 | 验收 T-0127（14 基底模型，离线等价判据过 + 欠账 D-01）+ 验收 T-0128（两把武器，真机 12 件装备 / 48 份配置）+ 派 T-0130（`weapon_attributes` 外部引用尺） | `docs/ROUND-R135-MODELVERIFY.md` |
 | R136 | 验收 T-0129（资源面首尺：基底 ↔ 模型 ↔ 原版贴图）+ 接线 `check_all` 71→72 + 派 T-0131（护甲三件套 + `ashen_vow`）+ **D-01 销账**（客户端 `Unable to load model` / `Missing textures` 双 0）+ M6 代码面完成度纠偏 | `docs/ROUND-R136-ITEMMODELS-VERIFY.md` |
+| R137 | 验收 T-0130（`weapon_attributes` 外部引用尺，接线 `check_all` 72→73）+ 验收 T-0131（护甲三件套，**三档套装首证** pass 6/0）+ 修 `set probe` 假红（判据按声明推导）+ 派 T-0132（`pieces` ↔ `set_id` 归属尺） | `docs/ROUND-R137-SETPROBE.md` |

@@ -1,0 +1,14 @@
+{
+  // 套装验收件（M3 · D1 装备线）：灰烬誓约三件套之一，LEGS 槽。
+  id: "demo_greaves",
+  base: "leggings",
+  name: "灰烬胫甲",
+  durability: 500,
+  rarity: "rare",
+  rev: 1,
+  set_id: "ashen_vow",
+  stats: {
+    armor: 8,
+    armor_toughness: 1,
+  },
+}
