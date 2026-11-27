@@ -149,3 +149,4 @@
 | R136 | 验收 T-0129（资源面首尺：基底 ↔ 模型 ↔ 原版贴图）+ 接线 `check_all` 71→72 + 派 T-0131（护甲三件套 + `ashen_vow`）+ **D-01 销账**（客户端 `Unable to load model` / `Missing textures` 双 0）+ M6 代码面完成度纠偏 | `docs/ROUND-R136-ITEMMODELS-VERIFY.md` |
 | R137 | 验收 T-0130（`weapon_attributes` 外部引用尺，接线 `check_all` 72→73）+ 验收 T-0131（护甲三件套，**三档套装首证** pass 6/0）+ 修 `set probe` 假红（判据按声明推导）+ 派 T-0132（`pieces` ↔ `set_id` 归属尺） | `docs/ROUND-R137-SETPROBE.md` |
 | R138 | 验收 T-0132（套装 `pieces` ↔ 物品 `set_id` 归属尺，接线 `check_all` 73→74）+ 派 T-0133（词条 3→8 条 + `sword_common` 首开 `core` 段，点亮 18 轮未走过的死分支）+ 新开 Q-025（护甲 tooltip 属性行） | `docs/ROUND-R138-PIECESSYNC.md` |
+| R139 | 验收 T-0133（词条 3→8 + `core` 段首开，**18 轮死分支首证**：15/15 命中 `runed`）+ 挖出「默认配置只补缺不覆盖」验证坑（R139-a）+ 派 T-0134（护甲词条池 `armor_common`） | `docs/ROUND-R139-AFFIXVERIFY.md` |

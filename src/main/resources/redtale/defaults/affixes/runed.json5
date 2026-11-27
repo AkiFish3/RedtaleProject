@@ -1,0 +1,11 @@
+{
+  // 核心段首条（R138）：core 段此前 slots=0、从未有内容，这条是 core 通道的首个内容实证。
+  id: "runed",
+  kind: "core",
+  weight: 40,
+  item_level: { min: 1, max: 60 },
+  exclusive_group: "core",
+  stats: {
+    physical_damage: { base: 0.06, per_item_level: 0.002 },
+  },
+}

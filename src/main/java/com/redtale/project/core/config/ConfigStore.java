@@ -59,6 +59,11 @@ public final class ConfigStore {
             "affixes/sharp.json5",
             "affixes/heavy.json5",
             "affixes/of_the_bear.json5",
+            "affixes/keen.json5",
+            "affixes/executioner.json5",
+            "affixes/of_the_hunt.json5",
+            "affixes/of_ruin.json5",
+            "affixes/runed.json5",
             "affix_pools/sword_common.json5",
             // 套装（M3）：没有这份默认文件，demo_longsword / demo_chestplate / demo_robe
             // 的 set_id 就指向一个不存在的定义（静默不生效）

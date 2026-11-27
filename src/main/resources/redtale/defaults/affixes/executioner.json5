@@ -1,0 +1,11 @@
+{
+  // 猎杀组（R138）：只对生物生效（pve 条件乘区），PvP 不加。
+  id: "executioner",
+  kind: "prefix",
+  weight: 60,
+  item_level: { min: 1, max: 60 },
+  exclusive_group: "slay",
+  stats: {
+    pve_damage: { base: 0.04, per_item_level: 0.0012 },
+  },
+}

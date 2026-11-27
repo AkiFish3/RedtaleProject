@@ -1,0 +1,11 @@
+{
+  // 亡灵特攻（R138）：走 undead 条件乘区，与 pve 同池相加（D12），不是相乘。
+  id: "of_the_hunt",
+  kind: "suffix",
+  weight: 55,
+  item_level: { min: 1, max: 60 },
+  exclusive_group: "hunt",
+  stats: {
+    undead_damage: { base: 0.05, per_item_level: 0.0015 },
+  },
+}

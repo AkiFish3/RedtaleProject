@@ -3,7 +3,8 @@
   // slots 是**投放层**的条数上限，不做全局钳制（D16）。
   id: "sword_common",
   applies_to: ["redtale_project:sword", "redtale_project:axe", "redtale_project:dagger"],
-  slots: { prefix: 1, suffix: 1, core: 0 },
-  prefix: { sharp: 100, heavy: 80 },
-  suffix: { of_the_bear: 60 },
+  slots: { prefix: 1, suffix: 1, core: 1 },
+  prefix: { sharp: 100, heavy: 80, keen: 70, executioner: 60 },
+  suffix: { of_the_bear: 60, of_the_hunt: 55, of_ruin: 45 },
+  core: { runed: 40 },
 }

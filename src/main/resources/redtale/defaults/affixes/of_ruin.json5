@@ -1,0 +1,11 @@
+{
+  // 对玩家特攻（R138）：走 pvp 条件乘区。
+  id: "of_ruin",
+  kind: "suffix",
+  weight: 45,
+  item_level: { min: 1, max: 60 },
+  exclusive_group: "ruin",
+  stats: {
+    pvp_damage: { base: 0.04, per_item_level: 0.0012 },
+  },
+}

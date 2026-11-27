@@ -1,0 +1,13 @@
+{
+  // 暴击组（R138）：只加暴击率与暴击倍率，不动平伤 —— 与 sharp/heavy 的 damage 组分属两组，
+  // 一件武器最多在「平伤」与「暴击」之间各出一条。
+  id: "keen",
+  kind: "prefix",
+  weight: 70,
+  item_level: { min: 1, max: 60 },
+  exclusive_group: "crit",
+  stats: {
+    critical_strike_chance: { base: 0.02, per_item_level: 0.0008 },
+    critical_strike_power: { base: 0.03, per_item_level: 0.0015 },
+  },
+}
