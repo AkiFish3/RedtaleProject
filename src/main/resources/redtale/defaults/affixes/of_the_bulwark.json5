@@ -1,0 +1,11 @@
+{
+  // 抗击退（R139）：原版 knockback_resistance 值域 0~1，base 取 0.05。
+  id: "of_the_bulwark",
+  kind: "suffix",
+  weight: 50,
+  item_level: { min: 1, max: 60 },
+  exclusive_group: "bulwark",
+  stats: {
+    knockback_resistance: { base: 0.05, per_item_level: 0.005 },
+  },
+}

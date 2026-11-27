@@ -1,0 +1,11 @@
+{
+  // 韧性组（R139）：护甲韧性只有原版那一条属性（ATTRIBUTE-REGISTRY §2B），走 armor_toughness。
+  id: "sturdy",
+  kind: "prefix",
+  weight: 80,
+  item_level: { min: 1, max: 60 },
+  exclusive_group: "tough",
+  stats: {
+    armor_toughness: { base: 0.5, per_item_level: 0.05 },
+  },
+}

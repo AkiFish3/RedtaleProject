@@ -1,0 +1,11 @@
+{
+  // 生命组（R139）：与原版最大生命同一条属性；与 of_the_bear 同族但分属不同池（武器 / 护甲），互斥组不跨池。
+  id: "vital",
+  kind: "suffix",
+  weight: 60,
+  item_level: { min: 1, max: 60 },
+  exclusive_group: "vitality",
+  stats: {
+    max_health: { base: 2.0, per_item_level: 0.2 },
+  },
+}

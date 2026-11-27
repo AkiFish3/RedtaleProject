@@ -1,0 +1,9 @@
+{
+  // 护甲词条池（R139）：此前只有 sword_common，四件防具基底摇不出任何词条（D22 只覆盖武器）。
+  // slots 是投放层条数上限，不做全局钳制（D16）。
+  id: "armor_common",
+  applies_to: ["redtale_project:helmet", "redtale_project:chestplate", "redtale_project:leggings", "redtale_project:boots"],
+  slots: { prefix: 1, suffix: 1, core: 0 },
+  prefix: { plated: 100, sturdy: 80 },
+  suffix: { vital: 60, of_the_bulwark: 50 },
+}

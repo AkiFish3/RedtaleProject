@@ -1,0 +1,11 @@
+{
+  // 护甲组（R139）：给防具加原版护甲值 —— 与武器的 physical_damage 组无关，池子本身不重叠。
+  id: "plated",
+  kind: "prefix",
+  weight: 100,
+  item_level: { min: 1, max: 60 },
+  exclusive_group: "plate",
+  stats: {
+    armor: { base: 1.0, per_item_level: 0.15 },
+  },
+}
