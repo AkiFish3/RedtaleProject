@@ -95,6 +95,7 @@ TOOLS = (
     "check_item_models.py",          # 资源面安全网：基底 ↔ 模型 ↔ 原版贴图三方对账 —— R136 接上
     "check_weapon_attr_ref.py",      # 引用面安全网：weapon_attributes 外部引用 ↔ BetterCombat 内置动作 —— R137 接上
     "check_set_pieces_sync.py",      # 归属面安全网：套装 pieces 成员 ↔ 物品 set_id 归属一致 —— R138 接上
+    "check_affix_kind_sync.py",      # 段类型面安全网：词条池段名 ↔ 词条 kind（错则整段空）—— R141 接上
 )
 
 

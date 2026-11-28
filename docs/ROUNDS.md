@@ -151,3 +151,4 @@
 | R138 | 验收 T-0132（套装 `pieces` ↔ 物品 `set_id` 归属尺，接线 `check_all` 73→74）+ 派 T-0133（词条 3→8 条 + `sword_common` 首开 `core` 段，点亮 18 轮未走过的死分支）+ 新开 Q-025（护甲 tooltip 属性行） | `docs/ROUND-R138-PIECESSYNC.md` |
 | R139 | 验收 T-0133（词条 3→8 + `core` 段首开，**18 轮死分支首证**：15/15 命中 `runed`）+ 挖出「默认配置只补缺不覆盖」验证坑（R139-a）+ 派 T-0134（护甲词条池 `armor_common`） | `docs/ROUND-R139-AFFIXVERIFY.md` |
 | R140 | 验收 T-0134（护甲词条池 `armor_common`：`reload` 57→62、四个防具基底各摇出 **2 条**词条、武器池零回归）+ 派 T-0135（词条池段名 ↔ 词条 `kind` 一致性尺，对账网第五十八例：`AffixRoller.java:140` 静默 `continue`、六把尺反事实全绿） | `docs/ROUND-R140-AFFIXARMOR.md` |
+| R141 | 验收 T-0135（词条池段名 ↔ 词条 `kind` 尺，六夹具逐字、接线 `check_all` 74→75）+ 派 T-0136（武器线三基底 `axe`/`spear`/`staff` 补档；派前现查 2.4.0 jar 33 个动作、证伪 `shield` 无动作可挂 → 池 C85 待拍板） | `docs/ROUND-R141-KINDSYNC.md` |
