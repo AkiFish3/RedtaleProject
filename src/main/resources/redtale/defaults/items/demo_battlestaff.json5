@@ -1,0 +1,22 @@
+{
+  // 示范长棍（D1 武器线补档；D15 武器动作差异取样：快、低伤、无乘区）。
+  id: "demo_battlestaff",
+  base: "staff",
+  name: "示范长棍",
+  durability: 900,
+  rarity: "uncommon",
+  rev: 1,
+
+  sockets: {
+    count: 1,
+    types: ["any"],
+  },
+
+  weapon_attributes: "bettercombat:staff",
+
+  stats: {
+    attack_damage: 6.0,
+    attack_speed: 1.2,
+    critical_strike_chance: 0.08,
+  },
+}

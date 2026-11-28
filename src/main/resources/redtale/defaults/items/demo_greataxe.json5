@@ -1,0 +1,22 @@
+{
+  // 示范战斧（D1 武器线补档；D15 武器动作差异取样：最慢、最高伤、靠暴击倍率）。
+  id: "demo_greataxe",
+  base: "axe",
+  name: "示范战斧",
+  durability: 1500,
+  rarity: "epic",
+  rev: 1,
+
+  sockets: {
+    count: 2,
+    types: ["offensive", "any"],
+  },
+
+  weapon_attributes: "bettercombat:axe",
+
+  stats: {
+    attack_damage: 9.0,
+    attack_speed: 0.85,
+    critical_strike_power: 0.25,
+  },
+}

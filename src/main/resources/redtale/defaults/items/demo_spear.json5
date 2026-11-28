@@ -1,0 +1,22 @@
+{
+  // 示范长枪（D1 武器线补档；D15 武器动作差异取样：中速、中伤、带物理乘区）。
+  id: "demo_spear",
+  base: "spear",
+  name: "示范长枪",
+  durability: 1100,
+  rarity: "rare",
+  rev: 1,
+
+  sockets: {
+    count: 1,
+    types: ["offensive"],
+  },
+
+  weapon_attributes: "bettercombat:spear",
+
+  stats: {
+    attack_damage: 7.5,
+    attack_speed: 1.15,
+    physical_damage: 0.1,
+  },
+}
